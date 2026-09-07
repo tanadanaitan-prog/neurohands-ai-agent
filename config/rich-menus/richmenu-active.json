@@ -1,0 +1,83 @@
+{
+  "size": {
+    "width": 1664,
+    "height": 928
+  },
+  "selected": false,
+  "name": "Neurohands Client Menu",
+  "chatBarText": "My Neurohands",
+  "areas": [
+    {
+      "bounds": {
+        "x": 201,
+        "y": 170,
+        "width": 380,
+        "height": 268
+      },
+      "action": {
+        "type": "postback",
+        "data": "menu=order_status"
+      }
+    },
+    {
+      "bounds": {
+        "x": 642,
+        "y": 170,
+        "width": 382,
+        "height": 268
+      },
+      "action": {
+        "type": "postback",
+        "data": "menu=products"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1084,
+        "y": 170,
+        "width": 381,
+        "height": 268
+      },
+      "action": {
+        "type": "postback",
+        "data": "menu=lead_time"
+      }
+    },
+    {
+      "bounds": {
+        "x": 201,
+        "y": 501,
+        "width": 380,
+        "height": 267
+      },
+      "action": {
+        "type": "postback",
+        "data": "menu=quote"
+      }
+    },
+    {
+      "bounds": {
+        "x": 642,
+        "y": 501,
+        "width": 382,
+        "height": 267
+      },
+      "action": {
+        "type": "postback",
+        "data": "menu=support"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1084,
+        "y": 501,
+        "width": 381,
+        "height": 267
+      },
+      "action": {
+        "type": "postback",
+        "data": "menu=agent"
+      }
+    }
+  ]
+}
