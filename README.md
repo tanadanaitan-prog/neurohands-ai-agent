@@ -2,7 +2,7 @@
 
 Recovered v3.10 Express server for the LINE concierge, Aria agent, Jarvis operator console, and document upload portal. This local recovery targets [tanadanaitan-prog/neurohands-ai-agent](https://github.com/tanadanaitan-prog/neurohands-ai-agent).
 
-**Current milestone:** stabilize the v3.10 KNC Glass / Aria pilot before enabling the larger agent platform. The recovered source and local tests are included here. A live Railway / LINE proof has **not** passed. The connected Supabase project lacks the document and agent schema and Storage bucket. See [Phase 1 evidence and recovery](docs/PHASE1_STATUS.md) and [Supabase readiness](supabase/README.md).
+**Current milestone:** stabilize the v3.10 KNC Glass / Aria pilot before enabling the larger agent platform. The recovered source is uploaded to GitHub. The Phase 1 Supabase schema and private document bucket are configured; all 131 original records were preserved and verified. A live Railway / LINE / model document proof has **not** passed. See [Phase 1 evidence and recovery](docs/PHASE1_STATUS.md) and [Supabase readiness](supabase/README.md).
 
 | Location | Contents |
 | --- | --- |
@@ -43,7 +43,7 @@ Open `http://localhost:3000/` to check that the process started. That response d
 ## Connections to finish
 
 1. Review the recovered project in `tanadanaitan-prog/neurohands-ai-agent`, prepared through the `codex/phase1-recovery` branch. Browser access is verified as the destination account. Credentials, local dependencies and generated packages are excluded from Git.
-2. Review the database differences in `supabase/README.md`, recover or design the v3.10 migration, and configure the private document bucket. No live database changes were made during this import.
+2. The reviewed `phase1_gateway_recovery` migration is applied to the connected project and its private `neurohands-docs` bucket is configured. Review the evidence in `supabase/README.md`; do not rerun the migration or substitute the Phase 2 workspace migration.
 3. Once the database is ready, connect that GitHub repository to the intended Railway service, using this folder as the repository root. The included Railway configuration runs the checks and tests, starts the server, and checks `/`.
 4. Populate Railway Variables using `.env.example` as the name list. Put secret values directly into Railway. Set `PUBLIC_URL` to the HTTPS deployment URL, or use Railway's `RAILWAY_PUBLIC_DOMAIN`.
 5. Set the LINE webhook URL to the deployment's `/webhook` endpoint and verify it in the LINE Developers console. Only publish the menus after confirming the intended LINE channel.
@@ -82,6 +82,8 @@ This command has not been run against LINE. Repeating it creates new menu IDs. E
 
 The document proof now runs in local tests with simulated providers, including wrong-client access, revoked/unbound identities, denied tools, failed storage/database operations and failed trace persistence. It verifies a distinctive value on the second spreadsheet sheet, beyond the original 20-row sample. Originals are retained with SHA-256 provenance; extraction limits produce `partial` status. PDF files remain stored-only. This is not a live model, LINE, database or deployment proof.
 
-Activation-code usage updates are still nontransactional, codes are predictable, and operator approvals need further access-control review before a production freeze. The final database schema must accept `partial` extraction status and longer UUID-suffixed document codes. The contact address in `BRAND_COPY.contact` is still a placeholder. See the Phase 1 record for all remaining acceptance checks.
+Activation codes now use 128 random bits, are stored only as SHA-256 hashes, expire after seven days, and default to a single use. `nh_activate_client` commits the client, binding, usage count and audit record together, with locks and replay checks. It refuses tenant reassignment and revoked bindings. Jarvis approvals require an explicit client/department, belong to their proposer and are claimed once before execution. Failed actions are reported as failures. Private data and operator commands require a direct LINE chat; disabled accounts and revoked upload-link issuers lose access.
+
+Local verification now reports 46 passing tests. A live database transaction also verified activation, replay and usage limits and was rolled back without leaving test users or codes. The live model/LINE flow, webhook retry/recovery, and full source-account/deployment inventory remain outstanding. The contact address in `BRAND_COPY.contact` is still a placeholder. See the Phase 1 record for all remaining acceptance checks.
 
 References: [Railway configuration](https://docs.railway.com/config-as-code/reference), [LINE rich-menu images](https://developers.line.biz/en/reference/messaging-api/#upload-rich-menu-image), [Supabase keys](https://supabase.com/docs/guides/getting-started/api-keys), [SheetJS installation](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/).

@@ -22,7 +22,10 @@ async function parseDocument(fileName, mime, buffer) {
         const range = XLSX.utils.decode_range(sheet["!fullref"] || sheet["!ref"] || "A1:A1");
         const sourceRows = sheet["!ref"] ? range.e.r - range.s.r + 1 : 0;
         totalRows += sourceRows;
-        const values = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: true, defval: null });
+        const readRange = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
+        readRange.e.c = Math.min(readRange.e.c, readRange.s.c + MAX_COLUMNS - 1);
+        readRange.e.r = Math.min(readRange.e.r, readRange.s.r + MAX_ROWS);
+        const values = sheet["!ref"] ? XLSX.utils.sheet_to_json(sheet, { range: readRange, header: 1, blankrows: true, defval: null }) : [];
         const retained = [];
         for (const row of values) {
           const clipped = row.slice(0, MAX_COLUMNS);

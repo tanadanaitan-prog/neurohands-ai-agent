@@ -1,26 +1,37 @@
-# Supabase readiness
+# Supabase Phase 1 readiness
 
-Read-only inspection on 2026-09-07 found the connected project `Neurohands` (`darxiaearohhnxiwhcbs`) running an older schema. Its public tables are `clients`, `glass_types`, `edging_services`, `orders`, `production_queue`, `messages`, `scores`, and `settings`. Row Level Security is enabled on those tables. No database writes, migrations, Auth configuration changes, or Storage changes were performed.
+Project `darxiaearohhnxiwhcbs` (`Neurohands - AI Agent`) belongs to the verified destination account's organization. On 2026-09-07 it initially contained eight legacy tables and 131 records, with no agent/document tables or Storage buckets.
 
-The recovered server directly references 22 tables. These 16 were absent:
+## Applied and verified
 
-```text
-activation_codes       agent_memory          agent_registry
-agent_runs             agent_tasks           bot_feedback
-client_accounts        client_agent_bindings client_documents
-escalations            jarvis_audit_log      jarvis_checklist
-jarvis_notes           staff_activations     support_cases
-tool_calls
-```
+- Migration `20260907123525_phase1_gateway_recovery.sql` is recorded remotely as `phase1_gateway_recovery`. The local filename matches the version assigned by the Supabase migration tool.
+- Sixteen Phase 1 tables were added, bringing the total to 24. All tables have RLS enabled. Browser roles have no direct table grants; the gateway uses a server-only key and enforces client, department and tool permissions.
+- Existing tables received account/lead-time columns and compatible message constraints. All 57 products, 14 edging services, 55 messages and five original settings were verified unchanged after migration. Two new settings were added.
+- KNC Glass and Aria (`AGT-001`) are configured. No real client activation codes or LINE bindings have been created yet.
+- `nh_activate_client` atomically redeems a hash of a random activation code. A live transaction checked activation, replay and the one-use limit, then rolled back; no self-test clients, bindings or codes remain. Anonymous/authenticated browser roles cannot execute that function or claim Jarvis approvals.
+- Private Storage bucket `neurohands-docs` has `public=false`, a 10,485,760-byte limit, and allowed MIME types for XLSX, XLS, CSV, TXT, DOCX, PDF and binary uploads. The gateway validates extensions and reports unsupported/partial extraction honestly. No original Storage objects existed before setup.
 
-Existing tables also lack columns used by this version. Confirmed examples are `clients.client_account_id` and `orders.client_account_id`, `orders.lead_time_days`, and `orders.urgent_flag`. Other columns, constraints, relationships, default values, seed records, grants, and indexes still need a full schema comparison.
+## Backup and recovery
 
-`check-readiness.sql` checks the directly referenced table names, the confirmed missing columns above, and the document bucket. It is a read-only diagnostic, not a migration or a complete readiness certificate. No returned rows from its first query would only mean those listed checks pass.
+The original public schema and exact JSON data were saved privately under `.tmp/backups/`, which Git ignores. `scripts/verify-public-backup.js` restored all 131 records and seven sequence states in isolated PostgreSQL and verified exact values. Timestamp comparisons use UTC. Generated restore SQL and snapshots contain private data and must never be uploaded to GitHub.
 
-The v3.10 MASTER SQL mentioned in the original README has not been recovered. The Downloads folder contains a v2.2 SQL file and a v2.4 deployment document; neither establishes the complete v3.10 schema. They were not applied or substituted for the missing migration.
+The migration was also tested against that restored copy before live application. After application, server-side fingerprints verified every original record's original columns. The snapshot SHA-256 is recorded in `docs/PHASE1_STATUS.md`.
 
-Before deployment, recover or create a reviewed migration that preserves existing product and message data, defines account ownership and binding rules, enables RLS on exposed tables, and installs the required agent/configuration records. Set up a private `neurohands-docs` Storage bucket and validate ownership checks for upload links and document reads. The recovered upload-token implementation assumes positive integer client account IDs; schema decisions must account for that or update the code.
+This is a tested backup of the existing public tables, not a complete Supabase project export. Platform roles, authentication configuration, deployment variables and original Railway resources remain outside that backup. The project contained zero Auth users and zero Storage objects at inspection.
 
-The bot uses a privileged server key that bypasses RLS, so authorization in the gateway still matters even when RLS is enabled. Keep the secret key on Railway/the server. Supabase Auth user login remains a separate feature requiring its intended user flow and access rules to be defined.
+The additive schema can remain if the server is rolled back; it preserves the old table layout and values. Do not drop the new tables or restore over a live database to undo a source change. Restore the private SQL into an isolated empty database first, compare records, then plan any recovery that affects live data. Sequence gaps left by rolled-back tests are expected.
 
-Reference: [Supabase API key roles and security](https://supabase.com/docs/guides/getting-started/api-keys).
+## Before a production freeze
+
+1. Finish webhook persistence/retry handling and remaining failure checks.
+2. Deploy the matching server commit, configure secrets privately and verify the deployment version.
+3. Run the real KNC upload → activation → answer → successful authorized `read_document` trace using LINE and the configured model. Test wrong-client access and provider failure on that deployment.
+4. Reconcile the original deployment/project, domains, integrations and account access before retiring anything.
+
+`check-readiness.sql` is a limited read-only diagnostic. It is not an end-to-end readiness certificate. The old v3.10 MASTER SQL was not recovered; this schema is a tested reconstruction from the complete server and inspected legacy database.
+
+The earlier `agent_workspace_foundation` migration is separate, unapplied Phase 2 work. Do not run a blanket database push or apply it as a Phase 1 repair. The `/studio` website remains disabled until Phase 1 is proven.
+
+The server key bypasses RLS. Keep it in Railway, never in browser code. Public browser login requires a separate publishable key and the Phase 2 access rules.
+
+References: [Supabase API keys](https://supabase.com/docs/guides/api/api-keys), [private buckets](https://supabase.com/docs/guides/storage/buckets/fundamentals), [database functions](https://supabase.com/docs/guides/database/functions).

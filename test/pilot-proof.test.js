@@ -7,31 +7,33 @@ const XLSX = require("xlsx");
 const apiHeaders = { "x-api-key": "local-proof-api", "content-type": "application/json" };
 const marker = "KNC-PILOT-739261";
 
-async function fixture(t) {
+async function fixture(t, env = {}) {
   Object.assign(process.env, {
     LINE_CHANNEL_SECRET: "local-proof-signing", LINE_CHANNEL_ACCESS_TOKEN: "local-proof-line",
     SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_local-proof",
-    NEUROHANDS_API_KEY: "local-proof-api", GEMINI_API_KEY: "", FOUNDER_LINE_ID: "",
+    NEUROHANDS_API_KEY: "local-proof-api", GEMINI_API_KEY: "", FOUNDER_LINE_ID: "operator",
     FALLBACK_API_KEY: "local-proof-model", FALLBACK_PROVIDER: "groq",
     FALLBACK_BASE_URL: "https://model.invalid", FALLBACK_MODELS: "local-proof", FALLBACK_MODEL: "",
-    ENABLE_STUDIO: "false", JARVIS_ACTIVATION_CODE: "", CRON_SECRET: "",
+    ENABLE_STUDIO: "false", JARVIS_ACTIVATION_CODE: "", CRON_SECRET: "", ...env,
   });
   delete require.cache[require.resolve("../src/server")];
   const gateway = require("../src/server");
   const tables = {
-    client_accounts: [{ id: 1, client_code: "KNC", company: "KNC Glass" }, { id: 2, client_code: "OTH", company: "Other client" }],
+    client_accounts: [{ id: 1, client_code: "KNC", company: "KNC Glass", active: true }, { id: 2, client_code: "OTH", company: "Other client", active: true }],
     activation_codes: [{ id: 1, code: "TEST-KNC-LOCAL-ONLY", client_account_id: 1, department: "sales", status: "active", max_uses: 1, used_count: 0 }],
-    client_agent_bindings: [], clients: [], settings: [], client_documents: [], tool_calls: [], agent_runs: [], agent_memory: [], jarvis_audit_log: [],
+    client_agent_bindings: [], clients: [], settings: [], client_documents: [], tool_calls: [], agent_runs: [], agent_memory: [], jarvis_audit_log: [], messages: [], staff_activations: [], jarvis_notes: [],
     agent_registry: [{ id: 1, agent_code: "AGT-001", callsign: "Aria", department: "sales", agent_name: "KNC agent", active: true, customer_facing: true, allowed_tools: ["read_document"], domains: ["sales"], responsibilities: ["Read authorized documents"], objective: "Answer from evidence" }],
   };
-  const state = { tables, objects: new Map(), requests: [], faults: new Set(), documentCode: null, modelCalls: 0 };
+  const state = { tables, objects: new Map(), requests: [], faults: new Set(), documentCode: null, modelCalls: 0, lineStatus: 429, lineMessages: [] };
   const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
   t.mock.method(globalThis, "fetch", async (address, options = {}) => {
     const url = new URL(String(address)), method = options.method || "GET";
     state.requests.push({ host: url.hostname, path: url.pathname, query: url.search, method });
-    if (url.hostname === "api.line.me") return json({ message: "Rejected for local test" }, 429);
+    if (url.hostname === "api.line.me") { if(options.body) state.lineMessages.push(JSON.parse(options.body)); return json({ message: "LINE test response" }, state.lineStatus); }
     if (url.hostname === "model.invalid") {
       state.modelCalls += 1;
+      if (state.faults.has("model-transport")) throw new TypeError("Injected network failure");
+      if (state.faults.has("model-http")) return json({error:"Injected failure"},503);
       assert.equal(options.headers.Authorization, "Bearer local-proof-model");
       const body = JSON.parse(options.body);
       assert.equal(body.messages[0].role, "system");
@@ -53,6 +55,22 @@ async function fixture(t) {
       return json({ Key: url.pathname });
     }
     const name = url.pathname.replace("/rest/v1/", "");
+    if (name === "rpc/nh_activate_client") {
+      const {p_line_user_id:user,p_code_hash:hash} = JSON.parse(options.body);
+      assert.equal(method,"POST");
+      const code = tables.activation_codes.find(c => crypto.createHash('sha256').update(c.code).digest('hex') === hash);
+      if (!code || code.used_count >= code.max_uses) return json([{ok:false,message:"Invalid or used code"}]);
+      tables.client_agent_bindings.push({id:tables.client_agent_bindings.length+1,line_user_id:user,client_account_id:code.client_account_id,department:code.department,status:'active'});
+      tables.clients.push({id:tables.clients.length+1,line_user_id:user,client_account_id:code.client_account_id});
+      code.used_count++;
+      return json([{ok:true,department:code.department,client_account_id:code.client_account_id}]);
+    }
+    if (name === "rpc/nh_claim_note") {
+      const args=JSON.parse(options.body);
+      const note=tables.jarvis_notes.find(n=>n.id===args.p_id && n.proposed_by===args.p_operator && n.status==='pending');
+      if(!note)return json([]);
+      note.status='executing'; return json([note]);
+    }
     assert.ok(Object.hasOwn(tables, name), `Unexpected table ${name}`);
     if (state.faults.has(`${method}:${name}`)) return json({ error: "Injected failure" }, 503);
     const matches = (row) => [...url.searchParams].every(([key, value]) => {
@@ -202,6 +220,71 @@ test("Phase 1 document proof with simulated providers (not a live LINE/deploymen
     const f = await fixture(t);
     await assert.rejects(f.gateway.replyToLine("test-reply", "test"), /LINE reply rejected/);
     await assert.rejects(f.gateway.pushToLine("test-user", "test"), /LINE push rejected/);
+  });
+
+  for (const fault of ['model-http','model-transport']) {
+    await t.test(`${fault} cannot produce a successful answer or notification claim`, async (t) => {
+      const f=await fixture(t); await f.activate(); f.state.faults.add(fault);
+      const result=await f.run();
+      assert.equal(result.status,503);
+      assert.equal(result.data.status,'error');
+      assert.doesNotMatch(result.data.reply,/notified|informed|KNC-PILOT-/i);
+      assert.equal(f.tables.agent_runs.at(-1).status,'error');
+    });
+  }
+  await t.test('disabled client accounts lose run and upload access',async(t)=>{
+    const f=await fixture(t); await f.activate(); f.tables.client_accounts[0].active=false;
+    assert.equal((await f.run()).status,403);
+    assert.equal((await f.upload()).status,403);
+    assert.equal(f.state.modelCalls,0);
+  });
+  await t.test('revoked upload issuers and group chats cannot act on private client data',async(t)=>{
+    const f=await fixture(t); await f.activate(); f.state.lineStatus=200;
+    const token=f.gateway.makeUploadToken(1,'sales','local-knc-user');
+    f.tables.client_agent_bindings[0].status='revoked';
+    const result=await f.request('/api/upload?t='+token,f.file,{'x-file-name':'proof.xlsx','content-type':'application/octet-stream'});
+    assert.equal(result.status,403); assert.equal(f.objects.size,0);
+    await f.gateway.handleEvent({type:'message',source:{type:'group',userId:'operator',groupId:'local-group'},replyToken:'local-reply',message:{type:'text',text:'brief'}});
+    assert.equal(f.tables.messages.length,0);
+    assert.equal(f.state.modelCalls,0);
+    assert.match(f.state.lineMessages[0].messages[0].text,/private chat/);
+  });
+  await t.test('generated activation codes are random, stored only as hashes, and limited to one use',async(t)=>{
+    const f=await fixture(t); f.state.lineStatus=200;
+    const event={type:'message',source:{type:'user',userId:'operator'},replyToken:'local-reply',message:{type:'text',text:'code: KNC sales'}};
+    await f.gateway.handleEvent(event); await f.gateway.handleEvent(event);
+    const codes=f.state.lineMessages.map(r=>r.messages[0].text.match(/NH-[0-9A-F]{32}/)?.[0]).filter(Boolean);
+    assert.equal(codes.length,2); assert.notEqual(codes[0],codes[1]);
+    const saved=f.tables.activation_codes.slice(1);
+    for(let i=0;i<saved.length;i++) {
+      assert.equal(saved[i].code,undefined);
+      assert.equal(saved[i].code_hash,crypto.createHash('sha256').update(codes[i]).digest('hex'));
+      assert.equal(saved[i].max_uses,1);
+      assert.ok(new Date(saved[i].expires_at)>new Date());
+      assert.equal(JSON.stringify(f.tables.messages).includes(codes[i]),false);
+    }
+  });
+  await t.test('a disclosed staff passphrase cannot enroll an arbitrary LINE user and is redacted from messages',async(t)=>{
+    const f=await fixture(t,{JARVIS_ACTIVATION_CODE:'local-staff-passphrase',FOUNDER_LINE_ID:'local-founder'});
+    f.state.lineStatus=200;
+    await f.gateway.handleEvent({type:'message',source:{type:'user',userId:'stranger'},replyToken:'local-reply',message:{type:'text',text:'local-staff-passphrase'}});
+    assert.equal(f.tables.staff_activations.length,0);
+    assert.equal(f.tables.jarvis_audit_log.length,0);
+    assert.equal(f.tables.messages[0].text_content,'[activation attempt redacted]');
+    assert.equal(f.state.modelCalls,0);
+    assert.match(f.state.lineMessages[0].messages[0].text,/must be assigned/);
+  });
+  await t.test('Jarvis records a failed approved tool as failed and does not execute a proposal twice',async(t)=>{
+    const f=await fixture(t,{FOUNDER_LINE_ID:'local-founder'}); f.state.lineStatus=200;
+    f.tables.jarvis_notes.push({id:1,proposed_by:'local-founder',status:'pending',tool_name:'read_document',tool_args:{doc_code:'LOCAL-MISSING'},client_account_id:1,department:'sales'});
+    f.state.faults.add('GET:client_documents');
+    const event={type:'message',source:{type:'user',userId:'local-founder'},replyToken:'local-reply',message:{type:'text',text:'yes'}};
+    await f.gateway.handleEvent(event);
+    assert.equal(f.tables.jarvis_notes[0].status,'failed');
+    assert.match(f.state.lineMessages.at(-1).messages[0].text,/Failed read_document/);
+    await f.gateway.handleEvent(event);
+    assert.equal(f.tables.tool_calls.length,1);
+    assert.match(f.state.lineMessages.at(-1).messages[0].text,/Nothing pending/);
   });
 });
 
