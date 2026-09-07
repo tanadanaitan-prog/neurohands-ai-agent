@@ -5,7 +5,8 @@ Project `darxiaearohhnxiwhcbs` (`Neurohands - AI Agent`) belongs to the verified
 ## Applied and verified
 
 - Migration `20260907123525_phase1_gateway_recovery.sql` is recorded remotely as `phase1_gateway_recovery`. The local filename matches the version assigned by the Supabase migration tool.
-- Sixteen Phase 1 tables were added, bringing the total to 24. All tables have RLS enabled. Browser roles have no direct table grants; the gateway uses a server-only key and enforces client, department and tool permissions.
+- Sixteen Phase 1 tables were added, bringing the total to 24 at that checkpoint. All tables have RLS enabled. Browser roles have no direct table grants; the gateway uses a server-only key and enforces client, department and tool permissions.
+- Migration `20260907130303_phase1_webhook_inbox.sql` added an encrypted event inbox, bringing the total to 25. Browser roles have no queue access. A rolled-back service-role test verified deduplication, claims and uncertain classification after lease expiry; the queue is empty.
 - Existing tables received account/lead-time columns and compatible message constraints. All 57 products, 14 edging services, 55 messages and five original settings were verified unchanged after migration. Two new settings were added.
 - KNC Glass and Aria (`AGT-001`) are configured. No real client activation codes or LINE bindings have been created yet.
 - `nh_activate_client` atomically redeems a hash of a random activation code. A live transaction checked activation, replay and the one-use limit, then rolled back; no self-test clients, bindings or codes remain. Anonymous/authenticated browser roles cannot execute that function or claim Jarvis approvals.
@@ -23,7 +24,7 @@ The additive schema can remain if the server is rolled back; it preserves the ol
 
 ## Before a production freeze
 
-1. Finish webhook persistence/retry handling and remaining failure checks.
+1. The durable inbox is applied and tested. Configure its private encryption key, verify actual LINE redelivery after deployment, and follow `docs/WEBHOOK_RECOVERY.md` for failed/interrupted events.
 2. Deploy the matching server commit, configure secrets privately and verify the deployment version.
 3. Run the real KNC upload → activation → answer → successful authorized `read_document` trace using LINE and the configured model. Test wrong-client access and provider failure on that deployment.
 4. Reconcile the original deployment/project, domains, integrations and account access before retiring anything.

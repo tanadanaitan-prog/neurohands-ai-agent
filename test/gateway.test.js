@@ -8,6 +8,7 @@ function loadGateway(overrides = {}) {
   Object.assign(process.env, {
     LINE_CHANNEL_SECRET: "test-line-secret",
     LINE_CHANNEL_ACCESS_TOKEN: "test-line-token",
+    WEBHOOK_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
     SUPABASE_URL: "https://example.invalid",
     SUPABASE_SERVICE_KEY: "sb_secret_test-only",
     GEMINI_API_KEY: "",
@@ -78,6 +79,54 @@ test("gateway regression checks (all external services mocked)", async (t) => {
     headers["x-line-signature"] = crypto.createHmac("sha256", "test-line-secret").update(body).digest("base64");
     assert.equal((await request("/webhook", { method: "POST", headers, body })).status, 200);
     assert.equal((await request("/webhook", { method: "POST", headers, body: body + " " })).status, 403);
+  });
+
+  await t.test("webhook acknowledgment waits for a durable receipt and rejects failed persistence", async (t) => {
+    const request = await serve(t, loadGateway().app);
+    const body=JSON.stringify({events:[{webhookEventId:'http-proof',timestamp:Date.now(),type:'message',source:{type:'user',userId:'fixture-user'},replyToken:'fixture-private-reply',message:{id:'fixture-message',type:'text',text:'private-fixture-message'}}]});
+    const headers={'content-type':'application/json','x-line-signature':crypto.createHmac('sha256','test-line-secret').update(body).digest('base64')};
+    let entered, release;
+    const started=new Promise(resolve=>{entered=resolve;});
+    const receipt=new Promise(resolve=>{release=resolve;});
+    t.mock.method(globalThis,'fetch',async(url,options)=>{
+      assert.equal(String(url),'https://example.invalid/rest/v1/rpc/nh_accept_line_events');
+      assert.equal(options.body.includes('private-fixture-message'),false);
+      assert.equal(options.body.includes('fixture-private-reply'),false);
+      entered();
+      return receipt;
+    });
+    let acknowledged=false;
+    const result=request('/webhook',{method:'POST',headers,body}).then(value=>{acknowledged=true;return value;});
+    await started;
+    assert.equal(acknowledged,false);
+    release(new Response(JSON.stringify([{event_id:'http-proof',status:'received'}])));
+    assert.equal((await result).status,200);
+    t.mock.method(globalThis,'fetch',async()=>new Response('{}',{status:503}));
+    assert.equal((await request('/webhook',{method:'POST',headers,body})).status,503);
+    t.mock.method(globalThis,'fetch',async()=>new Response('[]'));
+    assert.equal((await request('/webhook',{method:'POST',headers,body})).status,503);
+  });
+
+  await t.test("readiness requires configuration, seeded database and a private bucket",async(t)=>{
+    const missing=await serve(t,loadGateway({WEBHOOK_ENCRYPTION_KEY:''}).app);
+    assert.equal((await missing('/ready')).status,503);
+    const request=await serve(t,loadGateway({FOUNDER_LINE_ID:'local-founder'}).app);
+    let publicBucket=false,missingSchema=false;
+    t.mock.method(globalThis,'fetch',async(address)=>{
+      const url=new URL(String(address));
+      assert.equal(url.hostname,'example.invalid');
+      if(url.pathname.startsWith('/storage/'))return new Response(JSON.stringify({public:publicBucket}));
+      if(url.pathname.endsWith('/line_webhook_events'))return new Response(missingSchema?'{}':'[]',{status:missingSchema?404:200});
+      return new Response('[{"id":1}]');
+    });
+    assert.equal((await request('/ready')).status,200);
+    publicBucket=true;
+    assert.equal((await request('/ready')).status,503);
+    publicBucket=false;missingSchema=true;
+    assert.equal((await request('/ready')).status,503);
+    const version=JSON.parse((await request('/version')).text);
+    assert.equal(version.version,'3.10.0');
+    assert.equal(typeof version.commit,'string');
   });
 
   await t.test("upload links reject tampering, expiration and malformed claims", async (t) => {
