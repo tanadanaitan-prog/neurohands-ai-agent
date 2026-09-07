@@ -9,10 +9,12 @@ const { equalSecret, supabaseHeaders } = require("./lib/security");
 const { createStudioRouter } = require("./platform/router");
 const path = require("node:path");
 const { parseDocument } = require("./lib/document-parser");
+const { createWebhookInbox, currentWebhookEventId, encryptionKey } = require("./lib/webhook-inbox");
 
 const {
   LINE_CHANNEL_SECRET,
   LINE_CHANNEL_ACCESS_TOKEN,
+  WEBHOOK_ENCRYPTION_KEY,
   SUPABASE_URL,
   SUPABASE_SERVICE_KEY,
   GEMINI_API_KEY,
@@ -30,7 +32,7 @@ const {
 } = process.env;
 
 const app = express();
-app.use("/webhook", express.raw({ type: "*/*" }));
+app.use("/webhook", express.raw({ type: "*/*", limit: "1mb" }));
 // Preserve uploaded bytes even when the sender supplies a JSON content type.
 app.use((req, res, next) => req.path === "/api/upload" ? next() : express.json()(req, res, next));
 // Keep unfinished Phase 2 work out of the Phase 1 deployment.
@@ -83,12 +85,13 @@ async function callFallbackChat(bodyExtra) {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` },
       body: JSON.stringify({ model, ...bodyExtra }),
+      signal: AbortSignal.timeout(15000),
     });
     if (res.ok) {
       cachedFallbackModel = model;
       return res.json();
     }
-    console.error(`Fallback LLM error ${res.status} (${model})`, (await res.text()).slice(0, 200));
+    console.error(`Fallback LLM error ${res.status}`);
   }
   return null;
 }
@@ -472,13 +475,14 @@ async function askAI(systemContext, userMessage) {
         contents: [{ role: "user", parts: [{ text: userMessage }] }],
         generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
       }),
+      signal: AbortSignal.timeout(15000),
     });
     if (res.ok) {
       const data = await res.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
       if (text) return text;
     } else {
-      console.error("Gemini error", res.status, await res.text());
+      console.error("Gemini error", res.status);
     }
   }
   return askOpenAIPlain(systemContext, userMessage);
@@ -522,7 +526,7 @@ Client account ID: ${ctx.clientAccountId || "unknown"} | Time: ${new Date().toIS
 async function startAgentRun(ctx, input, agent) {
   const rows = await db("agent_runs", {
     method: "POST",
-    body: { agent_code: agent.agent_code || null, line_user_id: ctx.lineUserId, client_account_id: ctx.clientAccountId, department: ctx.department, objective: agent.objective, input, status: "started", iterations: 0 },
+    body: { agent_code: agent.agent_code || null, line_user_id: ctx.lineUserId, client_account_id: ctx.clientAccountId, department: ctx.department, objective: agent.objective, input, status: "started", iterations: 0, webhook_event_id: currentWebhookEventId() },
   });
   if (!rows?.[0]?.id) throw new Error("Agent run evidence could not be saved");
   return rows[0].id;
@@ -550,8 +554,8 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId)
     };
     if (tools.length) body.tools = [{ function_declarations: tools }];
 
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (!res.ok) { console.error("Gemini error", res.status, await res.text()); return { text: null, iterations: iteration, apiFailed: true }; }
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
+    if (!res.ok) { console.error("Gemini error", res.status); return { text: null, iterations: iteration, apiFailed: true }; }
 
     const data = await res.json();
     const parts = data?.candidates?.[0]?.content?.parts || [];
@@ -722,11 +726,9 @@ async function respondAgentWithRace(event, ctx, userText, agent) {
     else await pushToLine(event.source.userId, finalText);
 
     await logMessage({ line_user_id: event.source.userId, direction: "out", text_content: finalText, answered_by: `agent:${ctx.agentCode || ctx.department}`, status: "sent" });
-  } catch (err) {
-    console.error(err);
+    if (ctx.runStatus === "error") throw new Error("Agent execution failed; response delivery was recorded");
+  } finally {
     clearTimeout(timeout);
-    if (!replied) await replyToLine(event.replyToken, "Sorry, the system is temporarily unavailable.");
-    else await pushToLine(event.source.userId, "Sorry, the system is temporarily unavailable.");
   }
 }
 
@@ -866,6 +868,7 @@ const JARVIS_HELP = `🎩 Jarvis v3.10 commands
 brief — live digest (orders/cases/tasks/blocked)
 agents — list registered agents
 runs — last 10 agent runs
+events — failed or interrupted webhook events
 trace: <run_id> — full evidence chain
 memory: — recent agent memories
 code: <CLIENT> <dept> — create a random single-use activation code
@@ -895,6 +898,11 @@ async function handleStaffMessage(lineUserId, text, replyToken) {
   if (/^runs$/i.test(t)) {
     const rows = await db("agent_runs?select=id,agent_code,department,status,iterations,created_at&order=created_at.desc&limit=10");
     return send((rows || []).map((r) => `#${r.id} ${r.agent_code || r.department} • ${r.status} • ${r.iterations} iter`).join("\n") || "No runs yet.");
+  }
+
+  if (/^events$/i.test(t)) {
+    const rows = await db("line_webhook_events?status=in.(failed,uncertain)&select=event_id,status,error,updated_at&order=updated_at.desc&limit=10");
+    return send((rows || []).map(e => `${e.event_id} | ${e.status} | ${e.error}`).join("\n") || "No failed or interrupted webhook events recorded.");
   }
 
   if (/^trace:/i.test(t)) {
@@ -1185,23 +1193,49 @@ async function handleEvent(event) {
   }
 }
 
-app.post("/webhook", async (req, res) => {
+const webhookInbox = createWebhookInbox({ db, handleEvent, keyValue: WEBHOOK_ENCRYPTION_KEY });
+app.post("/webhook", asyncRoute(async (req, res) => {
   if (!verifySignature(req.body, req.headers["x-line-signature"])) return res.status(403).send("bad signature");
-  res.status(200).send("ok");
   let payload;
-  try { payload = JSON.parse(req.body.toString()); } catch { return; }
-  for (const event of payload.events || []) {
-    setImmediate(() => handleEvent(event).catch((e) => console.error("event error", e)));
-  }
-});
+  try { payload = JSON.parse(req.body.toString()); } catch { return res.status(400).send("invalid JSON"); }
+  if (!Array.isArray(payload.events)) return res.status(400).send("events must be an array");
+  await webhookInbox.accept(payload.events);
+  res.status(200).send("ok");
+  webhookInbox.wake();
+}));
 
 app.get("/", (_, res) => res.send("Neurohands v3.10 agent gateway is running"));
+app.get("/version", (_, res) => res.json({ version: "3.10.0", commit: process.env.RAILWAY_GIT_COMMIT_SHA || "unknown" }));
+app.get("/ready", asyncRoute(async (_, res) => {
+  res.set("Cache-Control", "no-store");
+  if (![LINE_CHANNEL_SECRET,LINE_CHANNEL_ACCESS_TOKEN,SUPABASE_URL,SUPABASE_SERVICE_KEY,FOUNDER_LINE_ID,NEUROHANDS_API_KEY].every(Boolean) || !(GEMINI_API_KEY || fallbackBase())) return res.status(503).json({ready:false});
+  encryptionKey(WEBHOOK_ENCRYPTION_KEY);
+  const [accounts, agents] = await Promise.all([
+    db("client_accounts?client_code=eq.KNC&active=eq.true&select=id"),
+    db("agent_registry?agent_code=eq.AGT-001&active=eq.true&select=agent_code"),
+    db("line_webhook_events?select=event_id&limit=1"),
+  ]);
+  const bucket = await fetch(`${SUPABASE_URL}/storage/v1/bucket/neurohands-docs`, { headers: supabaseHeaders(SUPABASE_SERVICE_KEY), signal: AbortSignal.timeout(5000) });
+  const metadata = bucket.ok ? await bucket.json() : null;
+  const ready=Boolean(accounts?.length && agents?.length && metadata && metadata.public === false);
+  res.status(ready ? 200 : 503).json({ready});
+}));
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   const status = error.type === "entity.too.large" ? 413 : error.type === "entity.parse.failed" ? 400 : 503;
-  res.status(status).json({ error: status === 413 ? "File exceeds 10 MB" : status === 400 ? "Invalid request body" : "The operation could not be confirmed. Please check its status before retrying." });
+  res.status(status).json({ error: status === 413 ? "Request exceeds the size limit" : status === 400 ? "Invalid request body" : "The operation could not be confirmed. Please check its status before retrying." });
 });
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`Neurohands v3.10 listening on ${PORT}`));
+  const server = app.listen(PORT, () => console.log(`Neurohands v3.10 listening on ${PORT}`));
+  try {
+    if (!LINE_CHANNEL_SECRET || !LINE_CHANNEL_ACCESS_TOKEN || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) throw new Error("Missing runtime configuration");
+    webhookInbox.start();
+  } catch { console.error("Webhook worker disabled until required runtime configuration is present"); }
+  process.once("SIGTERM", () => {
+    const deadline = setTimeout(() => process.exit(0), 20000); deadline.unref();
+    const stopped = webhookInbox.stop();
+    const closed = new Promise(resolve => server.close(resolve));
+    Promise.allSettled([stopped, closed]).then(() => process.exit(0));
+  });
 }
 module.exports = { app, parseDocument, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, activateByCode, replyToLine, pushToLine, handleEvent };
