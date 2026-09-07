@@ -142,6 +142,22 @@ test("Phase 1 document proof with simulated providers (not a live LINE/deploymen
     assert.equal(f.requests.filter((request) => request.host === "api.line.me").length, 0);
   });
 
+  await t.test("LINE handler surfaces a failed agent run to the durable inbox even after sending its error response",async(t)=>{
+    const f=await fixture(t); await f.activate(); f.state.lineStatus=200;
+    f.state.faults.add('model-transport');
+    await assert.rejects(f.gateway.handleEvent({type:'message',source:{type:'user',userId:'local-knc-user'},replyToken:'fixture-reply',message:{type:'text',text:'Check my document'}}),/Agent execution failed/);
+    assert.equal(f.tables.agent_runs[0].status,'error');
+    assert.equal(f.state.lineMessages.length,1);
+    assert.equal(f.tables.messages.at(-1).status,'sent');
+  });
+  await t.test("LINE delivery failure propagates to the inbox without a blind second delivery",async(t)=>{
+    const f=await fixture(t); await f.activate();
+    f.state.documentCode=(await f.upload()).data.doc_code;
+    await assert.rejects(f.gateway.handleEvent({type:'message',source:{type:'user',userId:'local-knc-user'},replyToken:'fixture-reply',message:{type:'text',text:'Check my document'}}),/LINE/);
+    assert.equal(f.state.lineMessages.length,1);
+    assert.equal(f.tables.messages.filter(message=>message.direction==='out').length,0);
+  });
+
   await t.test("wrong client, unbound department, unactivated and revoked users cannot retrieve KNC content", async (t) => {
     const f = await fixture(t);
     f.state.documentCode = (await f.upload()).data.doc_code;
