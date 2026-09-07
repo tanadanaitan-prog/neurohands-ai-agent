@@ -122,10 +122,13 @@ async function db(path, options = {}) {
     console.error("Supabase request failed", method, path.split("?")[0], res.status);
     throw new Error("Database operation failed");
   }
-  if (res.status === 204) return [];
+  if (res.status === 204) {
+    if (method === "POST") throw new Error("Database write was not confirmed");
+    return [];
+  }
   const text = await res.text();
   const data = text ? JSON.parse(text) : [];
-  if (method === "POST" && (!Array.isArray(data) || !data.length)) throw new Error("Database write was not confirmed");
+  if (method === "POST" && !path.startsWith("rpc/") && (!Array.isArray(data) || !data.length)) throw new Error("Database write was not confirmed");
   return data;
 }
 
@@ -201,12 +204,12 @@ async function ensureClient(lineUserId, clientAccountId) {
 
 async function isStaff(lineUserId) {
   if (FOUNDER_LINE_ID && lineUserId === FOUNDER_LINE_ID) return { role: "founder" };
-  const rows = await db(`staff_activations?line_user_id=eq.${encodeURIComponent(lineUserId)}&select=*`);
-  return rows?.[0] || null;
+  const rows = await db(`staff_activations?line_user_id=eq.${encodeURIComponent(lineUserId)}&active=eq.true&select=*`);
+  return rows?.find((row) => row.role === "admin") || null;
 }
 
 async function activateStaff(lineUserId) {
-  await db("staff_activations", { method: "POST", body: { line_user_id: lineUserId } });
+  if (!FOUNDER_LINE_ID || lineUserId !== FOUNDER_LINE_ID) throw new Error("Only the configured founder may use staff activation");
   await db("jarvis_audit_log", { method: "POST", body: { event_type: "activation", detail: `Staff activated: ${lineUserId}`, line_user_id: lineUserId } });
 }
 
@@ -238,43 +241,31 @@ function parseActivationCode(text) {
 
 async function activateByCode(lineUserId, rawCode) {
   const code = String(rawCode || "").toUpperCase().trim();
-  const rec = (await db(`activation_codes?code=eq.${encodeURIComponent(code)}&select=*`))?.[0];
-
-  if (!rec) return { ok: false, message: "❌ Invalid activation code." };
-  if (rec.status !== "active") return { ok: false, message: "❌ This code is no longer active." };
-  if (rec.expires_at && new Date(rec.expires_at) < new Date()) return { ok: false, message: "❌ This code has expired." };
-  if ((rec.used_count || 0) >= (rec.max_uses || 0)) return { ok: false, message: "❌ This code reached its usage limit." };
-
-  const department = normalizeDepartment(rec.department);
-
-  const existingBinding = await db(
-    `client_agent_bindings?line_user_id=eq.${encodeURIComponent(lineUserId)}&department=eq.${encodeURIComponent(department)}&select=id`
-  );
-
-  await db("client_agent_bindings", {
-    method: "POST",
-    body: { client_account_id: rec.client_account_id, line_user_id: lineUserId, department, role: "member", status: "active" },
-    headers: { Prefer: "return=representation,resolution=merge-duplicates" },
-  });
-
-  await ensureClient(lineUserId, rec.client_account_id);
-
-  if (!existingBinding?.length) {
-    await db(`activation_codes?id=eq.${rec.id}`, { method: "PATCH", body: { used_count: (rec.used_count || 0) + 1 } });
-  }
-
+  if (!code || code.length > 128) return { ok: false, message: "Invalid activation code." };
+  const activated = (await db("rpc/nh_activate_client", { method: "POST", body: {
+    p_line_user_id: lineUserId, p_code_hash: crypto.createHash("sha256").update(code).digest("hex"),
+  } }))?.[0];
+  if (!activated || typeof activated.ok !== "boolean") throw new Error("Activation result was not confirmed");
+  if (!activated.ok) return { ok: false, message: activated.message };
+  const department = normalizeDepartment(activated.department);
   const activeMenu = await getSetting("richmenu_active_id", null);
-  if (activeMenu) await linkRichMenu(lineUserId, activeMenu);
-
-  await db("jarvis_audit_log", { method: "POST", body: { event_type: "agent_activation", detail: `${lineUserId} activated ${department}`, line_user_id: lineUserId } });
-
-  return { ok: true, department, message: `✅ ${department.toUpperCase()} access activated.${activeMenu ? "\n\nYour menu has been updated." : ""}` };
+  let menuMessage = "";
+  if (activeMenu) {
+    try { await linkRichMenu(lineUserId, activeMenu); menuMessage = "\n\nYour menu has been updated."; }
+    catch { menuMessage = "\n\nAccess is active, but the menu update failed. You can still send messages."; }
+  }
+  return { ok: true, department, message: `✅ ${department.toUpperCase()} access activated.${menuMessage}` };
 }
 
 async function getBindings(lineUserId) {
-  return (await db(
+  const bindings = (await db(
     `client_agent_bindings?line_user_id=eq.${encodeURIComponent(lineUserId)}&status=eq.active&select=*&order=activated_at.desc`
   )) || [];
+  const ids = [...new Set(bindings.map(b => String(b.client_account_id)).filter(id => /^[1-9][0-9]*$/.test(id)))];
+  if (!ids.length) return [];
+  const accounts = await db(`client_accounts?id=in.(${ids.join(",")})&active=eq.true&select=id`);
+  const active = new Set((accounts || []).map(a => String(a.id)));
+  return bindings.filter(b => active.has(String(b.client_account_id)));
 }
 
 async function getAgent(department) {
@@ -317,9 +308,9 @@ async function getClientOrders(ctx, limit = 5) {
   );
   if (!rows?.length) {
     const client = await findClient(ctx.lineUserId);
-    if (client?.id) {
+    if (client?.id && String(client.client_account_id) === String(ctx.clientAccountId)) {
       rows = await db(
-        `orders?client_id=eq.${encodeURIComponent(client.id)}&select=order_no,stage,promised_date,on_track,lead_time_days,urgent_flag,quoted_price&order=created_at.desc&limit=${limit}`
+        `orders?client_id=eq.${encodeURIComponent(client.id)}&client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&select=order_no,stage,promised_date,on_track,lead_time_days,urgent_flag,quoted_price&order=created_at.desc&limit=${limit}`
       );
     }
   }
@@ -660,12 +651,12 @@ function formatOrders(rows) {
 async function getOrderStatusText(lineUserId) {
   const bindings = await getBindings(lineUserId);
   const client = await findClient(lineUserId);
-  const clientAccountId = bindings[0]?.client_account_id || client?.client_account_id || null;
+  const clientAccountId = bindings[0]?.client_account_id || null;
   if (!clientAccountId) return "Please activate first.\n\nTap GET STARTED or send your activation code.";
 
   let orders = await db(`orders?client_account_id=eq.${encodeURIComponent(clientAccountId)}&select=order_no,stage,promised_date,on_track,lead_time_days,urgent_flag&order=created_at.desc&limit=5`);
-  if (!orders?.length && client?.id) {
-    orders = await db(`orders?client_id=eq.${encodeURIComponent(client.id)}&select=order_no,stage,promised_date,on_track,lead_time_days,urgent_flag&order=created_at.desc&limit=5`);
+  if (!orders?.length && client?.id && String(client.client_account_id) === String(clientAccountId)) {
+    orders = await db(`orders?client_id=eq.${encodeURIComponent(client.id)}&client_account_id=eq.${encodeURIComponent(clientAccountId)}&select=order_no,stage,promised_date,on_track,lead_time_days,urgent_flag&order=created_at.desc&limit=5`);
   }
   if (!orders?.length) return "No orders found for this account yet.";
   return `📦 Recent orders\n\n${formatOrders(orders)}`;
@@ -743,9 +734,12 @@ async function handleMessage(event) {
   const lineUserId = event.source.userId;
   const userText = String(event.message.text || "").trim();
 
-  await logMessage({ line_user_id: lineUserId, direction: "in", text_content: userText, question_type: "auto", status: "received" });
+  const code = parseActivationCode(userText);
+  const staffActivation = equalSecret(JARVIS_ACTIVATION_CODE, userText);
+  await logMessage({ line_user_id: lineUserId, direction: "in", text_content: code || staffActivation ? "[activation attempt redacted]" : userText, question_type: "auto", status: "received" });
 
-  if (equalSecret(JARVIS_ACTIVATION_CODE, userText)) {
+  if (staffActivation) {
+    if (!FOUNDER_LINE_ID || lineUserId !== FOUNDER_LINE_ID) return replyToLine(event.replyToken, "Staff access must be assigned by the operator.");
     await activateStaff(lineUserId);
     await replyToLine(event.replyToken, "Jarvis activated 🎩 Type help.");
     return;
@@ -754,7 +748,6 @@ async function handleMessage(event) {
   const staff = await isStaff(lineUserId);
   if (staff) return handleStaffMessage(lineUserId, userText, event.replyToken);
 
-  const code = parseActivationCode(userText);
   if (code) {
     const result = await activateByCode(lineUserId, code);
     await replyToLine(event.replyToken, result.message);
@@ -844,14 +837,14 @@ ${L(blocked, (b) => `• ${b.tool_name}`)}
 Inbound today: ${msgs?.length || 0} | Open feedback: ${feedback?.length || 0}`;
 }
 
-async function proposeNote(content, category, lineUserId, toolName = null, toolArgs = null) {
-  const rows = await db("jarvis_notes", { method: "POST", body: { content, category, status: "pending", tool_name: toolName, tool_args: toolArgs } });
+async function proposeNote(content, category, lineUserId, toolName = null, toolArgs = null, account = null, department = null) {
+  const rows = await db("jarvis_notes", { method: "POST", body: { content, category, proposed_by: lineUserId, status: "pending", tool_name: toolName, tool_args: toolArgs, client_account_id: account, department } });
   await db("jarvis_audit_log", { method: "POST", body: { event_type: "note_proposed", detail: `[${category}] ${content}`, line_user_id: lineUserId } });
   return rows?.[0]?.id || null;
 }
 
-async function getLatestPendingNote() {
-  const rows = await db("jarvis_notes?status=eq.pending&select=*&order=created_at.desc&limit=1");
+async function getLatestPendingNote(lineUserId) {
+  const rows = await db(`jarvis_notes?proposed_by=eq.${encodeURIComponent(lineUserId)}&status=eq.pending&select=*&order=created_at.desc&limit=1`);
   return rows?.[0] || null;
 }
 
@@ -862,21 +855,10 @@ async function createActivationCode(clientCode, department, createdBy) {
   const acc = (await db(`client_accounts?client_code=eq.${encodeURIComponent(String(clientCode || "").toUpperCase())}&select=*`))?.[0];
   if (!acc) return `Client code not found: ${clientCode}`;
 
-  const base = (String(acc.company || acc.client_code || "").replace(/[^a-zA-Z]/g, "").slice(0, 3).toUpperCase())
-    || String(acc.client_code).slice(0, 3).toUpperCase();
-
-  const existing = await db(`activation_codes?client_account_id=eq.${acc.id}&department=eq.${encodeURIComponent(dep)}&select=code`);
-  const used = new Set((existing || []).map((r) => (String(r.code).match(/^[A-Z]{3}([0-9]{2})[A-Z]{3}$/) || [])[1]).filter(Boolean));
-  let nn = "";
-  for (let i = 1; i <= 99; i++) {
-    const s = String(i).padStart(2, "0");
-    if (!used.has(s)) { nn = s; break; }
-  }
-  if (!nn) return "No free numbers left for this client + department.";
-
-  const code = `${base}${nn}${deptCode}`;
-  await db("activation_codes", { method: "POST", body: { code, client_account_id: acc.id, department: dep, status: "active", max_uses: 100, used_count: 0, created_by: createdBy } });
-  return `✅ New ${dep} code for ${base}:\n\n${code}\n\nClient types: activate ${code}`;
+  if (acc.active === false) return "Client account is unavailable.";
+  const code = `NH-${crypto.randomBytes(16).toString("hex").toUpperCase()}`;
+  await db("activation_codes", { method: "POST", body: { code_hash: crypto.createHash("sha256").update(code).digest("hex"), code_hint: `NH-…${code.slice(-6)}`, client_account_id: acc.id, department: dep, status: "active", max_uses: 1, used_count: 0, expires_at: new Date(Date.now() + 7 * 86400000).toISOString(), created_by: createdBy } });
+  return `✅ New ${dep} code for ${acc.client_code}:\n\n${code}\n\nClient types: activate ${code}\n\nSingle use. Expires in 7 days. Share privately; the full code cannot be retrieved later.`;
 }
 
 const JARVIS_HELP = `🎩 Jarvis v3.10 commands
@@ -886,13 +868,13 @@ agents — list registered agents
 runs — last 10 agent runs
 trace: <run_id> — full evidence chain
 memory: — recent agent memories
-code: <CLIENT> <dept> — create activation code (KNC01SAL format)
-codes — list recent codes
+code: <CLIENT> <dept> — create a random single-use activation code
+codes — list recent code hints and usage
 upload — instant secure upload link (default client)
 upload: <CLIENT> <dept> — 7-day secure upload link
 docs: <CLIENT> — list client documents
 doc: <CODE> — show parsed document
-act: <tool> {json} — propose gated tool run (yes to execute)
+act: <CLIENT> <dept> <tool> {json} — propose a scoped tool run (yes to execute)
 task: / done: / checklist
 note: / learn: / market: + yes / no
 whois: <ID>
@@ -966,38 +948,48 @@ async function handleStaffMessage(lineUserId, text, replyToken) {
   }
 
   if (/^codes$/i.test(t)) {
-    const rows = await db("activation_codes?select=code,department,status,used_count,max_uses&order=created_at.desc&limit=10");
-    return send((rows || []).map((r) => `${r.code} | ${r.department} | ${r.status} | ${r.used_count}/${r.max_uses}`).join("\n") || "No codes.");
+    const rows = await db("activation_codes?select=code_hint,department,status,used_count,max_uses,expires_at&order=created_at.desc&limit=10");
+    return send((rows || []).map((r) => `${r.code_hint} | ${r.department} | ${r.status} | ${r.used_count}/${r.max_uses} | expires ${r.expires_at}`).join("\n") || "No codes.");
   }
 
   if (/^act:/i.test(t)) {
-    const m = t.match(/^act:\s*(\w+)\s*(\{.*\})?\s*$/is);
-    if (!m) return send("Format: act: <tool> {json}");
-    const toolName = m[1];
+    const m = t.match(/^act:\s*([A-Z0-9_-]+)\s+(\w+)\s+(\w+)\s*(\{.*\})?\s*$/is);
+    if (!m) return send("Format: act: <CLIENT> <dept> <tool> {json}");
+    const department = normalizeDepartment(m[2]);
+    if (!Object.hasOwn(DEPT_CODES, department)) return send("Unknown department.");
+    const account = (await db(`client_accounts?client_code=eq.${encodeURIComponent(m[1].toUpperCase())}&active=eq.true&select=id,client_code`))?.[0];
+    if (!account) return send("Client account is unavailable.");
+    const toolName = m[3];
     let args = {};
-    try { args = m[2] ? JSON.parse(m[2]) : {}; } catch { return send("Invalid JSON."); }
+    try { args = m[4] ? JSON.parse(m[4]) : {}; } catch { return send("Invalid JSON."); }
     if (!TOOL_HANDLERS[toolName]) return send(`Unknown tool: ${toolName}`);
-    await proposeNote(`Run tool ${toolName}`, "general", lineUserId, toolName, args);
-    return send(`Proposed action: ${toolName} ${JSON.stringify(args)}\nType yes to execute.`);
+    await proposeNote(`Run tool ${toolName} for ${account.client_code}/${department}`, "general", lineUserId, toolName, args, account.id, department);
+    return send(`Proposed action for ${account.client_code}/${department}: ${toolName} ${JSON.stringify(args)}\nType yes to execute.`);
   }
 
   if (/^yes$/i.test(t)) {
-    const pending = await getLatestPendingNote();
+    const pending = await getLatestPendingNote(lineUserId);
     if (!pending) return send("Nothing pending.");
-    if (pending.tool_name) {
-      const ctx = { lineUserId, clientAccountId: null, department: "staff", allowedTools: [pending.tool_name], agentCode: "JARVIS", runId: null };
-      const out = await executeToolWithLog(ctx, null, pending.tool_name, pending.tool_args || {});
-      await db(`jarvis_notes?id=eq.${pending.id}`, { method: "PATCH", body: { status: "confirmed", confirmed_at: new Date().toISOString() } });
-      return send(`Executed ${pending.tool_name}:\n${JSON.stringify(out).slice(0, 3000)}`);
+    const claimed = (await db("rpc/nh_claim_note", { method: "POST", body: { p_id: pending.id, p_operator: lineUserId } }))?.[0];
+    if (!claimed) return send("This proposal has already been handled.");
+    if (claimed.tool_name) {
+      const ctx = { lineUserId, clientAccountId: claimed.client_account_id, department: claimed.department, allowedTools: [claimed.tool_name], agentCode: null, runId: null };
+      const out = await executeToolWithLog(ctx, null, claimed.tool_name, claimed.tool_args || {});
+      const success = !ctx.toolFailed && !out?.error;
+      const saved = await db(`jarvis_notes?id=eq.${claimed.id}&status=eq.executing`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status: success ? "confirmed" : "failed", confirmed_at: new Date().toISOString() } });
+      if (!saved?.[0]?.id) throw new Error("Approval completion could not be confirmed");
+      return send(`${success ? "Executed" : "Failed"} ${claimed.tool_name}:\n${JSON.stringify(out).slice(0, 3000)}`);
     }
-    await db(`jarvis_notes?id=eq.${pending.id}`, { method: "PATCH", body: { status: "confirmed", confirmed_at: new Date().toISOString() } });
+    const saved = await db(`jarvis_notes?id=eq.${claimed.id}&status=eq.executing`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status: "confirmed", confirmed_at: new Date().toISOString() } });
+    if (!saved?.[0]?.id) throw new Error("Note completion could not be confirmed");
     return send("Confirmed — saved.");
   }
 
   if (/^no$/i.test(t)) {
-    const pending = await getLatestPendingNote();
+    const pending = await getLatestPendingNote(lineUserId);
     if (!pending) return send("Nothing pending.");
-    await db(`jarvis_notes?id=eq.${pending.id}`, { method: "PATCH", body: { status: "rejected" } });
+    const saved = await db(`jarvis_notes?id=eq.${pending.id}&proposed_by=eq.${encodeURIComponent(lineUserId)}&status=eq.pending`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status: "rejected" } });
+    if (!saved?.[0]?.id) return send("This proposal has already been handled.");
     return send("Cancelled.");
   }
 
@@ -1100,7 +1092,12 @@ app.post("/api/upload", express.raw({ type: "*/*", limit: "10mb" }), asyncRoute(
   const mime = String(req.headers["content-type"] || "application/octet-stream").split(";")[0];
 
   const acc = (await db(`client_accounts?id=eq.${info.clientAccountId}&select=*`))?.[0];
-  if (!acc) return res.status(403).json({ error: "Client account is unavailable" });
+  if (!acc || acc.active === false) return res.status(403).json({ error: "Client account is unavailable" });
+  const issuerIsStaff = info.lineUserId && await isStaff(info.lineUserId);
+  if (!issuerIsStaff) {
+    const bindings = info.lineUserId ? await getBindings(info.lineUserId) : [];
+    if (!bindings.some(b => String(b.client_account_id) === String(info.clientAccountId) && b.department === info.department)) return res.status(403).json({ error: "The upload link issuer no longer has access" });
+  }
   const base = String(acc.client_code).toUpperCase().replace(/[^A-Z0-9_-]/g, "");
   if (!base) throw new Error("Invalid client code");
   const deptCode = DEPT_CODES[info.department] || "BIZ";
@@ -1172,6 +1169,8 @@ app.post("/api/agent/run", asyncRoute(async (req, res) => {
 
 // ---------- WEBHOOK ----------
 async function handleEvent(event) {
+  if (!event?.source?.userId) return;
+  if (event.source.type !== "user") return replyToLine(event.replyToken, "Please use a private chat with Neurohands for account access and business information.");
   if (event.type === "message" && event.message?.type === "file") {
     const lineUserId = event.source.userId;
     const fileName = event.message.fileName || "file";
