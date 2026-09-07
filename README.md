@@ -1,8 +1,8 @@
-# Neurohands LINE gateway
+# Neurohands AI Agent
 
-Recovered v3.10 Express server for the LINE concierge, Aria agent, Jarvis operator console, and document upload portal. This is a local recovery prepared for a new GitHub repository under `tanadanaitan-prog`.
+Recovered v3.10 Express server for the LINE concierge, Aria agent, Jarvis operator console, and document upload portal. This local recovery targets [tanadanaitan-prog/neurohands-ai-agent](https://github.com/tanadanaitan-prog/neurohands-ai-agent).
 
-**Deployment status:** files have been organized and checked locally. GitHub upload and Railway deployment have not been completed. The connected Supabase database is an older schema and needs a reviewed migration before the v3.10 features can operate. See [Supabase readiness](supabase/README.md).
+**Current milestone:** stabilize the v3.10 KNC Glass / Aria pilot before enabling the larger agent platform. The recovered source and local tests are included here. A live Railway / LINE proof has **not** passed. The connected Supabase project lacks the document and agent schema and Storage bucket. See [Phase 1 evidence and recovery](docs/PHASE1_STATUS.md) and [Supabase readiness](supabase/README.md).
 
 | Location | Contents |
 | --- | --- |
@@ -42,13 +42,13 @@ Open `http://localhost:3000/` to check that the process started. That response d
 
 ## Connections to finish
 
-1. Upload this project to the intended new GitHub repository. The expected name is `tanadanaitan-prog/neurohands-bot`, but access to that repository has not been verified. Include the folders and root configuration files; exclude `.env`, `.git`, `.tmp`, `node_modules`, and `dist`.
+1. Review the recovered project in `tanadanaitan-prog/neurohands-ai-agent`, prepared through the `codex/phase1-recovery` branch. Browser access is verified as the destination account. Credentials, local dependencies and generated packages are excluded from Git.
 2. Review the database differences in `supabase/README.md`, recover or design the v3.10 migration, and configure the private document bucket. No live database changes were made during this import.
 3. Once the database is ready, connect that GitHub repository to the intended Railway service, using this folder as the repository root. The included Railway configuration runs the checks and tests, starts the server, and checks `/`.
 4. Populate Railway Variables using `.env.example` as the name list. Put secret values directly into Railway. Set `PUBLIC_URL` to the HTTPS deployment URL, or use Railway's `RAILWAY_PUBLIC_DOMAIN`.
 5. Set the LINE webhook URL to the deployment's `/webhook` endpoint and verify it in the LINE Developers console. Only publish the menus after confirming the intended LINE channel.
 
-The configuration preserves `SUPABASE_SERVICE_KEY` as the variable name and supports a server-only `sb_secret_` key as well as a legacy service-role JWT. There is no browser Supabase key in this project. User login through Supabase Auth has not been added; the recovered application uses LINE identity, activation bindings, signed upload links, and shared backend API secrets.
+The configuration preserves `SUPABASE_SERVICE_KEY` as the variable name and supports a server-only `sb_secret_` key as well as a legacy service-role JWT. The Phase 1 application uses LINE identity, activation bindings, signed upload links and shared backend API secrets. The separate `/studio` website and its Supabase Auth routes are experimental and disabled unless `ENABLE_STUDIO=true`. They require a separate public `SUPABASE_PUBLISHABLE_KEY` and the included workspace migration, which has not been applied remotely. Do not apply that Phase 2 migration as a replacement for the missing v3.10 schema.
 
 `GEMINI_MODEL=gemini-3.6-flash` and `FALLBACK_PROVIDER=groq` in the example reflect the supplied Railway screenshots. Model availability and provider credentials have not been tested. Configure supported fallback model names explicitly for the provider you use.
 
@@ -80,6 +80,8 @@ This command has not been run against LINE. Repeating it creates new menu IDs. E
 - Pinned direct dependency versions and added `package-lock.json`. Updated SheetJS from the obsolete npm package to the official 0.20.3 release. Overrode the transitive `qs` parser to 6.16.0 to address audit findings without changing Express major versions.
 - Added local checks for authentication, webhook signatures, upload tokens, fallback instructions, and document parsing. Tests do not call real external services.
 
-This recovery is not a full production audit. Activation-code usage updates are still nontransactional; document numbering can collide during simultaneous uploads; tenant binding and staff authorization need end-to-end validation against the final schema; several error paths in the recovered code still report success or human notification without confirming it. PDF files are stored but not parsed. The contact address in `BRAND_COPY.contact` remains a placeholder to replace before launch.
+The document proof now runs in local tests with simulated providers, including wrong-client access, revoked/unbound identities, denied tools, failed storage/database operations and failed trace persistence. It verifies a distinctive value on the second spreadsheet sheet, beyond the original 20-row sample. Originals are retained with SHA-256 provenance; extraction limits produce `partial` status. PDF files remain stored-only. This is not a live model, LINE, database or deployment proof.
+
+Activation-code usage updates are still nontransactional, codes are predictable, and operator approvals need further access-control review before a production freeze. The final database schema must accept `partial` extraction status and longer UUID-suffixed document codes. The contact address in `BRAND_COPY.contact` is still a placeholder. See the Phase 1 record for all remaining acceptance checks.
 
 References: [Railway configuration](https://docs.railway.com/config-as-code/reference), [LINE rich-menu images](https://developers.line.biz/en/reference/messaging-api/#upload-rich-menu-image), [Supabase keys](https://supabase.com/docs/guides/getting-started/api-keys), [SheetJS installation](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/).
