@@ -19,6 +19,7 @@ The earlier master document reports a working v3.10 deployment, 25 tables, KNC/A
 - Supabase browser: desired destination email, sole Owner of organization `ygwhgtvzaoajkokgcaby` (Neurohands). Project `darxiaearohhnxiwhcbs`, `Neurohands - AI Agent`, is healthy.
 - Initial database: eight public tables, with 57 glass products, 14 edging services, 55 messages and five settings; no client or order rows, no Auth users and no Storage buckets/objects. No vector or pg_cron extension was installed.
 - Applied `20260907123525_phase1_gateway_recovery`: now 24 public tables, all RLS-enabled, no direct browser-role table grants. KNC and Aria are seeded. The 16 missing tables and message constraint differences are repaired. All 131 original records' original values were verified unchanged by database-side fingerprints. Two new settings were added.
+- Applied `20260907130303_phase1_webhook_inbox`: now 25 public tables, including an RLS-protected encrypted inbox and linked agent runs. A live service-role transaction checked deduplication, claim and expired-lease classification, then rolled back with zero queue rows remaining. Browser roles cannot read or invoke the queue.
 - Created private `neurohands-docs` bucket, 10 MB limit, with document MIME allowlist. It is still empty pending the real upload proof.
 - A live service-role transaction tested activation, replay and a one-use limit and was rolled back. No test clients, activation codes, bindings or audit rows remain. Browser roles cannot invoke the privileged activation/approval functions.
 - Railway browser: linked to `tanadanaitan-prog`; email field empty; only one visible workspace, with zero projects. Existing service/project ID and deployed commit remain unknown.
@@ -26,7 +27,7 @@ The earlier master document reports a working v3.10 deployment, 25 tables, KNC/A
 
 ## Verified local behavior
 
-`npm run check` and `npm test` pass (46 reported tests including parent tests). HTTP tests use simulated providers; database migration tests use isolated PostgreSQL through PGlite. They do not contact production services. Live database self-tests are recorded separately above.
+`npm run check` and `npm test` pass (59 reported tests including parent tests). HTTP tests use simulated providers; database migration tests use isolated PostgreSQL through PGlite. They do not contact production services. Live database self-tests are recorded separately above.
 
 The pilot integration test uploads a workbook, verifies KNC registration and original-file hash, activates a test client, exercises the model/tool exchange and finds the distinctive value `KNC-PILOT-739261` on the second sheet. It checks a successful, allowed `read_document` record linked to the run and document.
 
@@ -43,7 +44,7 @@ The private legacy snapshot SHA-256 is `4d6c9475a9036a55fee8eea7f3eb29364b778411
 1. Locate the original Railway deployment and reconcile its Supabase project with the currently connected eight-table database. Inventory source repositories/history, variables, domains, jobs and integrations.
 2. Finish the full source-system backup/inventory, including deployment configuration and any original Storage objects once located. The inspected public-table backup and restore are complete; a complete production-system backup is not.
 3. The reconstructed v3.10 schema and private bucket are applied and verified. Real application use of every relevant table remains to be checked through the deployed workflow. The `nh_` workspace migration remains separate, unapplied Phase 2 work.
-4. Atomic activation, random codes, operator identity, scoped approvals, revoked upload issuers and model failure checks are implemented and tested. Webhook persistence/retry/recovery and broader operational review still remain before freeze.
+4. Atomic activation, random codes, operator identity, scoped approvals, revoked upload issuers and model failure checks are implemented and tested. Durable webhook intake and recovery now pass local and live database checks; actual LINE redelivery and broader operational review remain before freeze. See `WEBHOOK_RECOVERY.md`.
 5. Deploy the complete replacement package using the intended Railway service; verify the deployed commit and dependencies.
 6. Run the proof with the real private bucket, activated KNC LINE user, configured provider and Aria. Record the uploaded file's hash/code, account ownership, answer, run ID and authorized successful document trace. Run wrong-client and provider-failure checks on that deployment.
 
@@ -56,6 +57,7 @@ Only after all these checks pass should the baseline be tagged/frozen and Phase 
 - Revert a source change using a normal revert commit, then redeploy the previously verified Railway deployment when one has been identified. Do not reset history or remove the source account until destination operation is proven.
 - Failed upload registration writes no Storage object. Failed extraction persistence can leave a `pending` document record plus its original object; inspect that record and object before retrying. Never delete originals just to clear an error.
 - The applied document schema accepts `pending`, `parsed`, `partial`, `unsupported`, `failed` and long document codes. Approval records left `executing` after a crash require review of tool evidence before retrying; never execute them blindly.
+- Queue events in `received` can resume after a restart. Events left `processing` past their lease become `uncertain` and require evidence review; never blindly replay them. Preserve `WEBHOOK_ENCRYPTION_KEY` during rollback so pending encrypted input stays readable.
 - Credentials belong in private runtime configuration, never in GitHub, test fixtures, screenshots or this record. All test credentials and `.invalid` endpoints are inert fixtures.
 
 LINE supports retrieving incoming content by message ID. This version deliberately uses the Document Portal; it does not implement incoming-file retrieval. Reference: https://developers.line.biz/en/reference/messaging-api/#get-content
