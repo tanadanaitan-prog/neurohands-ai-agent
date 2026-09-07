@@ -10,7 +10,7 @@ The confirmed destination repository is `tanadanaitan-prog/neurohands-ai-agent`.
 
 The connected Supabase project is `darxiaearohhnxiwhcbs`, named `Neurohands - AI Agent`. Destination account email and sole organization Owner role are verified. The original eight tables and 131 records were backed up and restored in isolated PostgreSQL. The Phase 1 recovery migration added 16 tables; all original values were verified unchanged afterward. The private document bucket is configured. The complete source account and deployment migration remains unverified.
 
-Railway: signed in through destination GitHub user `tanadanaitan-prog`, email field empty, one workspace with zero projects. Original project/service IDs, variables and deployments remain unidentified. Supabase destination ownership has been verified in the browser; the organization has one member, the destination account, with Owner role.
+Railway: signed in through destination GitHub user `tanadanaitan-prog`, email field empty. A new private `Neurohands AI Agent` project and repository-connected service have been created in the initially empty workspace. Settings are staged; credentials and deployment are pending. See `RAILWAY_SETUP.md`. Original project/service IDs, variables and deployments remain unidentified. Supabase destination ownership has been verified in the browser; the organization has one member, the destination account, with Owner role.
 
 ## Required end state and evidence
 
