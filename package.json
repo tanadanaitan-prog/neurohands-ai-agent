@@ -1,0 +1,24 @@
+{
+  "name": "neurohands-line-gateway",
+  "version": "3.10.0",
+  "private": true,
+  "main": "src/server.js",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "check": "node --check src/server.js && node --check scripts/setup-richmenu.js && node scripts/setup-richmenu.js --check",
+    "test": "node --test",
+    "richmenu:check": "node scripts/setup-richmenu.js --check",
+    "richmenu:setup": "node --env-file-if-exists=.env scripts/setup-richmenu.js"
+  },
+  "dependencies": {
+    "express": "4.22.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "mammoth": "1.12.2"
+  },
+  "overrides": {
+    "qs": "6.16.0"
+  }
+}
