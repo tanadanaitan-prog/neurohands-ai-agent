@@ -1,0 +1,83 @@
+// Creates BOTH rich menus, uploads images, sets public as default,
+// stores both menu IDs in Supabase settings.
+const fs = require("fs");
+const path = require("path");
+
+const { LINE_CHANNEL_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
+
+if (!LINE_CHANNEL_ACCESS_TOKEN || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error("Missing env vars");
+  process.exit(1);
+}
+
+async function line(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: { Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`, ...(options.headers || {}) },
+  });
+  const text = await res.text();
+  if (!res.ok) { console.error("LINE error", res.status, text); throw new Error("LINE API error"); }
+  return text ? JSON.parse(text) : {};
+}
+
+async function db(pathname, options = {}) {
+  const method = options.method || "GET";
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathname}`, {
+    method,
+    headers: {
+      apikey: SUPABASE_SERVICE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  if (!res.ok) { console.error("Supabase error", res.status, await res.text()); return null; }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function saveSetting(key, value) {
+  await db("settings", {
+    method: "POST",
+    body: { key, value },
+    headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+  });
+}
+
+async function createMenu(jsonFile, imageFile) {
+  const menu = JSON.parse(fs.readFileSync(path.join(__dirname, "..", jsonFile), "utf-8"));
+  const created = await line("https://api.line.me/v2/bot/richmenu", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(menu),
+  });
+  const richMenuId = created.richMenuId;
+
+  const img = fs.readFileSync(path.join(__dirname, imageFile));
+  const up = await fetch(`https://api-data.line.me/v2/bot/richmenu/${richMenuId}/content`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`, "Content-Type": "image/png" },
+    body: img,
+  });
+  if (!up.ok) { console.error("Image upload failed", up.status, await up.text()); throw new Error("image upload failed"); }
+  return richMenuId;
+}
+
+async function main() {
+  console.log("Creating public brand menu...");
+  const publicId = await createMenu("richmenu-public.json", "richmenu-public.png");
+
+  console.log("Creating active client menu...");
+  const activeId = await createMenu("richmenu-active.json", "richmenu-active.png");
+
+  console.log("Setting public menu as default for all users...");
+  await line(`https://api.line.me/v2/bot/user/all/richmenu/${publicId}`, { method: "POST" });
+
+  await saveSetting("richmenu_public_id", publicId);
+  await saveSetting("richmenu_active_id", activeId);
+
+  console.log("Done. public:", publicId, "active:", activeId);
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

@@ -1,0 +1,9 @@
+{
+  "recoveredFrom": "NEUROHANDS v3.docx",
+  "sourceSha256": "d9115484b8683c967ffa139977754426e26e9385272765ffd568b03b735ed72e",
+  "recoveredSource": "docs/originals/server.v3.10.recovered.js.txt",
+  "recoveredSourceSha256": "45432ce9a637a7ceacf1a686ba5034abce5e9932b66a34c04d19c34c5d8fd460",
+  "downloadedPrefixMatches": true,
+  "originalTruncatedCopy": "docs/originals/server.js.truncated.txt",
+  "note": "The downloaded source, excluding its trailing newline, exactly matches the beginning of the recovered source. src/server.js includes the documented integration and access-control fixes."
+}

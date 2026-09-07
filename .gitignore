@@ -4,6 +4,8 @@ node_modules/
 !.env.example
 .tmp/
 dist/
+web/dist/
+supabase/.temp/
 *.log
 Thumbs.db
 .DS_Store

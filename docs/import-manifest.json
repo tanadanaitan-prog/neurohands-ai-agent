@@ -1,0 +1,50 @@
+[
+  {
+    "sourceFile": "server.js",
+    "destination": "src/server.js",
+    "sourceSha256": "7703d728fb3e73b7bed7798ef187e1a908cd97f5ce2f56688a170a203e5bf789",
+    "bytes": 34067
+  },
+  {
+    "sourceFile": "setup-richmenu.js",
+    "destination": "scripts/setup-richmenu.js",
+    "sourceSha256": "c0c8b2db2d803429bb54158081b84a45302aaab09b65c2234c4c219f67c051d5",
+    "bytes": 3056
+  },
+  {
+    "sourceFile": "package.json",
+    "destination": "package.json",
+    "sourceSha256": "8a6618eb0f76fbb6c210d18e8933da2867ed11dfacd9b61fcdf0bab60442424c",
+    "bytes": 227
+  },
+  {
+    "sourceFile": "README.md",
+    "destination": "docs/originals/README.md",
+    "sourceSha256": "ccc43d50582b0861a996225ee446356bd18c25a96d64b9c0d733a675f1ceb761",
+    "bytes": 5404
+  },
+  {
+    "sourceFile": "richmenu-public.json",
+    "destination": "config/rich-menus/richmenu-public.json",
+    "sourceSha256": "5149ba58eb279c88690010050d29b28228d2428555c259fd639705393d67966f",
+    "bytes": 932
+  },
+  {
+    "sourceFile": "richmenu-active.json",
+    "destination": "config/rich-menus/richmenu-active.json",
+    "sourceSha256": "6c48c076aedb30371ec6639e19485043f2fe4c7c8a52038919ecba61d9a208f2",
+    "bytes": 940
+  },
+  {
+    "sourceFile": "richmenu-public.png.png",
+    "destination": "assets/rich-menus/richmenu-public.png",
+    "sourceSha256": "fba440f29e7b3780b859f347336d7f0f1f2d547f21e46fafb03274ed76e2a4b3",
+    "bytes": 295628
+  },
+  {
+    "sourceFile": "richmenu-active.png.png",
+    "destination": "assets/rich-menus/richmenu-active.png",
+    "sourceSha256": "874ef2b055e284272df4979ec4c6cb66180b2bf82aa86a35ed18551062695f4c",
+    "bytes": 301894
+  }
+]
