@@ -22,7 +22,7 @@ The earlier master document reports a working v3.10 deployment, 25 tables, KNC/A
 - Applied `20260907130303_phase1_webhook_inbox`: now 25 public tables, including an RLS-protected encrypted inbox and linked agent runs. A live service-role transaction checked deduplication, claim and expired-lease classification, then rolled back with zero queue rows remaining. Browser roles cannot read or invoke the queue.
 - Created private `neurohands-docs` bucket, 10 MB limit, with document MIME allowlist. It is still empty pending the real upload proof.
 - A live service-role transaction tested activation, replay and a one-use limit and was rolled back. No test clients, activation codes, bindings or audit rows remain. Browser roles cannot invoke the privileged activation/approval functions.
-- Railway browser: linked to `tanadanaitan-prog`; email field empty; only one visible workspace, with zero projects. Existing service/project ID and deployed commit remain unknown.
+- Railway browser: linked to `tanadanaitan-prog`; email field empty. The initially empty destination workspace now contains the new `Neurohands AI Agent` project and repository-connected service. Build, start, readiness, domain and non-secret defaults are staged; credentials and the first deployment remain pending. See `RAILWAY_SETUP.md`. The original service/project and deployed commit remain unknown.
 - A request to the reported production health URL timed out from this environment. A timeout does not establish that the service is down.
 
 ## Verified local behavior
@@ -43,7 +43,7 @@ The private legacy snapshot SHA-256 is `4d6c9475a9036a55fee8eea7f3eb29364b778411
 
 1. Locate the original Railway deployment and reconcile its Supabase project with the currently connected eight-table database. Inventory source repositories/history, variables, domains, jobs and integrations.
 2. Finish the full source-system backup/inventory, including deployment configuration and any original Storage objects once located. The inspected public-table backup and restore are complete; a complete production-system backup is not.
-3. The reconstructed v3.10 schema and private bucket are applied and verified. Real application use of every relevant table remains to be checked through the deployed workflow. The `nh_` workspace migration remains separate, unapplied Phase 2 work.
+3. The reconstructed v3.10 schema, durable inbox and private bucket are applied and verified. Real application use of every relevant table remains to be checked through the deployed workflow. The `nh_` workspace migration remains separate, unapplied Phase 2 work.
 4. Atomic activation, random codes, operator identity, scoped approvals, revoked upload issuers and model failure checks are implemented and tested. Durable webhook intake and recovery now pass local and live database checks; actual LINE redelivery and broader operational review remain before freeze. See `WEBHOOK_RECOVERY.md`.
 5. Deploy the complete replacement package using the intended Railway service; verify the deployed commit and dependencies.
 6. Run the proof with the real private bucket, activated KNC LINE user, configured provider and Aria. Record the uploaded file's hash/code, account ownership, answer, run ID and authorized successful document trace. Run wrong-client and provider-failure checks on that deployment.

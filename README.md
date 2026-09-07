@@ -44,7 +44,7 @@ Open `http://localhost:3000/ready` to check required configuration, database see
 
 1. Review the recovered project in `tanadanaitan-prog/neurohands-ai-agent`, prepared through the `codex/phase1-recovery` branch. Browser access is verified as the destination account. Credentials, local dependencies and generated packages are excluded from Git.
 2. The reviewed `phase1_gateway_recovery` migration is applied to the connected project and its private `neurohands-docs` bucket is configured. Review the evidence in `supabase/README.md`; do not rerun the migration or substitute the Phase 2 workspace migration.
-3. Once the database is ready, connect that GitHub repository to the intended Railway service, using this folder as the repository root. The included Railway configuration runs the checks and tests, starts the server, and checks `/ready`.
+3. The new destination Railway service is connected to this repository. Its build/test/start/readiness settings are staged directly in the dashboard; new Railway services no longer use the included legacy `railway.json`. Follow [destination Railway setup](docs/RAILWAY_SETUP.md). Deployment awaits private credentials.
 4. Populate Railway Variables using `.env.example` as the name list. Put secret values directly into Railway. Set `PUBLIC_URL` to the HTTPS deployment URL, or use Railway's `RAILWAY_PUBLIC_DOMAIN`.
 5. Configure a stable private `WEBHOOK_ENCRYPTION_KEY` (32 random bytes encoded as base64), then follow [queue configuration and recovery](docs/WEBHOOK_RECOVERY.md). Set the LINE webhook URL to the deployment's `/webhook` endpoint and verify it in the LINE Developers console. Only publish the menus after confirming the intended LINE channel.
 

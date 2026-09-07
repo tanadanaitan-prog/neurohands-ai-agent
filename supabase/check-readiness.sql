@@ -5,10 +5,12 @@ with expected_tables(table_name) as (
     ('client_agent_bindings'), ('client_documents'), ('clients'),
     ('edging_services'), ('escalations'), ('glass_types'), ('jarvis_audit_log'),
     ('jarvis_checklist'), ('jarvis_notes'), ('messages'), ('orders'),
-    ('settings'), ('staff_activations'), ('support_cases'), ('tool_calls')
+    ('settings'), ('staff_activations'), ('support_cases'), ('tool_calls'),
+    ('line_webhook_events')
 ), expected_columns(table_name, column_name) as (
   values ('clients', 'client_account_id'), ('orders', 'client_account_id'),
-    ('orders', 'lead_time_days'), ('orders', 'urgent_flag')
+    ('orders', 'lead_time_days'), ('orders', 'urgent_flag'),
+    ('agent_runs', 'webhook_event_id')
 )
 select 'missing_table' as problem, e.table_name as object_name
 from expected_tables e
