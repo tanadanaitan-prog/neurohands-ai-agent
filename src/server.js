@@ -75,23 +75,93 @@ function fallbackModels() {
 
 let cachedFallbackModel = null;
 
-async function callFallbackChat(bodyExtra) {
+async function requestModelJson(provider, url, headers, body, model) {
+  const started = performance.now();
+  const modelLabel = typeof model === "string" && /^[A-Za-z0-9][A-Za-z0-9_./:-]{0,119}$/.test(model)
+    ? model : "invalid_model_label";
+  const elapsed = () => Math.round(performance.now() - started);
+  const failed = (reason) => console.error(`${provider} request failed`, reason,
+    JSON.stringify({ model: modelLabel, elapsed_ms: elapsed() }));
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
+    });
+  } catch (error) {
+    const reason = ["TimeoutError", "AbortError"].includes(error?.name) ? "timeout" : "transport";
+    failed(reason);
+    return null;
+  }
+  if (!response.ok) {
+    failed(response.status);
+    return null;
+  }
+  try {
+    const data = await response.json();
+    const usage = provider === "Gemini" ? data?.usageMetadata : data?.usage;
+    const count = (value) => Number.isSafeInteger(value) && value >= 0 ? value : null;
+    console.info("LLM response received", JSON.stringify({
+      provider, model: modelLabel, elapsed_ms: elapsed(),
+      input_tokens: count(usage?.promptTokenCount ?? usage?.prompt_tokens),
+      output_tokens: count(usage?.candidatesTokenCount ?? usage?.completion_tokens),
+      total_tokens: count(usage?.totalTokenCount ?? usage?.total_tokens),
+    }));
+    return data;
+  }
+  catch (error) {
+    // Provider errors may contain keys, URLs, prompts or customer content.
+    const reason = ["TimeoutError", "AbortError"].includes(error?.name) ? "timeout" : "invalid_json";
+    failed(reason);
+    return null;
+  }
+}
+
+function validToolArguments(args) {
+  return args !== null && typeof args === "object" && !Array.isArray(args);
+}
+
+function usableFallbackMessage(data, allowTools) {
+  const message = data?.choices?.[0]?.message;
+  if (!message || (message.content != null && typeof message.content !== "string")) return false;
+  if (message.tool_calls != null && !Array.isArray(message.tool_calls)) return false;
+  const calls = message.tool_calls || [];
+  if (calls.length) {
+    if (!allowTools) return false;
+    return calls.every((call) => {
+      if (!call || typeof call.id !== "string" || !call.id.trim() ||
+          typeof call.function?.name !== "string" || !call.function.name.trim() ||
+          typeof call.function.arguments !== "string") return false;
+      try { return validToolArguments(JSON.parse(call.function.arguments)); }
+      catch { return false; }
+    });
+  }
+  return typeof message.content === "string" && Boolean(message.content.trim());
+}
+
+function geminiParts(data) {
+  const parts = data?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts) || !parts.length) return null;
+  if (parts.some((part) => !part || typeof part !== "object" ||
+      (part.text !== undefined && typeof part.text !== "string") ||
+      (part.functionCall !== undefined && (typeof part.functionCall?.name !== "string" ||
+        !part.functionCall.name.trim() || (part.functionCall.args !== undefined && !validToolArguments(part.functionCall.args)))))) return null;
+  return parts;
+}
+
+async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.tools?.length)) {
   const base = fallbackBase();
   if (!base) return null;
   const models = (cachedFallbackModel ? [cachedFallbackModel] : [])
     .concat(fallbackModels().filter((m) => m !== cachedFallbackModel));
   for (const model of models) {
-    const res = await fetch(`${base}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` },
-      body: JSON.stringify({ model, ...bodyExtra }),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (res.ok) {
+    const data = await requestModelJson("Fallback LLM", `${base}/chat/completions`,
+      { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` },
+      { model, ...bodyExtra }, model);
+    if (usableFallbackMessage(data, allowToolCalls)) {
       cachedFallbackModel = model;
-      return res.json();
+      return data;
     }
-    console.error(`Fallback LLM error ${res.status}`);
+    if (data !== null) console.error("Fallback LLM request failed", "invalid_response");
   }
   return null;
 }
@@ -466,24 +536,17 @@ async function askOpenAIPlain(system, user) {
 
 async function askAI(systemContext, userMessage) {
   if (GEMINI_API_KEY) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemContext }] },
-        contents: [{ role: "user", parts: [{ text: userMessage }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-      }),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-      if (text) return text;
-    } else {
-      console.error("Gemini error", res.status);
-    }
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    const data = await requestModelJson("Gemini", url,
+      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, {
+      system_instruction: { parts: [{ text: systemContext }] },
+      contents: [{ role: "user", parts: [{ text: userMessage }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+    }, GEMINI_MODEL);
+    const parts = geminiParts(data);
+    const text = parts?.map((part) => part.text).filter(Boolean).join("\n").trim();
+    if (text && !parts.some((part) => part.functionCall)) return text;
+    if (data !== null) console.error("Gemini request failed", "invalid_response");
   }
   return askOpenAIPlain(systemContext, userMessage);
 }
@@ -541,7 +604,7 @@ async function completeAgentRun(runId, status, output, iterations, error = null)
 async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId) {
   if (!GEMINI_API_KEY) return { text: null, iterations: 0, apiFailed: true };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   let contents = [{ role: "user", parts: [{ text: userMessage }] }];
   let iteration = 0;
   const maxIterations = 5;
@@ -554,15 +617,21 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId)
     };
     if (tools.length) body.tools = [{ function_declarations: tools }];
 
-    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
-    if (!res.ok) { console.error("Gemini error", res.status); return { text: null, iterations: iteration, apiFailed: true }; }
-
-    const data = await res.json();
-    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const data = await requestModelJson("Gemini", url,
+      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL);
+    const parts = geminiParts(data);
+    if (!parts) {
+      if (data !== null) console.error("Gemini request failed", "invalid_response");
+      return { text: null, iterations: iteration, apiFailed: true };
+    }
     const functionCalls = parts.filter((p) => p.functionCall);
 
     if (!functionCalls.length) {
       const text = parts.map((p) => p.text).filter(Boolean).join("\n").trim();
+      if (!text) {
+        console.error("Gemini request failed", "invalid_response");
+        return { text: null, iterations: iteration, apiFailed: true };
+      }
       return { text, iterations: iteration + 1 };
     }
 
@@ -591,7 +660,8 @@ async function runOpenAIToolLoop(systemContext, userMessage, toolSchemas, ctx, r
   while (iteration < 5) {
     const bodyExtra = { temperature: 0.2, max_tokens: 1024, messages };
     if (tools.length) bodyExtra.tools = tools;
-    const data = await callFallbackChat(bodyExtra);
+    // Even unsolicited tool calls pass through authorization and its audit log.
+    const data = await callFallbackChat(bodyExtra, true);
     if (!data) return { text: null, iterations: iteration };
     const msg = data?.choices?.[0]?.message;
     if (!msg) return { text: null, iterations: iteration };
@@ -1238,4 +1308,4 @@ if (require.main === module) {
     Promise.allSettled([stopped, closed]).then(() => process.exit(0));
   });
 }
-module.exports = { app, parseDocument, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, activateByCode, replyToLine, pushToLine, handleEvent };
+module.exports = { app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, activateByCode, replyToLine, pushToLine, handleEvent };

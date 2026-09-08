@@ -79,15 +79,36 @@ test('encrypted LINE inbox and recovery in isolated PostgreSQL', async (t) => {
   });
   await t.test('handler failure retains encrypted input and is never automatically replayed',async()=>{
     let calls=0;
-    const w=worker({handleEvent:async()=>{calls++;throw new Error('private error text');}});
+    const logs=[];
+    const w=worker({logger:{error:(...args)=>logs.push(args)},handleEvent:async()=>{calls++;throw new Error('private error text');}});
     await w.accept([input('handler-failure')]);
     assert.equal(await w.runOnce(),true);
     assert.equal((await row('handler-failure')).status,'failed');
     assert.ok((await row('handler-failure')).payload_ciphertext);
     assert.equal((await row('handler-failure')).error.includes('private error text'),false);
+    assert.equal(JSON.stringify(logs).includes('private error text'),false);
+    assert.equal(logs[0][1].failure,'unclassified_failure');
     await w.accept([input('handler-failure')]);
     assert.equal(await w.runOnce(),false);
     assert.equal(calls,1);
+  });
+  await t.test('timeouts and LINE delivery failures retain useful diagnostics without raw error details',async()=>{
+    for(const [id,error,expected] of [
+      ['diagnostic-timeout',new DOMException('secret-bearing URL and customer text','TimeoutError'),'request_timeout'],
+      ['diagnostic-line',new Error('LINE reply rejected (401)'),'line_reply_401'],
+      ['diagnostic-network',new TypeError('fetch failed',{cause:{code:'ECONNRESET',message:'private connection details'}}),'econnreset'],
+    ]) {
+      const logs=[];
+      const w=worker({logger:{error:(...args)=>logs.push(args)},handleEvent:async()=>{throw error;}});
+      await w.accept([input(id)]);
+      await w.runOnce();
+      assert.equal((await row(id)).status,'failed');
+      assert.ok((await row(id)).error.includes(expected));
+      assert.equal(logs[0][1].failure,expected);
+      assert.equal(logs[0][1].stage,'handler');
+      assert.ok(logs[0][1].elapsedMs>=0);
+      assert.doesNotMatch(JSON.stringify(logs),/secret-bearing|customer text|private connection details/);
+    }
   });
   await t.test('wrong encryption key and moved ciphertext cannot reach the handler',async()=>{
     let calls=0;

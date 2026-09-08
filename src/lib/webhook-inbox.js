@@ -3,6 +3,22 @@ const { AsyncLocalStorage } = require('node:async_hooks');
 const eventContext = new AsyncLocalStorage();
 const currentWebhookEventId = () => eventContext.getStore()?.eventId || null;
 
+// Classify failures without exposing URLs, keys, message contents or provider bodies.
+function failureCode(error) {
+  if (error?.name === 'TimeoutError') return 'request_timeout';
+  if (error?.name === 'AbortError') return 'request_aborted';
+  const line = /^LINE (reply|push|menu link) rejected \(([1-5][0-9]{2})\)$/.exec(error?.message || '');
+  if (line) return `line_${line[1].replaceAll(' ', '_')}_${line[2]}`;
+  if (error?.message === 'Database operation failed') return 'database_request_failed';
+  if (error?.message === 'Database write was not confirmed') return 'database_write_unconfirmed';
+  if (error?.message === 'Agent execution failed; response delivery was recorded') return 'agent_failed_response_delivered';
+  if (error?.name === 'SyntaxError') return 'invalid_json';
+  const code = error?.cause?.code || error?.code;
+  if (['ECONNRESET','ECONNREFUSED','ENOTFOUND','EAI_AGAIN','ETIMEDOUT','UND_ERR_CONNECT_TIMEOUT','UND_ERR_HEADERS_TIMEOUT','UND_ERR_SOCKET'].includes(code)) return code.toLowerCase();
+  if (error?.message === 'fetch failed') return 'network_request_failed';
+  return 'unclassified_failure';
+}
+
 function encryptionKey(value) {
   if (typeof value !== 'string' || !/^[A-Za-z0-9+/]{43}=$/.test(value)) throw new Error('A private 32-byte base64 WEBHOOK_ENCRYPTION_KEY is required');
   const key=Buffer.from(value,'base64');
@@ -49,25 +65,37 @@ function createWebhookInbox({db,handleEvent,keyValue,logger=console}) {
     const key=encryptionKey(keyValue);
     const row=(await db('rpc/nh_claim_line_event',{method:'POST',body:{p_worker:workerId}}))?.[0];
     if(!row)return false;
+    const startedAt=performance.now();
     const heartbeat=setInterval(()=>{
       db(filter(row),{method:'PATCH',headers:{Prefer:'return=representation'},body:{lease_expires_at:new Date(Date.now()+90000).toISOString(),updated_at:new Date().toISOString()}})
         .then(saved=>{if(!saved?.length)logger.error('Webhook lease is no longer owned');})
         .catch(()=>logger.error('Webhook lease renewal failed'));
     },25000);
     heartbeat.unref?.();
-    let status='completed';
-    try { await eventContext.run({eventId:row.event_id},()=>handleEvent(decryptEvent(row,key))); }
-    catch { status='failed'; logger.error('Webhook handler failed; encrypted input retained for review'); }
+    let status='completed', failure=null, stage='decrypt';
+    try {
+      const event=decryptEvent(row,key);
+      stage='handler';
+      await eventContext.run({eventId:row.event_id},()=>handleEvent(event));
+    }
+    catch(error) {
+      status='failed';
+      failure=stage==='decrypt'?'payload_decryption_failed':failureCode(error);
+      logger.error('Webhook handler failed; encrypted input retained for review', {
+        eventId:row.event_id,stage,failure,elapsedMs:Math.round(performance.now()-startedAt),
+      });
+    }
     finally {clearInterval(heartbeat);}
-    const saved=await db(filter(row),{method:'PATCH',headers:{Prefer:'return=representation'},body:{status,error:status==='failed'?'Handler failed; inspect run and delivery evidence before retrying':null,updated_at:new Date().toISOString(),lease_expires_at:null,...(status==='completed'?{payload_ciphertext:null}:{})}});
+    const saved=await db(filter(row),{method:'PATCH',headers:{Prefer:'return=representation'},body:{status,error:status==='failed'?`Handler failed (${failure}); inspect run and delivery evidence before retrying`:null,updated_at:new Date().toISOString(),lease_expires_at:null,...(status==='completed'?{payload_ciphertext:null}:{})}});
     if(!saved?.[0]?.event_id)throw new Error('Webhook completion was not persisted; do not replay blindly');
+    logger.info?.('Webhook processing finished',{eventId:row.event_id,status,elapsedMs:Math.round(performance.now()-startedAt)});
     return true;
   }
   async function tick() {
     if(stopped || running)return;
     running=true;
     let handled=false;
-    try {handled=await runOnce();}catch{logger.error('Webhook worker could not confirm progress');}
+    try {handled=await runOnce();}catch(error){logger.error('Webhook worker could not confirm progress',{failure:failureCode(error)});}
     finally {
       running=false;
       if(!stopped){timer=setTimeout(()=>{currentRun=tick();},handled?10:2000);timer.unref?.();}
