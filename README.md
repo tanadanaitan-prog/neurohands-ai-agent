@@ -1,5 +1,7 @@
 # Neurohands AI Agent
 
+**Live update, 8 September 2026:** the LINE request-recovery repair is deployed and Gemini connectivity is verified. See [current deployment, usage measurements and remaining customer test](docs/LIVE_STATUS.md). The complete live Aria document proof is still pending.
+
 Recovered v3.10 Express server for the LINE concierge, Aria agent, Jarvis operator console, and document upload portal. This local recovery targets [tanadanaitan-prog/neurohands-ai-agent](https://github.com/tanadanaitan-prog/neurohands-ai-agent).
 
 **Current milestone:** stabilize the v3.10 KNC Glass / Aria pilot before enabling the larger agent platform. The recovered source is uploaded to GitHub. The Phase 1 Supabase schema and private document bucket are configured; all 131 original records were preserved and verified. A live Railway / LINE / model document proof has **not** passed. See [Phase 1 evidence and recovery](docs/PHASE1_STATUS.md) and [Supabase readiness](supabase/README.md).

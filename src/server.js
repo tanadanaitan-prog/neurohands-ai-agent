@@ -10,6 +10,7 @@ const { createStudioRouter } = require("./platform/router");
 const path = require("node:path");
 const { parseDocument } = require("./lib/document-parser");
 const { createWebhookInbox, currentWebhookEventId, encryptionKey } = require("./lib/webhook-inbox");
+const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt, finalizeRunMetrics, formatRunMetrics } = require("./lib/model-metrics");
 
 const {
   LINE_CHANNEL_SECRET,
@@ -75,14 +76,18 @@ function fallbackModels() {
 
 let cachedFallbackModel = null;
 
-async function requestModelJson(provider, url, headers, body, model) {
+async function requestModelJson(provider, url, headers, body, model, usable = () => true) {
   const started = performance.now();
-  const modelLabel = typeof model === "string" && /^[A-Za-z0-9][A-Za-z0-9_./:-]{0,119}$/.test(model)
-    ? model : "invalid_model_label";
+  const fallbackProvider = String(FALLBACK_PROVIDER).toLowerCase();
+  const metricProvider = provider === "Gemini" ? "gemini" : FALLBACK_BASE_URL ? "custom" :
+    ["groq", "openrouter", "mistral", "cerebras"].includes(fallbackProvider) ? fallbackProvider : "fallback";
+  const attempt = beginModelAttempt(metricProvider, model, [GEMINI_API_KEY, FALLBACK_API_KEY]);
   const elapsed = () => Math.round(performance.now() - started);
-  const failed = (reason) => console.error(`${provider} request failed`, reason,
-    JSON.stringify({ model: modelLabel, elapsed_ms: elapsed() }));
   let response;
+  const failed = (reason) => {
+    finishModelAttempt(attempt, typeof reason === "number" ? "http_error" : reason, response?.status, elapsed());
+    console.error(`${provider} request failed`, reason, JSON.stringify(attempt));
+  };
   try {
     response = await fetch(url, {
       method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
@@ -98,14 +103,8 @@ async function requestModelJson(provider, url, headers, body, model) {
   }
   try {
     const data = await response.json();
-    const usage = provider === "Gemini" ? data?.usageMetadata : data?.usage;
-    const count = (value) => Number.isSafeInteger(value) && value >= 0 ? value : null;
-    console.info("LLM response received", JSON.stringify({
-      provider, model: modelLabel, elapsed_ms: elapsed(),
-      input_tokens: count(usage?.promptTokenCount ?? usage?.prompt_tokens),
-      output_tokens: count(usage?.candidatesTokenCount ?? usage?.completion_tokens),
-      total_tokens: count(usage?.totalTokenCount ?? usage?.total_tokens),
-    }));
+    finishModelAttempt(attempt, usable(data) ? "usable_response" : "discarded_response", response.status, elapsed(), data);
+    console.info("LLM response received", JSON.stringify(attempt));
     return data;
   }
   catch (error) {
@@ -156,7 +155,7 @@ async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.to
   for (const model of models) {
     const data = await requestModelJson("Fallback LLM", `${base}/chat/completions`,
       { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` },
-      { model, ...bodyExtra }, model);
+      { model, ...bodyExtra }, model, (data) => usableFallbackMessage(data, allowToolCalls));
     if (usableFallbackMessage(data, allowToolCalls)) {
       cachedFallbackModel = model;
       return data;
@@ -542,7 +541,10 @@ async function askAI(systemContext, userMessage) {
       system_instruction: { parts: [{ text: systemContext }] },
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-    }, GEMINI_MODEL);
+    }, GEMINI_MODEL, (data) => {
+      const parts = geminiParts(data);
+      return parts && !parts.some((part) => part.functionCall) && parts.some((part) => part.text?.trim());
+    });
     const parts = geminiParts(data);
     const text = parts?.map((part) => part.text).filter(Boolean).join("\n").trim();
     if (text && !parts.some((part) => part.functionCall)) return text;
@@ -595,9 +597,9 @@ async function startAgentRun(ctx, input, agent) {
   return rows[0].id;
 }
 
-async function completeAgentRun(runId, status, output, iterations, error = null) {
+async function completeAgentRun(runId, status, output, iterations, error = null, metrics = null) {
   if (!runId) return;
-  const saved = await db(`agent_runs?id=eq.${runId}`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status, output, iterations, error, completed_at: new Date().toISOString() } });
+  const saved = await db(`agent_runs?id=eq.${runId}`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status, output, iterations, error, completed_at: new Date().toISOString(), llm_metrics: metrics } });
   if (!saved?.[0]?.id) throw new Error("Run completion could not be saved");
 }
 
@@ -618,7 +620,10 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId)
     if (tools.length) body.tools = [{ function_declarations: tools }];
 
     const data = await requestModelJson("Gemini", url,
-      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL);
+      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL, (data) => {
+        const parts = geminiParts(data);
+        return parts && parts.some((part) => part.functionCall || part.text?.trim());
+      });
     const parts = geminiParts(data);
     if (!parts) {
       if (data !== null) console.error("Gemini request failed", "invalid_response");
@@ -683,7 +688,7 @@ async function runOpenAIToolLoop(systemContext, userMessage, toolSchemas, ctx, r
 async function runAgent(ctx, userText, agent) {
   const guard = inputGuardrail(userText);
   if (!guard.ok) return guard.reply;
-  let runId;
+  let runId, metrics;
   try {
     const binding = (await getBindings(ctx.lineUserId)).find((item) =>
       String(item.client_account_id) === String(ctx.clientAccountId) && item.department === ctx.department);
@@ -692,23 +697,26 @@ async function runAgent(ctx, userText, agent) {
     ctx.allowedTools = Array.isArray(agent.allowed_tools) ? agent.allowed_tools : [];
     runId = await startAgentRun(ctx, userText, agent);
     ctx.runId = runId;
-    const toolSchemas = ctx.allowedTools.map((name) => TOOL_SCHEMAS[name]).filter(Boolean);
-    const memories = await loadMemories(ctx);
-    const system = buildAgentSystem(agent, ctx, memories);
-    let result = await askGeminiWithTools(system, userText, toolSchemas, ctx, runId);
-    if (result.apiFailed || !result.text) {
-      const fb = await runOpenAIToolLoop(system, userText, toolSchemas, ctx, runId);
-      if (fb.text) result = fb;
-    }
-    if (!result.text || result.exhausted) throw new Error("No complete model answer was returned");
-    const finalText = ctx.toolFailed ? "I could not verify the requested information because a tool did not succeed. Please try again or contact the team." : outputGuardrail(result.text);
-    ctx.runStatus = ctx.toolFailed ? "error" : "completed";
-    await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, ctx.toolFailed ? "One or more tool calls did not succeed" : null);
-    return finalText;
+    metrics = createRunMetrics(runId);
+    return await withRunMetrics(metrics, async () => {
+      const toolSchemas = ctx.allowedTools.map((name) => TOOL_SCHEMAS[name]).filter(Boolean);
+      const memories = await loadMemories(ctx);
+      const system = buildAgentSystem(agent, ctx, memories);
+      let result = await askGeminiWithTools(system, userText, toolSchemas, ctx, runId);
+      if (result.apiFailed || !result.text) {
+        const fb = await runOpenAIToolLoop(system, userText, toolSchemas, ctx, runId);
+        if (fb.text) result = fb;
+      }
+      if (!result.text || result.exhausted) throw new Error("No complete model answer was returned");
+      const finalText = ctx.toolFailed ? "I could not verify the requested information because a tool did not succeed. Please try again or contact the team." : outputGuardrail(result.text);
+      ctx.runStatus = ctx.toolFailed ? "error" : "completed";
+      await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, ctx.toolFailed ? "One or more tool calls did not succeed" : null, finalizeRunMetrics(metrics));
+      return finalText;
+    });
   } catch (err) {
     ctx.runStatus = "error";
     console.error("Agent run failed");
-    try { await completeAgentRun(runId, "error", null, 0, "Execution or evidence persistence failed"); }
+    try { await completeAgentRun(runId, "error", null, 0, "Execution or evidence persistence failed", finalizeRunMetrics(metrics)); }
     catch { console.error("Could not persist agent failure"); }
     return "Sorry, I could not complete that request. Please try again or contact the team.";
   }
@@ -980,7 +988,7 @@ async function handleStaffMessage(lineUserId, text, replyToken) {
     const run = (await db(`agent_runs?id=eq.${encodeURIComponent(id)}&select=*`))?.[0];
     const calls = await db(`tool_calls?run_id=eq.${encodeURIComponent(id)}&select=tool_name,allowed,status&order=created_at.asc`);
     if (!run) return send(`Run #${id} not found.`);
-    return send(`Trace #${id}\nAgent: ${run.agent_code || run.department}\nInput: ${run.input}\nOutput: ${run.output}\nStatus: ${run.status} (${run.iterations} iter)\nTools:\n${(calls || []).map((c) => `• ${c.tool_name} • ${c.allowed ? "allowed" : "BLOCKED"} • ${c.status}`).join("\n") || "• none"}`);
+    return send(`Trace #${id}\nAgent: ${run.agent_code || run.department}\nStatus: ${run.status} (${run.iterations} iter)\n${formatRunMetrics(run.llm_metrics)}\nInput: ${run.input}\nOutput: ${run.output}\nTools:\n${(calls || []).map((c) => `• ${c.tool_name} • ${c.allowed ? "allowed" : "BLOCKED"} • ${c.status}`).join("\n") || "• none"}`);
   }
 
   if (/^memory:$/i.test(t)) {
