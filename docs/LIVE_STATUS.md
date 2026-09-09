@@ -4,7 +4,9 @@
 
 - PR #7 (`899628db273cd26b6b2ed21590e5ad151e5a7bdb`) is deployed. The recorded build passed 101 tests. Readiness and delivery checks do not establish successful AI answers.
 - The latest inspected real founder greeting failed: Gemini reached the application's 15-second request timeout; Groq rejected authentication with HTTP 401. LINE delivered the failure notice. The reason for Gemini's delay is not established.
-- The owner reports replacing the Groq key. Verification of the replacement in the running service is pending. Changing the model alone cannot repair a rejected API key.
+- The owner reports replacing the Groq key. A Groq-only probe returned HTTP 401 in 96 ms. After committing the staged variables and explicitly restarting Railway, an authentication-only model-list request again returned 401. No successful Groq answer was established. Changing the model alone cannot repair a rejected API key.
+- PR #8 published the simpler README and goal acceptance record as `c57de7e5fc7c9b50d63ab98ad4f9855683f5ce77`. Deployment `237dba65-a4a3-4bb3-b042-b43762fb940e` runs that revision; the original build passed 101 tests. Temporary pre-deploy diagnostics were removed.
+- The selected replacement is OpenRouter `openai/gpt-oss-120b:free`. Provider settings are prepared without deploying; the failed fallback key was cleared and the owner was asked to enter an OpenRouter key privately. The `GEMINI_ENABLED=false` change is under review so this pilot can avoid Google calls while its billing tier is unverified. See [free provider setup](FREE_PROVIDER_SETUP.md). The replacement is not yet a live success.
 - The complete second-account Aria activation → document answer → authorized `read_document` trace remains pending. Jarvis founder replies and small provider probes do not satisfy that test.
 - Work must stay within verified free allowances. Railway's dashboard shows 28 trial days or $4.90 credit remaining; the owner confirms the replacement key belongs to Groq's Free plan. A bounded Groq-only probe is authorized within these allowances. Gemini's account billing tier remains unverified. Token measurements alone are not a spending cap.
 
