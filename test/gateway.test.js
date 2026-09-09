@@ -12,6 +12,7 @@ function loadGateway(overrides = {}) {
     SUPABASE_URL: "https://example.invalid",
     SUPABASE_SERVICE_KEY: "sb_secret_test-only",
     GEMINI_API_KEY: "",
+    GEMINI_ENABLED: "true",
     FOUNDER_LINE_ID: "",
     JARVIS_ACTIVATION_CODE: "",
     NEUROHANDS_API_KEY: "test-api-secret",
@@ -127,6 +128,38 @@ test("gateway regression checks (all external services mocked)", async (t) => {
     const version=JSON.parse((await request('/version')).text);
     assert.equal(version.version,'3.10.0');
     assert.equal(typeof version.commit,'string');
+  });
+
+  await t.test("readiness does not count a disabled Gemini key as an available provider", async (t) => {
+    for (const overrides of [
+      { FALLBACK_API_KEY: "" },
+      { FALLBACK_PROVIDER: "unknown", FALLBACK_BASE_URL: "" },
+    ]) {
+      const request = await serve(t, loadGateway({
+        FOUNDER_LINE_ID: "local-founder", GEMINI_API_KEY: "retained-fixture-key",
+        GEMINI_ENABLED: "false", ...overrides,
+      }).app);
+      const response = await request("/ready");
+      assert.equal(response.status, 503);
+      assert.deepEqual(JSON.parse(response.text), { ready: false });
+    }
+  });
+
+  await t.test("readiness accepts configured fallback-only and enabled Gemini-only deployments", async (t) => {
+    t.mock.method(globalThis, "fetch", async (address) => {
+      const url = new URL(String(address));
+      assert.equal(url.hostname, "example.invalid", "Readiness must not call an AI provider");
+      return new Response(url.pathname.startsWith("/storage/") ? '{"public":false}' : '[{"id":1}]');
+    });
+    for (const overrides of [
+      { GEMINI_ENABLED: "false", GEMINI_API_KEY: "retained-fixture-key" },
+      { GEMINI_ENABLED: "true", GEMINI_API_KEY: "enabled-fixture-key", FALLBACK_API_KEY: "" },
+    ]) {
+      const request = await serve(t, loadGateway({ FOUNDER_LINE_ID: "local-founder", ...overrides }).app);
+      const response = await request("/ready");
+      assert.equal(response.status, 200);
+      assert.deepEqual(JSON.parse(response.text), { ready: true });
+    }
   });
 
   await t.test("upload links reject tampering, expiration and malformed claims", async (t) => {

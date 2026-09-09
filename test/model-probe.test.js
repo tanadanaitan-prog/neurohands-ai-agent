@@ -48,6 +48,21 @@ test("missing keys and invalid configuration never call a provider or reveal sec
   assert.equal(JSON.stringify(results).includes(SECRET), false);
 });
 
+test("the diagnostic skips disabled Gemini even when its key is configured", async () => {
+  const calls = [];
+  const results = await checkModels({ env: { ...env, GEMINI_ENABLED: " FALSE " }, fetchImpl: async (url) => {
+    calls.push(new URL(url).hostname);
+    assert.equal(new URL(url).hostname, "api.groq.com");
+    return fallbackAnswer();
+  } });
+  assert.deepEqual(calls, ["api.groq.com"]);
+  assert.deepEqual(results.map((result) => result.status), ["disabled", "ok"]);
+  assert.equal(results[0].httpStatus, null);
+  assert.equal(results[0].elapsedMs, 0);
+  assert.deepEqual(results[0].usage, {});
+  assert.equal(JSON.stringify(results).includes(SECRET), false);
+});
+
 test("CLI emits JSON only and exits successfully when no provider is configured", () => {
   // Deliberately clear the inherited environment: this test cannot use live keys.
   const child = spawnSync(process.execPath, [require.resolve("../scripts/check-models")], { env: {}, encoding: "utf8", timeout: 5000 });
