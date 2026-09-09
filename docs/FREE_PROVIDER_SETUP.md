@@ -62,6 +62,16 @@ Before any test, verify the [model's current availability and tool support](http
 
 ## Failure and recovery
 
+The runtime recognizes explicit account-wide authentication, credit, spend and quota failures. After one such rejection, it stops trying other models on that route and skips that route for later requests in the same process. Another configured route can still run. Ordinary transient errors keep the existing bounded fallback behavior.
+
+From the founder LINE account, send `health` for configuration and recorded account blocks without an AI request. `runs` and `trace: <id>` include safe failure reasons and distinguish actual requests from skipped routes. Existing commands and approvals remain available. No raw provider error body or private key is included.
+
+After correcting an account problem within verified free allowances, redeploy to clear the process pause. It does not survive a restart, coordinate replicas, cancel in-flight requests or enforce a dollar budget. It is not a hard $0 guarantee.
+
+OpenAI provides separate alerts and enforced spend limits; enforcement can lag, so a displayed credit balance or limit is not an instantaneous cutoff. Verify the key's organization, usable grant balance/expiry and applicable controls before more paid-model traffic. Do not buy credits or enable automatic purchases. [Spend controls](https://developers.openai.com/api/docs/guides/spend-limits), [prepaid billing behavior](https://help.openai.com/en/articles/8264644).
+
+The optional [Inkling third-model configuration](PUBLIC_MODEL_TEST.md) is restricted to a separate synthetic harness and never receives private business requests.
+
 - **401/403:** check the provider endpoint, key issuer and permissions. Trying another model does not repair a rejected credential.
 - **Credit-balance or quota error:** stop tests and check the account allowance. The observed `credit_balance_exhausted` response is not evidence that a short delay will fix the request. [OpenAI error guidance](https://developers.openai.com/api/docs/guides/error-codes).
 - **Rate limit or timeout:** record the failure and inspect its actual cause. Do not label the answer successful or replay a business action that may already have run.

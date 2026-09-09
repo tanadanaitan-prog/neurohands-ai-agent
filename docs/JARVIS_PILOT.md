@@ -34,6 +34,7 @@ Natural-language actions produce a proposal. Read its company, department and de
 | Command | Purpose |
 | --- | --- |
 | `help` | List supported commands. |
+| `health` | Show AI configuration and account blocks recorded in this process, without calling a model. |
 | `brief` | Show the current operations digest. |
 | `upload: KNC sales` | Create a secure portal link for that client and department. |
 | `docs: KNC` / `doc: <document-code>` | List or inspect uploaded documents. |
