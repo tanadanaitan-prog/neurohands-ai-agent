@@ -12,13 +12,13 @@ Neurohands aims to give a business an AI workforce that can answer questions, us
 | **Aria — customer business agent, AGT-001** | An activated customer | Uses permitted tools to look up products, orders and lead times; read that customer's available documents; record useful customer facts, support cases and follow-up tasks. |
 | **Concierge — public receptionist** | A visitor who has not activated customer access | Explains the business using configured company information and guides visitors toward a demo or activation. It does not receive private customer tools. |
 
-These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. The owner's replacement key belongs to **OpenAI**, and the prepared route is direct OpenAI with `gpt-4.1-mini`. That key authenticates, but a generation test is blocked by exhausted account credit. See the status below.
+These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. The configured route is direct **OpenAI / `gpt-4.1-mini`**. That key authenticates, but the last generation test was blocked by exhausted account credit. See the status below.
 
-The provider-switch repair adds `GEMINI_ENABLED=false`, allowing an alternative provider to handle requests directly while retaining the saved Gemini key. This flag requires the new code; it is not implemented in the currently deployed `c57de7e` revision. OpenRouter remains a separate optional route requiring its own key and verified allowance.
+The deployed provider-switch repair honors `GEMINI_ENABLED=false`, so requests use the configured alternative directly while retaining the saved Gemini key. This setting was verified in the new Railway container. OpenRouter remains a separate optional route requiring its own key and verified allowance.
 
 Jarvis currently provides an operator interface. Automatic delegation among independent agents, departments and managers is part of the future platform.
 
-A **Jarvis repair under review** adds conversational business tools, a short history of the operator's own conversations, confirmed notes, and proposals that require approval. It is not deployed yet. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
+The **deployed Jarvis repair** adds conversational business tools, a short history of the operator's own delivered conversations, confirmed notes, and proposals that require approval. Deployment and health checks passed; real AI conversation acceptance still awaits usable provider credit. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
 
 ## How a request moves through the system
 
@@ -26,10 +26,11 @@ A **Jarvis repair under review** adds conversational business tools, a short his
 flowchart TD
     A[Person sends a LINE message] --> B[Railway receives and verifies the message]
     B --> C[Identify the person and their access]
-    C -->|Founder or staff| J[Jarvis: operator commands and summaries]
+    C -->|Founder or staff| J[Jarvis: operator tools and proposals]
     C -->|Activated customer| R[Aria: permitted business tools]
     C -->|Visitor| P[Concierge: public company information]
     R --> D[Check allowed tools and client / department scope]
+    J --> D
     D --> S[Read or record authorized business data]
     S --> V[Use tool results to prepare the answer]
     J --> O[Reply through LINE]
@@ -72,7 +73,7 @@ This section supersedes older deployment statements in the linked September 7–
 
 | Status | What the evidence establishes |
 | --- | --- |
-| **Verified** | Application code and the simpler overview are published in the destination GitHub repository. Railway runs commit `c57de7e`; its build passed **101 tests**, and readiness/version endpoints were checked. The combined provider-switch and Jarvis repair passes **157 local tests**, syntax/menu checks and the build. It remains under review and is not deployed or accepted live. |
+| **Deployed and health checked** | [PR #9](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/9) released the provider-switch and Jarvis runtime as `16a0cbe`. Its Railway build passed **157 tests**, and `/version` matched the release commit while `/ready` returned `ready: true`. Release verification made no inference requests; live AI acceptance remains pending. |
 | **Verified** | The recovered Phase 1 database and private document bucket are configured. All 131 original database records were preserved and checked. One pilot document has been uploaded and parsed. |
 | **Verified, limited scope** | LINE has delivered messages to the application and received replies, including operator upload links and failure replies. This establishes connectivity, not reliable AI answers. |
 | **Implemented; full live proof pending** | Aria's document tools, activation, access checks, run traces and usage recording have automated tests. The full second-account customer activation → correct document answer → successful authorized trace remains unverified. |
@@ -127,7 +128,7 @@ Use [`.env.example`](.env.example) for the configuration names. Store real keys 
 | [Webhook recovery](docs/WEBHOOK_RECOVERY.md) | Failed or interrupted events, safe recovery and preserving the encryption key. |
 | [Live evidence](docs/LIVE_STATUS.md) | Dated diagnostic results and the customer proof requirements. |
 | [Provider setup and allowance checks](docs/FREE_PROVIDER_SETUP.md) | Direct OpenAI settings, the current credit block, optional OpenRouter settings, and the $0 test requirement. |
-| [Jarvis pilot](docs/JARVIS_PILOT.md) | The repair under review: conversational tools, finite history, confirmed notes, approvals and deployment/test order. |
+| [Jarvis pilot](docs/JARVIS_PILOT.md) | The deployed repair: conversational tools, finite history, confirmed notes, approvals and remaining live acceptance. |
 
 Useful founder commands are `help`, `brief`, `agents`, `runs`, `events`, `trace: <run_id>`, `docs: KNC` and `upload: KNC sales`. Creating a follow-up or checklist item records work; it does not mean an autonomous scheduler will execute it.
 

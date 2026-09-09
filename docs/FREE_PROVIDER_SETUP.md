@@ -16,9 +16,9 @@ The owner reported promotional/free credits, but the generation result shows tha
 
 `gpt-4.1-mini` supports Chat Completions and function calling. It is a priced API model, not an inherently free model. Existing eligible promotional credits may cover usage only when they are available for the account and request. [Official model documentation](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
 
-## Prepared direct OpenAI configuration
+## Verified deployed OpenAI configuration
 
-Enter secret values only in Railway Variables or a private local `.env`. The owner's replacement key is already saved; do not paste it into chat or this repository.
+The following settings and the presence of the private key were verified in the Railway container for the PR #9 runtime release. Store secret values only in Railway Variables or a private local `.env`; do not paste them into chat or this repository.
 
 | Variable | Value |
 | --- | --- |
@@ -31,7 +31,7 @@ Enter secret values only in Railway Variables or a private local `.env`. The own
 
 The `FALLBACK_` variable names are retained for compatibility. With Gemini disabled, this route handles requests directly; it does not wait for a Google failure. The explicit OpenAI base URL is required in this version.
 
-**The Gemini disable flag requires the new code.** The currently deployed `c57de7e` revision does not implement it. Saving the variable alone does not disable Google calls in that old revision. The provider-switch and Jarvis changes remain under review. Keep the saved Gemini credential so a future verified configuration can re-enable it without recovering a deleted key.
+**The Gemini disable flag is now deployed.** PR #9's runtime release `16a0cbe` implements it, and the new container has `GEMINI_ENABLED=false`. The earlier September 9 revision `c57de7e` lacked this behavior. Keep the saved Gemini credential for a future verified configuration. Deployment and non-AI health checks passed; no inference requests were made during release verification, and the account-credit block remains unresolved.
 
 ## Deploy code, then verify AI within usable allowance
 
