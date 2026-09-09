@@ -12,6 +12,20 @@ Project `darxiaearohhnxiwhcbs` (`Neurohands - AI Agent`) belongs to the verified
 - `nh_activate_client` atomically redeems a hash of a random activation code. A live transaction checked activation, replay and the one-use limit, then rolled back; no self-test clients, bindings or codes remain. Anonymous/authenticated browser roles cannot execute that function or claim Jarvis approvals.
 - Private Storage bucket `neurohands-docs` has `public=false`, a 10,485,760-byte limit, and allowed MIME types for XLSX, XLS, CSV, TXT, DOCX, PDF and binary uploads. The gateway validates extensions and reports unsupported/partial extraction honestly. No original Storage objects existed before setup.
 
+## Jarvis operator runs — 9 September 2026
+
+The reviewed `jarvis_operator_runs` migration is applied to project `darxiaearohhnxiwhcbs`. Supabase assigned version **`20260909155146`**. The file was initially generated locally with the CLI as `20260909153735_jarvis_operator_runs.sql`, then renamed to **`20260909155146_jarvis_operator_runs.sql`** to match the recorded remote version. Its SQL content was unchanged by the rename. Apply this migration once; do not use a blanket push that includes the unapplied workspace migration.
+
+- `agent_runs.run_kind` defaults to `client`, retaining the requirement for a client account. Operator runs require a null client account, null agent code and the `operations` department; the two checks are validated remotely.
+- `agent_runs.delivered_at` is nullable with no default. Only completed operator runs with a recorded delivery timestamp enter the indexed conversation-history query. Model completion alone does not establish delivery.
+- `jarvis_notes.source_run_id` is a nullable, validated foreign key to the originating run, with its own index. Historical notes and explicit commands without a run stay compatible; a proposed operation and its approved tool execution can share the same evidence chain.
+- Live preflight and postflight both found **0 agent runs and 0 Jarvis notes**. Ordered fingerprints of all pre-existing columns match exactly. No customer or operator test rows were inserted remotely.
+- Both tables retain RLS, unchanged policies, and identical table/sequence ACLs. Anonymous and authenticated browser roles cannot select/insert/update/delete these tables; the service role retains its existing access.
+- The security advisor remained at the same **25 informational `rls_enabled_no_policy` findings** for the existing server-only tables, with no added warnings/errors. These tables intentionally lack browser policies; their server-side access checks still require separate runtime verification. [Advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+- `node --test test/jarvis-operator-db.test.js` passed all **8 reported tests** in isolated PostgreSQL, covering historical data/defaults, shape constraints, proposal foreign keys, unchanged access controls, and delivery-confirmed history ordering/index applicability. This is not a live model or LINE proof.
+
+Detailed preflight/postflight results and the local SQL SHA-256 are in the Git-ignored `.tmp/live-evidence/20260909-jarvis-operator-migration.json`. This database change alone does not prove that the matching server revision has been deployed or that Jarvis/Aria can answer successfully.
+
 ## Backup and recovery
 
 The original public schema and exact JSON data were saved privately under `.tmp/backups/`, which Git ignores. `scripts/verify-public-backup.js` restored all 131 records and seven sequence states in isolated PostgreSQL and verified exact values. Timestamp comparisons use UTC. Generated restore SQL and snapshots contain private data and must never be uploaded to GitHub.

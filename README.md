@@ -12,9 +12,13 @@ Neurohands aims to give a business an AI workforce that can answer questions, us
 | **Aria — customer business agent, AGT-001** | An activated customer | Uses permitted tools to look up products, orders and lead times; read that customer's available documents; record useful customer facts, support cases and follow-up tasks. |
 | **Concierge — public receptionist** | A visitor who has not activated customer access | Explains the business using configured company information and guides visitors toward a demo or activation. It does not receive private customer tools. |
 
-These are **three application roles using AI models**. We have not trained three new models. Gemini is the configured primary AI engine; a model hosted by Groq is the configured backup when the primary cannot provide a usable response. The roles can use the same engine while having different instructions, permissions and information.
+These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. The owner's replacement key belongs to **OpenAI**, and the prepared route is direct OpenAI with `gpt-4.1-mini`. That key authenticates, but a generation test is blocked by exhausted account credit. See the status below.
+
+The provider-switch repair adds `GEMINI_ENABLED=false`, allowing an alternative provider to handle requests directly while retaining the saved Gemini key. This flag requires the new code; it is not implemented in the currently deployed `c57de7e` revision. OpenRouter remains a separate optional route requiring its own key and verified allowance.
 
 Jarvis currently provides an operator interface. Automatic delegation among independent agents, departments and managers is part of the future platform.
+
+A **Jarvis repair under review** adds conversational business tools, a short history of the operator's own conversations, confirmed notes, and proposals that require approval. It is not deployed yet. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
 
 ## How a request moves through the system
 
@@ -43,7 +47,7 @@ For example, a customer asks about an order. The application identifies their ac
 | **GitHub** | Stores the source code, documentation and change history. |
 | **Railway** | Runs the application, receives LINE events and calls the connected services. |
 | **Supabase** | Stores business records, customer access, private documents, saved facts and execution records. |
-| **Gemini / Groq** | Supply the AI responses and tool requests; the application enforces access. |
+| **Selected AI provider** | Supplies AI responses and tool requests; the application enforces access. |
 
 Connecting GitHub to Supabase alone does not connect LINE or configure Railway's runtime credentials. Each connection has its own purpose.
 
@@ -68,11 +72,11 @@ This section supersedes older deployment statements in the linked September 7–
 
 | Status | What the evidence establishes |
 | --- | --- |
-| **Verified** | Application code is in the destination GitHub repository. The latest verified Railway deployment is commit `899628d`; its checks passed with **101 tests**, and its readiness/version endpoints were checked. |
+| **Verified** | Application code and the simpler overview are published in the destination GitHub repository. Railway runs commit `c57de7e`; its build passed **101 tests**, and readiness/version endpoints were checked. The combined provider-switch and Jarvis repair passes **157 local tests**, syntax/menu checks and the build. It remains under review and is not deployed or accepted live. |
 | **Verified** | The recovered Phase 1 database and private document bucket are configured. All 131 original database records were preserved and checked. One pilot document has been uploaded and parsed. |
 | **Verified, limited scope** | LINE has delivered messages to the application and received replies, including operator upload links and failure replies. This establishes connectivity, not reliable AI answers. |
 | **Implemented; full live proof pending** | Aria's document tools, activation, access checks, run traces and usage recording have automated tests. The full second-account customer activation → correct document answer → successful authorized trace remains unverified. |
-| **Repair awaiting confirmation** | The latest investigated founder AI request reached the application's 15-second timeout while waiting for Gemini; Groq then rejected authentication with HTTP 401. The owner reports replacing the Groq key. A successful response using the new key still needs verification. |
+| **Provider account blocked** | The replacement key is an OpenAI key. Its authenticated model-list request returned HTTP 200. A single bounded `gpt-4.1-mini` generation test returned HTTP 429, `credit_balance_exhausted`, after 1,742 ms, with no usable answer or reported usage. No further generation tests or purchases are authorized while that credit block remains. See [provider setup and allowance checks](docs/FREE_PROVIDER_SETUP.md). |
 | **Planned / experimental** | The broader team website, automatic delegation, department workflows, recurring task execution, semantic document search and external connector framework are not established live capabilities. The experimental `/studio` website remains disabled for this milestone. |
 
 The current repository and destination service are available, but the complete original-account migration and source deployment inventory remain unfinished. Preserve the original resources until that reconciliation is complete.
@@ -122,6 +126,8 @@ Use [`.env.example`](.env.example) for the configuration names. Store real keys 
 | [Supabase readiness](supabase/README.md) | Applied Phase 1 schema, access and document storage checks. Do not substitute the experimental Phase 2 migration. |
 | [Webhook recovery](docs/WEBHOOK_RECOVERY.md) | Failed or interrupted events, safe recovery and preserving the encryption key. |
 | [Live evidence](docs/LIVE_STATUS.md) | Dated diagnostic results and the customer proof requirements. |
+| [Provider setup and allowance checks](docs/FREE_PROVIDER_SETUP.md) | Direct OpenAI settings, the current credit block, optional OpenRouter settings, and the $0 test requirement. |
+| [Jarvis pilot](docs/JARVIS_PILOT.md) | The repair under review: conversational tools, finite history, confirmed notes, approvals and deployment/test order. |
 
 Useful founder commands are `help`, `brief`, `agents`, `runs`, `events`, `trace: <run_id>`, `docs: KNC` and `upload: KNC sales`. Creating a follow-up or checklist item records work; it does not mean an autonomous scheduler will execute it.
 

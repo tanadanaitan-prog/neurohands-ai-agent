@@ -11,7 +11,7 @@ const primary = (total = 78) => json({ candidates: [{ content: { parts: [{ text:
   usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 2, thoughtsTokenCount: 71, cachedContentTokenCount: 3, totalTokenCount: total } });
 
 function gatewayFixture(t, overrides = {}) {
-  const values = { GEMINI_API_KEY: PRIVATE, GEMINI_MODEL: "gemini-fixture", FALLBACK_API_KEY: PRIVATE, FALLBACK_PROVIDER: "groq",
+  const values = { GEMINI_API_KEY: PRIVATE, GEMINI_ENABLED: "true", GEMINI_MODEL: "gemini-fixture", FALLBACK_API_KEY: PRIVATE, FALLBACK_PROVIDER: "groq",
     FALLBACK_BASE_URL: "https://model.invalid", FALLBACK_MODELS: "first,second", FALLBACK_MODEL: "", ENABLE_STUDIO: "false",
     SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture", ...overrides };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));

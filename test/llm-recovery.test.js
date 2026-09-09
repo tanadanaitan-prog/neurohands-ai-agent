@@ -9,14 +9,16 @@ const schema = { name: "request_human", parameters: { type: "object", properties
 
 function loadGateway(t, overrides = {}) {
   const values = {
-    GEMINI_API_KEY: PRIVATE_MARKER, GEMINI_MODEL: "fixture-gemini",
+    GEMINI_API_KEY: PRIVATE_MARKER, GEMINI_ENABLED: "true", GEMINI_MODEL: "fixture-gemini",
     FALLBACK_API_KEY: PRIVATE_MARKER, FALLBACK_PROVIDER: "groq",
     FALLBACK_BASE_URL: "https://fallback.invalid", FALLBACK_MODELS: "first,second", FALLBACK_MODEL: "",
     SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture",
     ENABLE_STUDIO: "false", ...overrides,
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
-  Object.assign(process.env, values);
+  for (const [key, value] of Object.entries(values)) {
+    if (value === undefined) delete process.env[key]; else process.env[key] = value;
+  }
   t.after(() => {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[key]; else process.env[key] = value;
@@ -54,6 +56,85 @@ const primaryFailures = {
 };
 
 test("LLM recovery uses mocked providers only", async (t) => {
+  await t.test("Gemini remains the primary when the enable flag is absent", async (t) => {
+    const { gateway } = loadGateway(t, { GEMINI_ENABLED: undefined });
+    let calls = 0;
+    t.mock.method(globalThis, "fetch", async (url) => {
+      calls++;
+      assert.equal(new URL(url).hostname, "generativelanguage.googleapis.com");
+      return geminiAnswer("Primary answer");
+    });
+    assert.equal(await gateway.askAI("Policy", "Question"), "Primary answer");
+    assert.equal(calls, 1);
+  });
+
+  await t.test("disabled Gemini retains its key but plain answers use only the fallback", async (t) => {
+    const { gateway, metrics } = loadGateway(t, { GEMINI_ENABLED: " false " });
+    const hosts = [];
+    t.mock.method(globalThis, "fetch", async (url) => {
+      hosts.push(new URL(url).hostname);
+      assert.equal(new URL(url).hostname, "fallback.invalid");
+      return answer();
+    });
+    assert.equal(await gateway.askAI("Policy", "Question"), "Recovered answer");
+    assert.equal(process.env.GEMINI_API_KEY, PRIVATE_MARKER);
+    assert.deepEqual(hosts, ["fallback.invalid"]);
+    assert.equal(metrics.length, 1);
+    assert.equal(metrics[0].provider, "custom");
+  });
+
+  await t.test("disabled Gemini lets Aria complete an authorized fallback document-tool exchange", async (t) => {
+    const { gateway } = loadGateway(t, { GEMINI_ENABLED: "false" });
+    const modelHosts = [];
+    const toolRecords = [];
+    let completed;
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+      const address = new URL(url);
+      if (address.hostname === "fallback.invalid") {
+        modelHosts.push(address.hostname);
+        const body = JSON.parse(options.body);
+        if (modelHosts.length === 1) {
+          assert.equal(body.tools[0].function.name, "read_document");
+          return json({ choices: [{ message: { tool_calls: [
+            { id: "fixture-read", function: { name: "read_document", arguments: JSON.stringify({ doc_code: "FIXTURE-DOC" }) } },
+          ] } }] });
+        }
+        const result = JSON.parse(body.messages.at(-1).content);
+        assert.equal(result.readable, true);
+        assert.equal(result.content.text, "Fixture document answer");
+        return answer("Fixture document answer");
+      }
+      assert.equal(address.hostname, "database.invalid", "Disabled Gemini must never receive a request");
+      switch (address.pathname) {
+        case "/rest/v1/client_agent_bindings": return json([{ client_account_id: 1, department: "sales" }]);
+        case "/rest/v1/client_accounts": return json([{ id: 1, active: true }]);
+        case "/rest/v1/agent_memory": return json([]);
+        case "/rest/v1/client_documents":
+          assert.equal(address.searchParams.get("client_account_id"), "eq.1");
+          assert.equal(address.searchParams.get("department"), "eq.sales");
+          assert.equal(address.searchParams.get("doc_code"), "eq.FIXTURE-DOC");
+          return json([{ doc_code: "FIXTURE-DOC", parsed_status: "parsed", parsed_summary: { text: "Fixture document answer", extraction_complete: true } }]);
+        case "/rest/v1/tool_calls":
+          toolRecords.push(JSON.parse(options.body));
+          return json([{ id: 2 }]);
+        case "/rest/v1/agent_runs":
+          if (options.method === "PATCH") completed = JSON.parse(options.body);
+          return json([{ id: 1 }]);
+        default: throw new Error("Unexpected fixture request");
+      }
+    });
+    const ctx = { lineUserId: "fixture-client", clientAccountId: 1, department: "sales" };
+    const agent = { agent_code: "AGT-001", allowed_tools: ["read_document"], domains: [], responsibilities: [] };
+    assert.equal(await gateway.runAgent(ctx, "Read my document", agent), "Fixture document answer");
+    assert.deepEqual(modelHosts, ["fallback.invalid", "fallback.invalid"]);
+    assert.equal(toolRecords.length, 1);
+    assert.equal(toolRecords[0].allowed, true);
+    assert.equal(toolRecords[0].status, "success");
+    assert.equal(completed.status, "completed");
+    assert.equal(ctx.runStatus, "completed");
+    assert.equal(process.env.GEMINI_API_KEY, PRIVATE_MARKER);
+  });
+
   for (const [reason, fail] of Object.entries(primaryFailures)) {
     await t.test(`plain Gemini ${reason} falls through to fallback without exposing private data`, async (t) => {
       const { gateway, logs } = loadGateway(t);

@@ -1,5 +1,5 @@
 // Run in Railway's environment: node scripts/check-models.js
-// One small request per configured provider. Never prints response bodies or secrets.
+// One small request per enabled/configured provider. Never prints response bodies or secrets.
 const { performance } = require("node:perf_hooks");
 
 const TIMEOUT_MS = 25000;
@@ -42,6 +42,7 @@ function configuration(env) {
   return [
     {
       provider: "gemini", model: safeModel(geminiModel, secrets), key: env.GEMINI_API_KEY,
+      enabled: String(env.GEMINI_ENABLED).trim().toLowerCase() !== "false",
       url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`,
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: { contents: [{ role: "user", parts: [{ text: "Reply with OK." }] }], generationConfig: { maxOutputTokens: 128 } },
@@ -57,6 +58,7 @@ function configuration(env) {
 async function probe(config, { fetchImpl, timeoutMs, now }) {
   const started = now();
   const result = { provider: config.provider, model: config.model, status: "missing_key", httpStatus: null, elapsedMs: 0, usage: {} };
+  if (config.enabled === false) return { ...result, status: "disabled" };
   if (!config.key) return result;
   if (!config.model || !config.url) return { ...result, status: "invalid_configuration" };
   const controller = new AbortController();
