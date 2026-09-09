@@ -727,7 +727,8 @@ async function runOpenAIToolLoop(systemContext, userMessage, toolSchemas, ctx, r
 async function runAgent(ctx, userText, agent) {
   const guard = inputGuardrail(userText);
   if (!guard.ok) return guard.reply;
-  let runId, metrics;
+  let runId, metrics, toolExecutions = 0;
+  const partialWorkReply = "I could not complete that request. Some work may already be saved. Please ask the team to check what was completed before repeating the request.";
   try {
     const binding = (await getBindings(ctx.lineUserId)).find((item) =>
       String(item.client_account_id) === String(ctx.clientAccountId) && item.department === ctx.department);
@@ -741,13 +742,18 @@ async function runAgent(ctx, userText, agent) {
       const toolSchemas = ctx.allowedTools.map((name) => TOOL_SCHEMAS[name]).filter(Boolean);
       const memories = await loadMemories(ctx);
       const system = buildAgentSystem(agent, ctx, memories);
-      let result = await askGeminiWithTools(system, userText, toolSchemas, ctx, runId);
-      if (result.apiFailed || !result.text) {
-        const fb = await runOpenAIToolLoop(system, userText, toolSchemas, ctx, runId);
+      const options = { execute: async (...args) => {
+        toolExecutions++;
+        return executeToolWithLog(...args);
+      } };
+      let result = await askGeminiWithTools(system, userText, toolSchemas, ctx, runId, options);
+      // Restarting after a tool could repeat a business action. Preserve its evidence and stop instead.
+      if ((result.apiFailed || !result.text) && toolExecutions === 0) {
+        const fb = await runOpenAIToolLoop(system, userText, toolSchemas, ctx, runId, options);
         if (fb.text) result = fb;
       }
       if (!result.text || result.exhausted) throw new Error("No complete model answer was returned");
-      const finalText = ctx.toolFailed ? "I could not verify the requested information because a tool did not succeed. Please try again or contact the team." : outputGuardrail(result.text);
+      const finalText = ctx.toolFailed ? (toolExecutions > 0 ? partialWorkReply : "I could not verify the requested information because a tool did not succeed. Please try again or contact the team.") : outputGuardrail(result.text);
       ctx.runStatus = ctx.toolFailed ? "error" : "completed";
       await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, ctx.toolFailed ? "One or more tool calls did not succeed" : null, finalizeRunMetrics(metrics));
       return finalText;
@@ -757,7 +763,7 @@ async function runAgent(ctx, userText, agent) {
     console.error("Agent run failed");
     try { await completeAgentRun(runId, "error", null, 0, "Execution or evidence persistence failed", finalizeRunMetrics(metrics)); }
     catch { console.error("Could not persist agent failure"); }
-    return "Sorry, I could not complete that request. Please try again or contact the team.";
+    return toolExecutions > 0 ? partialWorkReply : "Sorry, I could not complete that request. Please try again or contact the team.";
   }
 }
 
