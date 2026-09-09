@@ -1,4 +1,16 @@
-# Live pilot status — 8 September 2026
+# Live pilot status
+
+## Current checkpoint — 9 September 2026
+
+- PR #7 (`899628db273cd26b6b2ed21590e5ad151e5a7bdb`) is deployed. The recorded build passed 101 tests. Readiness and delivery checks do not establish successful AI answers.
+- The latest inspected real founder greeting failed: Gemini reached the application's 15-second request timeout; Groq rejected authentication with HTTP 401. LINE delivered the failure notice. The reason for Gemini's delay is not established.
+- The owner reports replacing the Groq key. Verification of the replacement in the running service is pending. Changing the model alone cannot repair a rejected API key.
+- The complete second-account Aria activation → document answer → authorized `read_document` trace remains pending. Jarvis founder replies and small provider probes do not satisfy that test.
+- Work must stay within verified free allowances. Railway's dashboard shows 28 trial days or $4.90 credit remaining; the owner confirms the replacement key belongs to Groq's Free plan. A bounded Groq-only probe is authorized within these allowances. Gemini's account billing tier remains unverified. Token measurements alone are not a spending cap.
+
+See the [plain-language project overview](../README.md) and [full goal acceptance record](GOAL_ACCEPTANCE.md). The dated evidence below is historical, not a claim of current provider availability.
+
+## Historical checkpoint — 8 September 2026
 
 This dated record supersedes the deployment observations from 7 September in `PHASE1_STATUS.md` and `RAILWAY_SETUP.md`. It does not declare the full pilot or account migration complete.
 
