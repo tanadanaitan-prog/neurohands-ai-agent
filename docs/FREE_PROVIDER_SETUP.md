@@ -1,48 +1,70 @@
-# Free provider pilot setup
+# Provider setup and the $0 test requirement
 
-Prepared 9 September 2026. The replacement is not accepted until its private key, live answer and Aria document trace pass. Do not treat this page as proof of a working connection.
+Updated 9 September 2026. The current replacement route is **direct OpenAI / `gpt-4.1-mini`**. Its private key authenticates, but generation is blocked by account credit. OpenRouter is a separate optional alternative.
 
-## Why change the provider?
+## What is working, and what is blocked?
 
-The saved Groq credential returned HTTP 401 both in a small generation probe and in an authentication-only check after a fresh Railway restart. Changing the model behind that rejected key cannot fix authentication.
+The owner confirmed that the saved replacement key came from OpenAI's platform. Using a key against a different provider's endpoint can produce an authentication rejection; OpenAI, Groq and OpenRouter keys are not interchangeable.
 
-The selected replacement is **OpenRouter / `openai/gpt-oss-120b:free`**. Its [official model page](https://openrouter.ai/openai/gpt-oss-120b:free) lists free prompt/completion tokens and tool calling. This is the same model family through another provider. Actual speed, Thai answers and document accuracy still need a live test.
+| Check | Observed result | What it establishes |
+| --- | --- | --- |
+| OpenAI authenticated model list | HTTP 200 | The key authenticates with OpenAI. |
+| One `gpt-4.1-mini` request, maximum eight output tokens | HTTP 429, `credit_balance_exhausted`, 1,742 ms | No usable answer; generation is currently blocked by account credit. Usage was not reported. |
+| Real Jarvis and Aria conversation with this model | Pending | No successful end-to-end conversation is claimed. |
 
-## Private key: the owner's step
+The owner reported promotional/free credits, but the generation result shows that usable credit is not currently available to this request. Stop further generation tests until the correct account/project has verified usable allowance. Do not buy credits or enable automatic purchases under the current $0 requirement.
 
-1. Sign in to [OpenRouter API Keys](https://openrouter.ai/keys) with the intended owner account and use its free allowance. Do not buy credits or select a paid model.
-2. Create an API key and copy it directly into Railway → **Neurohands AI Agent** → **neurohands-ai-agent** → **Variables** → `FALLBACK_API_KEY`.
-3. Save the value privately and tell the technical lead it is saved. Do not paste the key into chat, GitHub, a screenshot or this document. Deployment follows the code checks below.
+`gpt-4.1-mini` supports Chat Completions and function calling. It is a priced API model, not an inherently free model. Existing eligible promotional credits may cover usage only when they are available for the account and request. [Official model documentation](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
 
-## Prepared configuration
+## Prepared direct OpenAI configuration
+
+Enter secret values only in Railway Variables or a private local `.env`. The owner's replacement key is already saved; do not paste it into chat or this repository.
 
 | Variable | Value |
 | --- | --- |
 | `GEMINI_ENABLED` | `false` |
+| `FALLBACK_PROVIDER` | `openai` |
+| `FALLBACK_BASE_URL` | `https://api.openai.com/v1` |
+| `FALLBACK_MODELS` | `gpt-4.1-mini` |
+| `FALLBACK_MODEL` | Empty |
+| `FALLBACK_API_KEY` | The owner's private OpenAI API key |
+
+The `FALLBACK_` variable names are retained for compatibility. With Gemini disabled, this route handles requests directly; it does not wait for a Google failure. The explicit OpenAI base URL is required in this version.
+
+**The Gemini disable flag requires the new code.** The currently deployed `c57de7e` revision does not implement it. Saving the variable alone does not disable Google calls in that old revision. The provider-switch and Jarvis changes remain under review. Keep the saved Gemini credential so a future verified configuration can re-enable it without recovering a deleted key.
+
+## Deploy code, then verify AI within usable allowance
+
+1. Complete code review and local checks, including tests with `GEMINI_ENABLED=false`. The combined Jarvis repair also requires the operator-run migration **before** the application deployment; follow the [Jarvis deployment order](JARVIS_PILOT.md#deployment-order).
+2. Verify that the Railway deployment fits within its existing allowance and $0 new spending. Deploy the reviewed revision with the intended private variables. The AI credit block does not prevent this code-only deployment; do not run inference requests or provider diagnostics as deployment hooks.
+3. Check the deployed commit, `/ready` and provider settings. These checks do not require AI generation. Readiness validates configuration and application dependencies; it does not authenticate the model or check its balance.
+4. Before any inference request, confirm the key belongs to the intended OpenAI account/project and that existing promotional/free allowance is usable and unexpired. Resolve the reported account-credit issue without purchasing credit. Do not assume a model-list HTTP 200 proves generation credit exists.
+5. Only within that verified usable allowance, perform one bounded plain-response test. Record status, model, elapsed time and reported usage. Do not repeatedly retry a credit-balance error.
+6. Complete the founder [Jarvis acceptance checks](JARVIS_PILOT.md#live-acceptance) and the separate [second-account Aria document test](../README.md#documents-and-customer-activation).
+7. Verify actual LINE delivery, source accuracy, correct client/department, allowed successful tool calls and run traces. Record unknown usage as unknown, not zero.
+
+A tool conversation may require several model requests. Neither a tiny connectivity test nor a token counter establishes the monthly bill, a hard spending limit or supported customer capacity.
+
+## Optional alternative: OpenRouter
+
+If a different verified free route is chosen, OpenRouter's `openai/gpt-oss-120b:free` remains a candidate. It requires an **OpenRouter-issued key**, even though the model name begins with `openai/`. The OpenAI key currently saved in Railway cannot be reused for this route.
+
+| Variable | Alternative value |
+| --- | --- |
+| `GEMINI_ENABLED` | `false` |
 | `FALLBACK_PROVIDER` | `openrouter` |
+| `FALLBACK_BASE_URL` | Empty; the server selects OpenRouter's official API |
 | `FALLBACK_MODELS` | `openai/gpt-oss-120b:free` |
 | `FALLBACK_MODEL` | Empty |
-| `FALLBACK_BASE_URL` | Empty; the server selects OpenRouter's official API |
-| `FALLBACK_API_KEY` | The owner's private OpenRouter key |
+| `FALLBACK_API_KEY` | A separate private OpenRouter key |
 
-Keep the `:free` suffix exactly. Do not reuse the Groq key for OpenRouter. Keep the saved Gemini key: `GEMINI_ENABLED=false` disables its runtime and diagnostic requests without deleting that credential. When the flag is absent, existing Gemini-first behavior remains. The new flag requires the matching code revision and a service restart.
-
-## Verification and deployment
-
-1. Run syntax/menu checks, the build and automated tests, including tests with `GEMINI_ENABLED=false`.
-2. Review the change and confirm that the enabled provider has a private key. Readiness must fail if every provider is disabled or unconfigured.
-3. Deploy the reviewed revision with the saved variables. Verify the deployed commit, `/ready` and configuration. These checks do not authenticate the provider.
-4. Check the private key against OpenRouter's authenticated `GET /api/v1/key` endpoint. Record only safe allowance fields and status, never the key or raw account details. Resolve account/rate-limit issues without buying credits.
-5. Within the verified allowance, make one bounded plain-response test and then the real second-account Aria document test described in the [README](../README.md#documents-and-customer-activation).
-6. Compare the actual answer with its source and verify the client/department, allowed successful `read_document`, completed run and LINE delivery. Record reported tokens, elapsed time and any unknown usage.
-
-OpenRouter's [Free plan](https://openrouter.ai/pricing) advertises limited daily requests. A tool conversation can need several model requests, so the request allowance is not a customer-conversation allowance. Capacity, model availability and account limits can change; verify [current limits](https://openrouter.ai/docs/api_reference/limits). Do not silently switch to the unsuffixed paid model when free capacity is exhausted.
+Before any test, verify the [model's current availability and tool support](https://openrouter.ai/openai/gpt-oss-120b:free), the account's [current limits](https://openrouter.ai/docs/api_reference/limits), and its usable free allowance. Keep the `:free` suffix; do not silently switch to a paid model when free capacity is unavailable. Selecting an alternative remains separate from proving that it works.
 
 ## Failure and recovery
 
-- **401/403:** investigate the correct provider, saved key and account permissions. Do not keep trying other models with the same rejected credential.
-- **402/429:** inspect the account's allowance and reset information. Wait or use another explicitly verified free option; do not add credits automatically.
-- **Timeout or unavailable model:** record the failed attempt. Do not label the answer successful or replay a business action that already ran.
-- **No enabled provider:** keep the last healthy deployment while repairing configuration. The readiness check should reject the incomplete replacement.
+- **401/403:** check the provider endpoint, key issuer and permissions. Trying another model does not repair a rejected credential.
+- **Credit-balance or quota error:** stop tests and check the account allowance. The observed `credit_balance_exhausted` response is not evidence that a short delay will fix the request. [OpenAI error guidance](https://developers.openai.com/api/docs/guides/error-codes).
+- **Rate limit or timeout:** record the failure and inspect its actual cause. Do not label the answer successful or replay a business action that may already have run.
+- **Incomplete provider configuration:** repair it before accepting a new deployment. Readiness must reject a configuration with no enabled provider.
 
-Re-enable Gemini only after its allowance and operation are verified, by setting `GEMINI_ENABLED=true` and restarting. Preserve `WEBHOOK_ENCRYPTION_KEY`, LINE credentials, customer bindings and document storage. The provider change does not require a database migration or re-uploading customer documents.
+Preserve `WEBHOOK_ENCRYPTION_KEY`, LINE credentials, customer bindings and stored documents. A provider-only change does not require re-uploading documents or a schema change; the separate Jarvis operator-history feature does require its reviewed migration.
