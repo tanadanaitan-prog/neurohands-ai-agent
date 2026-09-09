@@ -1,8 +1,8 @@
 # Jarvis conversational pilot
 
-**Status: local repair under review, not deployed.** The currently deployed `c57de7e` revision does not contain this expanded Jarvis runtime. The provider connection is also blocked by OpenAI account credit; see [provider status](FREE_PROVIDER_SETUP.md). Do not treat the examples below as passed live tests.
+**Status: deployed and health checked; live AI acceptance remains blocked by account credit.** [PR #9](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/9) released this Jarvis runtime as `16a0cbe` on 9 September 2026. Railway deployment `1b371129-a52e-4072-8b35-9119ff430006` succeeded; `/version` matched the release commit and `/ready` returned `ready: true`. See [provider status](FREE_PROVIDER_SETUP.md). The examples below are still pending live tests.
 
-The combined local suite passes **157 tests**, with syntax/menu validation and the build also passing. These checks use simulated providers and isolated databases; the actual LINE conversations below still require live acceptance.
+Both local verification and the Railway build passed **157 tests**, with syntax/menu validation and the build passing. Tests use simulated providers and isolated databases. Release checks made no inference requests; the actual LINE conversations below still require usable credit and live acceptance.
 
 ## What changes for the owner?
 
