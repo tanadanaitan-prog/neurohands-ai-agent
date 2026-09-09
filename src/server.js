@@ -10,7 +10,8 @@ const { createStudioRouter } = require("./platform/router");
 const path = require("node:path");
 const { parseDocument } = require("./lib/document-parser");
 const { createWebhookInbox, currentWebhookEventId, encryptionKey } = require("./lib/webhook-inbox");
-const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt, finalizeRunMetrics, formatRunMetrics } = require("./lib/model-metrics");
+const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt, finalizeRunMetrics, formatRunMetrics, recordProviderBlocked } = require("./lib/model-metrics");
+const { readProviderFailure, createProviderFailures } = require("./lib/provider-failures");
 const { JARVIS_OBJECTIVE, loadJarvisContext } = require("./lib/jarvis-context");
 const { createJarvisTools } = require("./lib/jarvis-tools");
 
@@ -82,22 +83,47 @@ function fallbackModels() {
 }
 
 let cachedFallbackModel = null;
+const providerFailures = createProviderFailures();
+
+function modelProviderLabel(provider) {
+  if (provider === "Gemini") return "gemini";
+  const officialBases = { openai: "https://api.openai.com/v1", groq: "https://api.groq.com/openai/v1",
+    openrouter: "https://openrouter.ai/api/v1", mistral: "https://api.mistral.ai/v1", cerebras: "https://api.cerebras.ai/v1" };
+  return Object.entries(officialBases).find(([, base]) => base === fallbackBase())?.[0] || "custom";
+}
+
+function modelHealthText() {
+  const reasons = { authentication_rejected: "authentication rejected", credit_exhausted: "credit exhausted",
+    spend_limit_reached: "spend limit reached", quota_exhausted: "account quota exhausted" };
+  const describe = (route, label, configured) => {
+    if (!configured) return `${label}: disabled or not configured.`;
+    const reason = providerFailures.get(route);
+    return reason ? `${label}: paused — ${reasons[reason] || "account failure"}.` : `${label}: configured; no account block recorded in this process.`;
+  };
+  return ["AI connection status", describe("gemini", "Gemini", geminiConfigured()),
+    describe("fallback", "Fallback", Boolean(fallbackBase())),
+    "This status check sends no AI request and does not verify credit or answer quality.",
+    "After correcting an account block within the approved free allowance, redeploy to clear the pause. Do not raise spending limits or buy credits under the $0 requirement.",
+    "Public model tests use a separate script; private LINE conversations never use that test route."].join("\n\n");
+}
 
 async function requestModelJson(provider, url, headers, body, model, usable = () => true) {
+  const route = provider === "Gemini" ? "gemini" : "fallback";
+  const metricProvider = modelProviderLabel(provider);
+  const blocked = providerFailures.get(route);
+  if (blocked) { recordProviderBlocked(metricProvider, blocked); return null; }
   const started = performance.now();
-  const fallbackProvider = String(FALLBACK_PROVIDER).toLowerCase();
-  const metricProvider = provider === "Gemini" ? "gemini" : FALLBACK_BASE_URL ? "custom" :
-    ["groq", "openrouter", "mistral", "cerebras"].includes(fallbackProvider) ? fallbackProvider : "fallback";
   const attempt = beginModelAttempt(metricProvider, model, [GEMINI_API_KEY, FALLBACK_API_KEY]);
   const elapsed = () => Math.round(performance.now() - started);
   let response;
-  const failed = (reason) => {
-    finishModelAttempt(attempt, typeof reason === "number" ? "http_error" : reason, response?.status, elapsed());
+  const signal = AbortSignal.timeout(15000);
+  const failed = (reason, failureReason) => {
+    finishModelAttempt(attempt, typeof reason === "number" ? "http_error" : reason, response?.status, elapsed(), undefined, failureReason);
     console.error(`${provider} request failed`, reason, JSON.stringify(attempt));
   };
   try {
     response = await fetch(url, {
-      method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
+      method: "POST", headers, body: JSON.stringify(body), signal,
     });
   } catch (error) {
     const reason = ["TimeoutError", "AbortError"].includes(error?.name) ? "timeout" : "transport";
@@ -105,7 +131,9 @@ async function requestModelJson(provider, url, headers, body, model, usable = ()
     return null;
   }
   if (!response.ok) {
-    failed(response.status);
+    const failureReason = await readProviderFailure(response, { signal });
+    providerFailures.block(route, failureReason);
+    failed(response.status, failureReason);
     return null;
   }
   try {
@@ -167,6 +195,7 @@ async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.to
       cachedFallbackModel = model;
       return data;
     }
+    if (providerFailures.get("fallback")) return null;
     if (data !== null) console.error("Fallback LLM request failed", "invalid_response");
   }
   return null;
@@ -971,6 +1000,7 @@ async function createActivationCode(clientCode, department, createdBy) {
 const JARVIS_HELP = `🎩 Jarvis v3.10 commands
 
 brief — live digest (orders/cases/tasks/blocked)
+health — AI configuration and recorded account blocks; no AI request
 agents — list registered agents
 runs — last 10 agent runs
 events — failed or interrupted webhook events
@@ -1054,6 +1084,7 @@ async function handleStaffMessage(lineUserId, text, replyToken) {
   const send = (msg) => replyToLine(replyToken, msg.startsWith("🎩") ? msg : `🎩 ${msg}`);
 
   if (/^(help|command)$/i.test(t)) return send(JARVIS_HELP);
+  if (/^health$/i.test(t)) return send(modelHealthText());
   if (/^brief$/i.test(t)) return send(await buildDailyDigest());
   const note = /^(note|learn|market):\s*([\s\S]*)$/i.exec(t);
   if (note) {
@@ -1078,8 +1109,8 @@ async function handleStaffMessage(lineUserId, text, replyToken) {
   }
 
   if (/^runs$/i.test(t)) {
-    const rows = await db("agent_runs?select=id,agent_code,department,status,iterations,created_at&order=created_at.desc&limit=10");
-    return send((rows || []).map((r) => `#${r.id} ${r.agent_code || r.department} • ${r.status} • ${r.iterations} iter`).join("\n") || "No runs yet.");
+    const rows = await db("agent_runs?select=id,agent_code,department,status,iterations,created_at,llm_metrics&order=created_at.desc&limit=10");
+    return send((rows || []).map((r) => `#${r.id} ${r.agent_code || r.department} • ${r.status} • ${r.iterations} iter\n${formatRunMetrics(r.llm_metrics)}`).join("\n\n") || "No runs yet.");
   }
 
   if (/^events$/i.test(t)) {

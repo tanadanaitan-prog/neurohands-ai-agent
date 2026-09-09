@@ -2,6 +2,10 @@
 
 ## Current checkpoint — 9 September 2026
 
+- **Next verified local change:** 189 tests, syntax/menu checks and the build pass for safe account-failure classification, stopping repeated attempts on a rejected route, founder `health`/trace reporting, and a separate Inkling synthetic harness. This test count is local evidence; the earlier release evidence below remains separately dated.
+- The owner selected `thinkingmachines/inkling-small:free` for synthetic/public inputs only. Three non-secret `THIRD_*` values are staged in Railway. The inspected service has no `THIRD_API_KEY`, and a value-free runtime check found no OpenRouter-format key in the intended model-key variables. Key location is awaiting clarification; no live Inkling request has been made. [Third-model setup](PUBLIC_MODEL_TEST.md).
+- A fresh read-only database check at 16:16 UTC found one parsed KNC sales document, zero active customer bindings, zero Aria runs and zero operator runs. No webhook had arrived since the PR #9 release. Real founder and second-account customer acceptance remain pending.
+
 - **Verified runtime release:** [PR #9](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/9) merged as `16a0cbee733862872cd232826e2c4e86145e0846`. Railway deployment `1b371129-a52e-4072-8b35-9119ff430006` succeeded at approximately 16:04 UTC (23:04 Bangkok). Its build passed **157 tests, zero failures**. `/version` returned the exact release commit and `/ready` returned HTTP 200 with `ready: true`. These are deployment checks, not live AI acceptance; no inference requests were made during release verification.
 - Earlier PR #7 (`899628db273cd26b6b2ed21590e5ad151e5a7bdb`) was deployed with 101 passing build tests. Readiness and delivery checks do not establish successful AI answers.
 - The latest inspected real founder greeting failed: Gemini reached the application's 15-second request timeout; Groq rejected authentication with HTTP 401. LINE delivered the failure notice. The reason for Gemini's delay is not established.

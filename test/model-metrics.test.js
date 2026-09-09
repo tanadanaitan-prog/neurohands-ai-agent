@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { PGlite } = require("@electric-sql/pglite");
-const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt, finalizeRunMetrics, formatRunMetrics } = require("../src/lib/model-metrics");
+const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt, recordProviderBlocked, finalizeRunMetrics, formatRunMetrics } = require("../src/lib/model-metrics");
 
 const PRIVATE = "private-fixture-never-in-metrics";
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
@@ -158,6 +158,112 @@ test("trace summary rejects malformed version-one numbers instead of displaying 
   ];
   for (const metrics of invalid) assert.equal(formatRunMetrics(metrics), "Usage: unavailable for this run.");
   assert.match(formatRunMetrics(valid), /0 model call\(s\), 0 total tokens reported/);
+});
+
+test("provider rejection and skipped routes stay separate from real request and token counts", async () => {
+  const collector = createRunMetrics(201);
+  await withRunMetrics(collector, async () => {
+    const attempt = beginModelAttempt("openai", "fixture-model");
+    finishModelAttempt(attempt, "http_error", 401, 17, undefined, "authentication_rejected");
+    recordProviderBlocked("OpenAI", "authentication_rejected");
+    recordProviderBlocked("openai", "authentication_rejected");
+  });
+  const metrics = finalizeRunMetrics(collector);
+  assert.equal(metrics.attempt_count, 1);
+  assert.equal(metrics.model_elapsed_ms, 17);
+  assert.equal(metrics.attempts[0].failure_reason, "authentication_rejected");
+  assert.deepEqual(metrics.blocked_providers, [{ provider: "openai", reason: "authentication_rejected" }]);
+  assert.deepEqual(metrics.totals.total_tokens, { observed: null, unknown_attempts: 1, complete: null });
+  assert.match(formatRunMetrics(metrics), /1 model call\(s\), unknown observed tokens; 1 attempt\(s\) with unknown usage/);
+  assert.match(formatRunMetrics(metrics), /Model issue\(s\): OpenAI: authentication rejected \(further requests skipped\)\./);
+});
+
+test("skipped-only provider decisions are isolated by run and do not invent requests or usage", async () => {
+  const one = createRunMetrics(202), two = createRunMetrics(203);
+  await Promise.all([
+    withRunMetrics(one, async () => {
+      recordProviderBlocked("gemini", "quota_exhausted");
+      await new Promise((resolve) => setImmediate(resolve));
+      recordProviderBlocked("gemini", "quota_exhausted");
+    }),
+    withRunMetrics(two, async () => {
+      recordProviderBlocked("openrouter", "credit_exhausted");
+      await new Promise((resolve) => setImmediate(resolve));
+    }),
+  ]);
+  const first = finalizeRunMetrics(one), second = finalizeRunMetrics(two);
+  assert.equal(first.attempt_count, 0);
+  assert.equal(first.model_elapsed_ms, 0);
+  assert.deepEqual(first.attempts, []);
+  assert.deepEqual(first.totals.total_tokens, { observed: 0, unknown_attempts: 0, complete: 0 });
+  assert.deepEqual(first.blocked_providers, [{ provider: "gemini", reason: "quota_exhausted" }]);
+  assert.deepEqual(second.blocked_providers, [{ provider: "openrouter", reason: "credit_exhausted" }]);
+  assert.match(formatRunMetrics(first), /Gemini: quota exhausted \(request skipped\)/);
+  assert.equal(recordProviderBlocked("groq", "authentication_rejected"), null, "An unrelated operation has no run to modify");
+  assert.deepEqual(one.blocked_providers, first.blocked_providers);
+});
+
+test("optional failure details preserve version-one compatibility and use fixed human-readable labels", async () => {
+  const collector = createRunMetrics(204);
+  const labels = [
+    ["openai", "credit_exhausted", "OpenAI: credits exhausted"],
+    ["groq", "spend_limit_reached", "Groq: spending limit reached"],
+    ["mistral", "quota_exhausted", "Mistral: quota exhausted"],
+    ["cerebras", "http_error", "Cerebras: HTTP request failed"],
+  ];
+  await withRunMetrics(collector, async () => {
+    for (const [provider, reason] of labels) {
+      const attempt = beginModelAttempt(provider, "fixture-model");
+      finishModelAttempt(attempt, "http_error", 429, 1);
+      attempt.failure_reason = reason;
+    }
+  });
+  const metrics = finalizeRunMetrics(collector);
+  assert.equal(metrics.version, 1);
+  assert.equal(Object.hasOwn(metrics, "blocked_providers"), false);
+  for (const [, , label] of labels) assert.ok(formatRunMetrics(metrics).includes(label));
+  const historical = { ...metrics, attempts: metrics.attempts.map(({ failure_reason, ...attempt }) => attempt) };
+  const expected = `Usage: 4 model call(s), unknown observed tokens; 4 attempt(s) with unknown usage.\nTime: ${historical.run_elapsed_ms} ms run / 4 ms model requests. Cost: unpriced.`;
+  assert.equal(formatRunMetrics(historical), expected, "Old version-one traces keep their exact output");
+  assert.equal(formatRunMetrics({ ...historical, blocked_providers: [] }), expected);
+});
+
+test("untrusted stored provider labels and failure details cannot enter the trace text", async () => {
+  const collector = createRunMetrics(205);
+  await withRunMetrics(collector, async () => {
+    for (const provider of [PRIVATE, `https://${PRIVATE}.invalid`, "__proto__", null, { provider: "openai" }]) {
+      assert.equal(recordProviderBlocked(provider, "credit_exhausted"), null);
+    }
+    for (const reason of [PRIVATE, "constructor", "QUOTA_EXHAUSTED", null, { reason: "quota_exhausted" }]) {
+      assert.equal(recordProviderBlocked("openai", reason), null);
+    }
+    const failed = beginModelAttempt("openai", "fixture-model");
+    finishModelAttempt(failed, "http_error", 402, 1, undefined, PRIVATE);
+    assert.equal(Object.hasOwn(failed, "failure_reason"), false);
+    failed.failure_reason = PRIVATE;
+  });
+  collector.blocked_providers.push({ provider: "openai", reason: PRIVATE }, { provider: PRIVATE, reason: "quota_exhausted" });
+  const metrics = finalizeRunMetrics(collector);
+  assert.equal(JSON.stringify(metrics).includes(PRIVATE), false);
+  const expected = formatRunMetrics(metrics);
+  const poisoned = { ...metrics, attempts: [
+    { provider: PRIVATE, status: "http_error", failure_reason: "credit_exhausted" },
+    { provider: "openai", status: "http_error", failure_reason: PRIVATE },
+    { provider: "openai", status: "usable_response", failure_reason: "credit_exhausted" },
+    { provider: "__proto__", status: "http_error", failure_reason: "credit_exhausted" }, null,
+  ], blocked_providers: [
+    { provider: `https://${PRIVATE}.invalid`, reason: "http_error" },
+    { provider: "openai", reason: PRIVATE }, { provider: "constructor", reason: "quota_exhausted" }, null,
+  ] };
+  assert.equal(formatRunMetrics(poisoned), expected);
+  assert.equal(formatRunMetrics({ ...metrics, attempts: PRIVATE, blocked_providers: PRIVATE }), expected);
+});
+
+test("successful responses cannot retain failure metadata from a prior state", () => {
+  const attempt = beginModelAttempt("gemini", "fixture-model");
+  attempt.failure_reason = "credit_exhausted";
+  finishModelAttempt(attempt, "usable_response", 200, 2, { usageMetadata: { totalTokenCount: 5 } }, "credit_exhausted");
+  assert.equal(Object.hasOwn(attempt, "failure_reason"), false);
 });
 
 test("additive metrics migration keeps historical rows unknown and preserves browser restrictions", async (t) => {
