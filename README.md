@@ -68,7 +68,7 @@ This section supersedes older deployment statements in the linked September 7–
 
 | Status | What the evidence establishes |
 | --- | --- |
-| **Verified** | Application code is in the destination GitHub repository. The latest verified Railway deployment is commit `899628d`; its checks passed with **101 tests**, and its readiness/version endpoints were checked. |
+| **Verified** | Application code and the simpler overview are published in the destination GitHub repository. Railway runs commit `c57de7e`; its build passed **101 tests**, and readiness/version endpoints were checked. The newer provider-switch repair passes **107 local tests** and is awaiting deployment. |
 | **Verified** | The recovered Phase 1 database and private document bucket are configured. All 131 original database records were preserved and checked. One pilot document has been uploaded and parsed. |
 | **Verified, limited scope** | LINE has delivered messages to the application and received replies, including operator upload links and failure replies. This establishes connectivity, not reliable AI answers. |
 | **Implemented; full live proof pending** | Aria's document tools, activation, access checks, run traces and usage recording have automated tests. The full second-account customer activation → correct document answer → successful authorized trace remains unverified. |
