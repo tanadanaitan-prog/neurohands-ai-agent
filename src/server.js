@@ -19,6 +19,7 @@ const {
   SUPABASE_URL,
   SUPABASE_SERVICE_KEY,
   GEMINI_API_KEY,
+  GEMINI_ENABLED = "true",
   GEMINI_MODEL = "gemini-2.5-flash",
   JARVIS_ACTIVATION_CODE = "",
   FOUNDER_LINE_ID = "",
@@ -49,6 +50,10 @@ const DEPT_CODES = {
   sales: "SAL", marketing: "MKT", accounting: "ACC", hr: "HRS",
   finance: "FIN", support: "SUP", operations: "OPS", business: "BIZ",
 };
+
+function geminiConfigured() {
+  return String(GEMINI_ENABLED).trim().toLowerCase() !== "false" && Boolean(GEMINI_API_KEY);
+}
 
 function fallbackBase() {
   if (!FALLBACK_API_KEY) return null;
@@ -534,7 +539,7 @@ async function askOpenAIPlain(system, user) {
 }
 
 async function askAI(systemContext, userMessage) {
-  if (GEMINI_API_KEY) {
+  if (geminiConfigured()) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
     const data = await requestModelJson("Gemini", url,
       { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, {
@@ -604,7 +609,7 @@ async function completeAgentRun(runId, status, output, iterations, error = null,
 }
 
 async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId) {
-  if (!GEMINI_API_KEY) return { text: null, iterations: 0, apiFailed: true };
+  if (!geminiConfigured()) return { text: null, iterations: 0, apiFailed: true };
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   let contents = [{ role: "user", parts: [{ text: userMessage }] }];
@@ -1286,7 +1291,7 @@ app.get("/", (_, res) => res.send("Neurohands v3.10 agent gateway is running"));
 app.get("/version", (_, res) => res.json({ version: "3.10.0", commit: process.env.RAILWAY_GIT_COMMIT_SHA || "unknown" }));
 app.get("/ready", asyncRoute(async (_, res) => {
   res.set("Cache-Control", "no-store");
-  if (![LINE_CHANNEL_SECRET,LINE_CHANNEL_ACCESS_TOKEN,SUPABASE_URL,SUPABASE_SERVICE_KEY,FOUNDER_LINE_ID,NEUROHANDS_API_KEY].every(Boolean) || !(GEMINI_API_KEY || fallbackBase())) return res.status(503).json({ready:false});
+  if (![LINE_CHANNEL_SECRET,LINE_CHANNEL_ACCESS_TOKEN,SUPABASE_URL,SUPABASE_SERVICE_KEY,FOUNDER_LINE_ID,NEUROHANDS_API_KEY].every(Boolean) || !(geminiConfigured() || fallbackBase())) return res.status(503).json({ready:false});
   encryptionKey(WEBHOOK_ENCRYPTION_KEY);
   const [accounts, agents] = await Promise.all([
     db("client_accounts?client_code=eq.KNC&active=eq.true&select=id"),
