@@ -12,7 +12,7 @@ Neurohands aims to give a business an AI workforce that can answer questions, us
 | **Aria — customer business agent, AGT-001** | An activated customer | Uses permitted tools to look up products, orders and lead times; read that customer's available documents; record useful customer facts, support cases and follow-up tasks. |
 | **Concierge — public receptionist** | A visitor who has not activated customer access | Explains the business using configured company information and guides visitors toward a demo or activation. It does not receive private customer tools. |
 
-These are **three application roles using AI models**. We have not trained three new models. Gemini is the configured primary AI engine; a model hosted by Groq is the configured backup when the primary cannot provide a usable response. The roles can use the same engine while having different instructions, permissions and information.
+These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. Gemini is enabled by default; setting `GEMINI_ENABLED=false` lets the configured alternative provider handle requests directly while retaining the saved Gemini key. The current replacement candidate is OpenRouter's explicitly free `openai/gpt-oss-120b:free`, pending its private key and live verification.
 
 Jarvis currently provides an operator interface. Automatic delegation among independent agents, departments and managers is part of the future platform.
 
@@ -43,7 +43,7 @@ For example, a customer asks about an order. The application identifies their ac
 | **GitHub** | Stores the source code, documentation and change history. |
 | **Railway** | Runs the application, receives LINE events and calls the connected services. |
 | **Supabase** | Stores business records, customer access, private documents, saved facts and execution records. |
-| **Gemini / Groq** | Supply the AI responses and tool requests; the application enforces access. |
+| **Selected AI provider** | Supplies AI responses and tool requests; the application enforces access. |
 
 Connecting GitHub to Supabase alone does not connect LINE or configure Railway's runtime credentials. Each connection has its own purpose.
 
@@ -72,7 +72,7 @@ This section supersedes older deployment statements in the linked September 7–
 | **Verified** | The recovered Phase 1 database and private document bucket are configured. All 131 original database records were preserved and checked. One pilot document has been uploaded and parsed. |
 | **Verified, limited scope** | LINE has delivered messages to the application and received replies, including operator upload links and failure replies. This establishes connectivity, not reliable AI answers. |
 | **Implemented; full live proof pending** | Aria's document tools, activation, access checks, run traces and usage recording have automated tests. The full second-account customer activation → correct document answer → successful authorized trace remains unverified. |
-| **Repair awaiting confirmation** | The latest investigated founder AI request reached the application's 15-second timeout while waiting for Gemini; Groq then rejected authentication with HTTP 401. The owner reports replacing the Groq key. A successful response using the new key still needs verification. |
+| **Provider replacement pending** | A founder request reached the application's 15-second timeout while waiting for Gemini. The saved Groq key still returned HTTP 401 after a fresh restart. OpenRouter's free replacement is prepared; its private key and live answer remain to be verified. See [free provider setup](docs/FREE_PROVIDER_SETUP.md). |
 | **Planned / experimental** | The broader team website, automatic delegation, department workflows, recurring task execution, semantic document search and external connector framework are not established live capabilities. The experimental `/studio` website remains disabled for this milestone. |
 
 The current repository and destination service are available, but the complete original-account migration and source deployment inventory remain unfinished. Preserve the original resources until that reconciliation is complete.
@@ -122,6 +122,7 @@ Use [`.env.example`](.env.example) for the configuration names. Store real keys 
 | [Supabase readiness](supabase/README.md) | Applied Phase 1 schema, access and document storage checks. Do not substitute the experimental Phase 2 migration. |
 | [Webhook recovery](docs/WEBHOOK_RECOVERY.md) | Failed or interrupted events, safe recovery and preserving the encryption key. |
 | [Live evidence](docs/LIVE_STATUS.md) | Dated diagnostic results and the customer proof requirements. |
+| [Free provider setup](docs/FREE_PROVIDER_SETUP.md) | Private OpenRouter key entry, disabling Gemini without deleting its key, and the live verification sequence. |
 
 Useful founder commands are `help`, `brief`, `agents`, `runs`, `events`, `trace: <run_id>`, `docs: KNC` and `upload: KNC sales`. Creating a follow-up or checklist item records work; it does not mean an autonomous scheduler will execute it.
 
