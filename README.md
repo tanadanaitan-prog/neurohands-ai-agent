@@ -16,6 +16,8 @@ These are **three application roles using AI models**. We have not trained three
 
 The deployed provider-switch repair honors `GEMINI_ENABLED=false`, so requests use the configured alternative directly while retaining the saved Gemini key. This setting was verified in the new Railway container. OpenRouter remains a separate optional route requiring its own key and verified allowance.
 
+The owner selected **Inkling Small (free)** as a third configuration for synthetic tests only. Its separate harness checks a fictional order and tool call. It never receives LINE conversations, KNC documents or memories. See [third-model setup](docs/PUBLIC_MODEL_TEST.md). A successful synthetic test will not replace the real Aria customer proof.
+
 Jarvis currently provides an operator interface. Automatic delegation among independent agents, departments and managers is part of the future platform.
 
 The **deployed Jarvis repair** adds conversational business tools, a short history of the operator's own delivered conversations, confirmed notes, and proposals that require approval. Deployment and health checks passed; real AI conversation acceptance still awaits usable provider credit. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
