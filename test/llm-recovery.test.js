@@ -55,6 +55,38 @@ const primaryFailures = {
   http_error: () => json({ error: PRIVATE_MARKER }, 429),
 };
 
+for (const [status, code] of [[401, "invalid_api_key"], [429, "credit_balance_exhausted"], [429, "project_spend_limit_exceeded"]]) {
+  test(`account-wide ${code} stops model cascade and later requests until restart`, async (t) => {
+    const { gateway, logs } = loadGateway(t, { GEMINI_ENABLED: "false", FALLBACK_MODELS: "one,two,three" });
+    let count = 0;
+    t.mock.method(globalThis, "fetch", async () => {
+      count++;
+      return json({ error: { code, message: PRIVATE_MARKER } }, status);
+    });
+    assert.equal(await gateway.askAI("Policy", "First"), null);
+    assert.equal(await gateway.askAI("Policy", "Second"), null);
+    assert.equal(count, 1, "Do not try other models or another message with the same rejected account");
+    assert.equal(logs.some(line => line.includes(PRIVATE_MARKER)), false);
+  });
+}
+
+test("a paused primary account still permits a separately configured fallback", async (t) => {
+  const { gateway } = loadGateway(t);
+  let primary = 0, fallback = 0;
+  t.mock.method(globalThis, "fetch", async url => {
+    if (new URL(url).hostname === "generativelanguage.googleapis.com") {
+      primary++;
+      return json({ error: { code: "insufficient_quota" } }, 429);
+    }
+    fallback++;
+    return answer();
+  });
+  assert.equal(await gateway.askAI("Policy", "First"), "Recovered answer");
+  assert.equal(await gateway.askAI("Policy", "Second"), "Recovered answer");
+  assert.equal(primary, 1);
+  assert.equal(fallback, 2);
+});
+
 test("LLM recovery uses mocked providers only", async (t) => {
   await t.test("Gemini remains the primary when the enable flag is absent", async (t) => {
     const { gateway } = loadGateway(t, { GEMINI_ENABLED: undefined });

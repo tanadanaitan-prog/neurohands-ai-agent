@@ -422,3 +422,29 @@ test("client deactivation between proposal and yes blocks the business write and
   assert.equal(blocked.run_id, proposed.ctx.runId);
   assert.doesNotMatch(f.line.at(-1).messages[0].text, /Executed create_task/);
 });
+
+test("Jarvis keeps health and evidence commands available after account credit rejection", async (t) => {
+  const f = fixture(t);
+  f.model = async () => json({ error: { code: "credit_balance_exhausted", message: PRIVATE } }, 429);
+  await f.run("First owner request");
+  await f.run("Second owner request");
+  assert.equal(f.calls.length, 1);
+  const [first, second] = f.tables.agent_runs;
+  assert.equal(first.llm_metrics.attempt_count, 1);
+  assert.equal(first.llm_metrics.attempts[0].failure_reason, "credit_exhausted");
+  assert.equal(second.llm_metrics.attempt_count, 0);
+  assert.deepEqual(second.llm_metrics.blocked_providers, [{ provider: "custom", reason: "credit_exhausted" }]);
+  await f.send("health");
+  assert.match(f.line.at(-1).messages[0].text, /credit exhausted/);
+  await f.send(`trace: ${first.id}`);
+  assert.match(f.line.at(-1).messages[0].text, /credits? exhausted/i);
+  await f.send("runs");
+  assert.match(f.line.at(-1).messages[0].text, /credits? exhausted/i);
+  await f.send("help");
+  assert.match(f.line.at(-1).messages[0].text, /health/);
+  await f.send("note: Prefer short summaries");
+  await f.send("yes");
+  assert.equal(f.tables.jarvis_notes.at(-1).status, "confirmed");
+  assert.equal(f.calls.length, 1, "Deterministic commands must not attempt AI generation");
+  assert.equal(f.logs.join("\n").includes(PRIVATE), false);
+});
