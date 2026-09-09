@@ -312,6 +312,81 @@ test("LLM recovery uses mocked providers only", async (t) => {
     assert.equal(ctx.runStatus, "completed");
   });
 
+  for (const failure of ["primary outage", "later tool rejection"]) {
+    await t.test(`Aria preserves a successful task and its trace after ${failure}`, async (t) => {
+      const { gateway, logs } = loadGateway(t);
+      const tasks = [], toolRecords = [];
+      const taskArgs = { title: "Call KNC tomorrow", domain: "sales" };
+      let primaryCalls = 0, fallbackCalls = 0, completed;
+      t.mock.method(globalThis, "fetch", async (url, options) => {
+        const address = new URL(url);
+        if (address.hostname === "generativelanguage.googleapis.com") {
+          primaryCalls++;
+          if (primaryCalls === 1) {
+            const parts = [{ functionCall: { name: "create_task", args: taskArgs } }];
+            if (failure === "later tool rejection") parts.push({ functionCall: { name: "get_recent_orders", args: {} } });
+            return json({ candidates: [{ content: { parts } }] });
+          }
+          return failure === "primary outage" ? json({ error: { message: PRIVATE_MARKER } }, 503) : geminiAnswer("Task created");
+        }
+        if (address.hostname === "fallback.invalid") {
+          fallbackCalls++;
+          return fallbackCalls === 1
+            ? json({ choices: [{ message: { tool_calls: [{ id: "repeated-task", function: { name: "create_task", arguments: JSON.stringify(taskArgs) } }] } }] })
+            : answer("Task created");
+        }
+        assert.equal(address.hostname, "database.invalid");
+        switch (address.pathname) {
+          case "/rest/v1/client_agent_bindings": return json([{ client_account_id: 1, department: "sales" }]);
+          case "/rest/v1/client_accounts": return json([{ id: 1, active: true }]);
+          case "/rest/v1/agent_memory": return json([]);
+          case "/rest/v1/agent_tasks": {
+            assert.equal(options.method, "POST");
+            const task = { ...JSON.parse(options.body), id: tasks.length + 501 };
+            tasks.push(task);
+            return json([task]);
+          }
+          case "/rest/v1/tool_calls":
+            toolRecords.push(JSON.parse(options.body));
+            return json([{ id: toolRecords.length }]);
+          case "/rest/v1/agent_runs":
+            if (options.method === "PATCH") completed = JSON.parse(options.body);
+            return json([{ id: 17 }]);
+          default: throw new Error("Unexpected fixture request");
+        }
+      });
+      const ctx = { lineUserId: "fixture-client", clientAccountId: 1, department: "sales" };
+      const agent = { agent_code: "AGT-001", allowed_tools: ["create_task"], domains: [], responsibilities: [] };
+      const reply = await gateway.runAgent(ctx, "Create a task to call KNC tomorrow", agent);
+      assert.equal(tasks.length, 1, "A provider outage must not repeat the successful business write");
+      assert.equal(tasks[0].client_account_id, 1);
+      assert.equal(tasks[0].title, taskArgs.title);
+      assert.equal(primaryCalls, 2);
+      assert.equal(fallbackCalls, 0, "Do not restart a conversation after tool execution");
+      assert.equal(toolRecords.length, failure === "primary outage" ? 1 : 2);
+      assert.equal(toolRecords[0].run_id, ctx.runId);
+      assert.equal(toolRecords[0].run_id, 17);
+      assert.equal(toolRecords[0].tool_name, "create_task");
+      assert.equal(toolRecords[0].allowed, true);
+      assert.equal(toolRecords[0].status, "success");
+      assert.equal(toolRecords[0].output.task_id, tasks[0].id);
+      if (failure === "later tool rejection") {
+        assert.equal(toolRecords[1].run_id, ctx.runId);
+        assert.equal(toolRecords[1].status, "blocked");
+        assert.equal(toolRecords[1].allowed, false);
+      }
+      assert.equal(completed.status, "error");
+      assert.equal(completed.output, failure === "primary outage" ? null : reply);
+      assert.equal(completed.llm_metrics.attempt_count, 2);
+      assert.equal(ctx.runStatus, "error");
+      assert.match(reply, /could not complete/);
+      assert.match(reply, /check what was completed before repeating/i);
+      assert.doesNotMatch(reply, /try again|retry/i);
+      assert.doesNotMatch(reply, /Task created/);
+      assert.equal(logs.join("\n").includes(PRIVATE_MARKER), false);
+    });
+  }
+
   await t.test("tool evidence failures remain failures and are not mistaken for provider outages", async (t) => {
     const { gateway } = loadGateway(t);
     let modelCalls = 0;

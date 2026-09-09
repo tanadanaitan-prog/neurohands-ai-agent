@@ -112,7 +112,10 @@ test("each tool-loop round contributes tokens even when the requested tool is bl
   let round = 0;
   state.model = () => ++round === 1 ? json({ candidates: [{ content: { parts: [{ functionCall: { name: "request_human", args: {} } }] } }],
     usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 4, totalTokenCount: 9 } }) : primary();
-  assert.match(await state.run(), /tool did not succeed/);
+  const reply = await state.run();
+  assert.match(reply, /could not complete/);
+  assert.match(reply, /check what was completed before repeating/i);
+  assert.doesNotMatch(reply, /try again|retry/i);
   const metrics = state.runs[0].llm_metrics;
   assert.equal(state.runs[0].status, "error", "Telemetry must not weaken tool authorization");
   assert.equal(metrics.attempt_count, 2);
