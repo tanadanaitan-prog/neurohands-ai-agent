@@ -170,7 +170,7 @@ const BRAND_COPY = {
   services: "What we do\n\n• AI customer service (enquiries, complaints, orders)\n• Sales support and follow-up\n• Admin and document handling\n• Data analysis and reporting\n• A custom AI agent team built for your business",
   projects: "What we are building\n\n• LINE-based AI agents for sales and customer service\n• AI agent manager that delegates tasks and returns results\n• Data and document handling agents\n• Next: finance, HR and operations agents",
   contact: "Contact\n\nLINE: this chat\nHours: 08:00–18:00, Monday–Saturday (Bangkok time)\nEmail: contact@your-domain.com",
-  activate: "Get started\n\n✔ Existing client (paid & deployed):\nsend your activation code.\nExample:\nactivate KNC01SAL\n\n✚ New to Neurohands:\nsend the word: demo\nand our team will arrange a demo within business hours (08:00–18:00, Mon–Sat).",
+  activate: "Get started\n\n✔ Existing client:\nUse the full private activation code supplied by your team. Send the word activate, a space, then the complete code beginning NH-.\n\nCopy the full code, not its shortened hint. Keep it private.\n\n✚ New to Neurohands:\nsend the word: demo\nand our team will arrange a demo within business hours (08:00–18:00, Mon–Sat).",
 };
 
 // ---------- SUPABASE ----------
@@ -838,7 +838,7 @@ async function handleMessage(event) {
   const bindings = await getBindings(lineUserId);
   if (!bindings.length) {
     if (/^upload$/i.test(userText)) {
-      await replyToLine(event.replyToken, "Please activate first.\n\nSend your activation code (example: activate KNC01SAL) and I will open your secure upload.");
+      await replyToLine(event.replyToken, "Please activate first.\n\nSend the word activate, a space, then the full private code beginning NH- supplied by your team. Use the complete code, not its shortened hint. Then send upload again for your secure link.");
       return;
     }
     if (/^(demo|request demo|ขอเดโม)$/i.test(userText)) {
