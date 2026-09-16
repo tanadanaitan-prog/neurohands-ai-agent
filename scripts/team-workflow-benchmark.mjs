@@ -127,6 +127,7 @@ export function validateTeamWorkflowFixture(specification) {
   }
 
   const runtimeProfiles = new Map(AGENT_PROFILES.map((profile) => [profile.agentId, profile]));
+  const plannedEvidenceOwners = new Map();
   for (const agent of specification.agents) {
     const profile = runtimeProfiles.get(agent.id);
     if (!profile || profile.displayName !== agent.name || profile.departmentId !== agent.department) {
@@ -137,15 +138,30 @@ export function validateTeamWorkflowFixture(specification) {
     if (!plan.usage || plan.usage.inputTokens + plan.usage.outputTokens !== plan.usage.totalTokens) {
       throw new Error(`${agent.id} synthetic token fields must add exactly to totalTokens.`);
     }
-    for (const call of plan.tools || []) {
-      if (!profile.allowedTools.includes(call.name)) throw new Error(`${agent.id} cannot use planned tool ${call.name}.`);
-      if (call.args?.operation === "store_evidence") {
-        const expectedRecord = expected[call.args.evidenceType];
-        if (!expectedRecord || expectedRecord.ownerAgentId !== agent.id || !isDeepStrictEqual(call.args.data, expectedRecord.data)) {
-          throw new Error(`${agent.id} plan evidence ${call.args.evidenceType} does not match expected truth.`);
-        }
-      }
+    if (!Array.isArray(plan.tools) || !Array.isArray(plan.evidenceTypes)) throw new Error(`${agent.id} plan must declare tools and evidenceTypes arrays.`);
+    if (!isDeepStrictEqual(agent.plannedTools, plan.tools.map(({ name }) => name))) {
+      throw new Error(`${agent.id}.plannedTools must exactly match its deterministic plan calls.`);
     }
+    const runtimeSteps = Object.values(WORKFLOW_TEMPLATES).flatMap((template) => template.steps)
+      .filter((step) => step.stepId === agent.stepId && step.agentId === agent.id);
+    if (!runtimeSteps.length) throw new Error(`${agent.id} has no fixed runtime step.`);
+    for (const call of plan.tools || []) {
+      if (runtimeSteps.some((step) => !step.allowedTools.includes(call.name))) {
+        throw new Error(`${agent.id} planned tool ${call.name} is outside the exact fixed step allowedTools.`);
+      }
+      if (call.args?.operation === "store_evidence") throw new Error(`${agent.id} must return non-write evidence directly instead of using a pseudo write tool.`);
+    }
+    for (const evidenceType of plan.evidenceTypes) {
+      const expectedRecord = expected[evidenceType];
+      if (!expectedRecord || expectedRecord.ownerAgentId !== agent.id || expectedRecord.source !== "trusted_injected_agent_result") {
+        throw new Error(`${agent.id} direct evidence ${evidenceType} does not match its trusted fixture ownership.`);
+      }
+      if (plannedEvidenceOwners.has(evidenceType)) throw new Error(`Direct evidence ${evidenceType} is assigned more than once.`);
+      plannedEvidenceOwners.set(evidenceType, agent.id);
+    }
+  }
+  if (!isDeepStrictEqual([...plannedEvidenceOwners.keys()].sort(), Object.keys(expected).sort())) {
+    throw new Error("Every expected evidence record must be returned exactly once by its fixed injected agent.");
   }
   const pricingCall = specification.plans.requirements_quote.tools.find(({ args }) => args?.operation === "calculate_pricing");
   if (!pricingCall || !isDeepStrictEqual({
@@ -181,8 +197,10 @@ export function runFixtureMutationSelfCheck(specification) {
   const mutations = [
     ["sales_quote_monthly_999", (value) => { value.expectedEvidence.sales_quote.data.monthlyTotal = 999; }],
     ["marketing_monthly_999", (value) => { value.expectedEvidence.marketing_brief.data.verifiedMonthlyTHB = 999; }],
-    ["sales_plan_monthly_999", (value) => {
-      value.plans.requirements_quote.tools.find(({ args }) => args?.evidenceType === "sales_quote").args.data.monthlyTotal = 999;
+    ["raw_proposal_monthly_999", (value) => { value.proposal.expectedMonthly = 999; }],
+    ["pair_step_pseudo_write", (value) => {
+      value.agents.find(({ id }) => id === "sales-suri").plannedTools.push("create_task");
+      value.plans.requirements_quote.tools.push({ name: "create_task", args: { operation: "store_evidence" } });
     }],
   ];
   const results = mutations.map(([id, mutate]) => {
@@ -207,6 +225,7 @@ function createDeterministicModel(specification) {
       return {
         content: `${profile.displayName} fixture plan for ${stepId}`,
         toolCalls: structuredClone(plan.tools),
+        evidenceTypes: structuredClone(plan.evidenceTypes),
         usage: structuredClone(plan.usage),
       };
     },
@@ -237,7 +256,7 @@ function persistedEvidenceRecords(records, clientId) {
 
 function expectedEvidenceMatches(record, expected, clientId) {
   return Boolean(record) && record.ownerAgentId === expected.ownerAgentId && record.clientId === clientId
-    && record.source === "accepted_deterministic_tool_result" && isDeepStrictEqual(record.data, expected.data);
+    && record.source === expected.source && isDeepStrictEqual(record.data, expected.data);
 }
 
 function createDeterministicExecutor(specification) {
@@ -281,21 +300,6 @@ function createDeterministicExecutor(specification) {
         firstMonth,
         ...(verified ? {} : { error: "pricing_fixture_mismatch" }),
       };
-    } else if (operation === "store_evidence" && ["create_task", "remember"].includes(name)) {
-      const expected = expectedEvidence.get(args.evidenceType);
-      const accepted = Boolean(expected) && context.agentId === expected.ownerAgentId
-        && isDeepStrictEqual(args.data, expected.data);
-      const record = accepted ? {
-        evidenceId: `evidence-${args.evidenceType}`,
-        evidenceType: args.evidenceType,
-        ownerAgentId: context.agentId,
-        clientId: context.clientId,
-        data: structuredClone(args.data),
-        source: "accepted_deterministic_tool_result",
-      } : null;
-      result = accepted
-        ? { ok: true, accepted: true, record }
-        : { ok: false, accepted: false, error: "evidence_fixture_mismatch" };
     } else if (operation === "verify_evidence" && name === "calculate") {
       const truth = proposalTruth(specification.proposal);
       const requiredEvidenceTypes = [...expectedEvidence.keys()];
@@ -368,13 +372,24 @@ function createAgentInvoker(specification, scenario, model, executorAudit) {
   return async (profile, step, context) => {
     const started = performance.now();
     const response = await model.invoke({ profile, step, context });
-    const evidence = [];
+    const evidence = response.evidenceTypes.map((evidenceType) => {
+      const expected = specification.expectedEvidence[evidenceType];
+      if (!expected || expected.ownerAgentId !== profile.agentId) throw new Error(`Unexpected direct evidence ${evidenceType}.`);
+      return {
+        evidenceId: `evidence-${evidenceType}`,
+        evidenceType,
+        ownerAgentId: profile.agentId,
+        clientId: context.clientId,
+        source: expected.source,
+        data: structuredClone(expected.data),
+      };
+    });
     const toolAudit = [];
     for (const call of response.toolCalls) {
+      if (!context.allowedTools.includes(call.name)) throw new Error(`Deterministic plan attempted tool ${call.name} outside the fixed step scope.`);
       const result = await context.executeTool({ name: call.name, args: structuredClone(call.args) });
       const accepted = result?.ok !== false;
       toolAudit.push({ name: call.name, args: structuredClone(call.args), result: structuredClone(result), ok: accepted });
-      if (accepted && result.record) evidence.push(result.record);
       if (accepted && call.args.operation === "calculate_pricing") {
         const { operation, ...inputs } = call.args;
         evidence.push({
@@ -551,7 +566,8 @@ function agentMeasurements(run, audit) {
       failedStepCount: step.status === "failed" ? 1 : 0,
       blockedStepCount: step.status === "blocked" ? 1 : 0,
       repeatedIdenticalToolCallCount: repeatCount(calls),
-      evidenceRecords: calls.filter((entry) => entry.result.record).length,
+      evidenceRecords: (Array.isArray(step.evidence) ? step.evidence : [step.evidence])
+        .filter((record) => record && typeof record.evidenceType === "string").length,
       provenance: {
         wallMs: "measured",
         inputTokens: "synthetic",

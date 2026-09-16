@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "real-named-workflow-after-guardrails-20260917",
+  "reviewedAt": "2026-09-17",
+  "reviewType": "technical_lead_manual_review",
+  "changeUnderReview": [
+    "Each fixed workflow step now exposes only its own approved subset of the agent profile tools.",
+    "A model response containing no text and no tool call receives at most one bounded retry when a call slot remains.",
+    "The deterministic fixture no longer uses task writes as a shortcut for non-write evidence."
+  ],
+  "scope": "One repeated local synthetic run for the previously failed pair and full-department scenarios. This is a development comparison, not a reliability rate or team-size ranking.",
+  "model": "qwen3:1.7b via loopback Ollama",
+  "productionServicesUsed": false,
+  "externalConnectorsUsed": false,
+  "semanticScore": null,
+  "scoreReason": "One development sample per changed scenario is insufficient for a defensible capability score.",
+  "sourceArtifacts": [
+    {
+      "path": "artifacts/benchmarks/2026-09-16-team-workflow-deterministic.jsonl",
+      "sha256": "1b0b23a6c53a4f211bf73bdef731e2a04ef84ef01d9822ae71f3f43951b8351c"
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-pair-attempt2.json",
+      "sha256": "7eb8a37c5f7adf67d7612fb52372e91520d5cffded1ffb38da97f25c16c1e138",
+      "role": "before"
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-pair-attempt3.json",
+      "sha256": "1e7c7675115a037c25b0f5e2d06ee40f24761820cd31bf2cade835ceff538d42",
+      "role": "after"
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-full-department.json",
+      "sha256": "b5538d4660eea9de05c90417fa30f798d8213bbbbb4dd63f7242621e444bdc8e",
+      "role": "before"
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-full-department-attempt2.json",
+      "sha256": "7ed7ef95919a29da8cc835a63b47a54782b14ade5b0e878071e0059312338fb6",
+      "role": "after"
+    }
+  ],
+  "results": [
+    {
+      "topology": "pair",
+      "scenarioStatus": "completed",
+      "businessCorrectness": "partial",
+      "review": "Suri and Quinn each read the document and independently calculated 2,040 THB. Both steps completed with four successful tools. Their final prose omitted the exact four-working-day lead time found in the document, so structural completion is not a complete business-quality answer.",
+      "wallMs": 22256,
+      "providerTokens": {
+        "input": 3186,
+        "output": 228,
+        "total": 3414
+      },
+      "successfulToolCalls": 4,
+      "failedToolCalls": 0,
+      "storedBytes": 6615,
+      "recordCount": 7,
+      "approximatePeakModelRamMiB": 2025.8,
+      "sampledModelCpuSeconds": 160.5,
+      "structuralChecks": "11/11 pass"
+    },
+    {
+      "topology": "full_department",
+      "scenarioStatus": "failed",
+      "businessCorrectness": "fail",
+      "review": "Suri used only the correct step-scoped tools, read the document and calculated 5,000 THB. The model then returned two consecutive empty replies. The single permitted retry was exhausted, Suri failed without a final answer, and all four dependent roles were blocked.",
+      "wallMs": 13092,
+      "providerTokens": {
+        "input": 3221,
+        "output": 113,
+        "total": 3334
+      },
+      "successfulToolCalls": 2,
+      "failedToolCalls": 0,
+      "storedBytes": 7080,
+      "recordCount": 11,
+      "approximatePeakModelRamMiB": 2235.4,
+      "sampledModelCpuSeconds": 100.203,
+      "structuralChecks": "11/11 pass"
+    }
+  ],
+  "beforeAfterInterpretation": [
+    "The pair moved from a failed empty QA response to structural completion, but its final prose still missed a required business detail.",
+    "The full-department run stopped using tools outside Sales responsibility; it still failed because the local model produced two empty final responses.",
+    "Lower token counts in these single changed runs do not prove optimization because prompts, allowed tools, runtime behavior and local inference conditions changed.",
+    "The safety result improved: no rejected or unauthorized tool reached the executor, and incomplete work still did not advance downstream."
+  ],
+  "nextAcceptanceGate": "Use a model capable of reliable structured tool use, then run repeated held-out objectives with explicit answer acceptance criteria under the same tools and budgets before any LINE deployment."
+}

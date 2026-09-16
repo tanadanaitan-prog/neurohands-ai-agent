@@ -90,8 +90,8 @@ node scripts/team-workflow-benchmark.mjs --out artifacts/benchmarks/2026-09-16-t
 
 node scripts/real-named-workflow-benchmark.mjs --dry-run
 node scripts/real-named-workflow-benchmark.mjs --topology individual --suite-timeout-ms 900000 --out artifacts/benchmarks/2026-09-17-real-named-individual.json
-node scripts/real-named-workflow-benchmark.mjs --topology pair --suite-timeout-ms 900000 --out artifacts/benchmarks/2026-09-17-real-named-pair-attempt2.json
-node scripts/real-named-workflow-benchmark.mjs --topology full_department --suite-timeout-ms 900000 --out artifacts/benchmarks/2026-09-17-real-named-full-department.json
+node scripts/real-named-workflow-benchmark.mjs --topology pair --suite-timeout-ms 900000 --out artifacts/benchmarks/2026-09-17-real-named-pair-attempt3.json
+node scripts/real-named-workflow-benchmark.mjs --topology full_department --suite-timeout-ms 900000 --out artifacts/benchmarks/2026-09-17-real-named-full-department-attempt2.json
 ```
 
 The dry run validates configuration without model inference, a network request
@@ -105,13 +105,14 @@ Source: [`2026-09-16-team-workflow-deterministic.jsonl`](../artifacts/benchmarks
 
 | Topology | Runtime result | Structural eligibility | Conformance | Wall time | Synthetic tokens | Tool calls | Evidence storage |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `individual` | Completed | No; four required roles absent | 2/10 | 8.844 ms | 176 | 2 successful | 3,302 bytes / 3 records |
-| `pair` | Completed | No; three required roles absent | 2/10 | 11.918 ms | 304 | 3 successful | 6,933 bytes / 7 records |
-| `full_department` | Completed | Yes; all five roles present | 10/10 | 26.632 ms | 756 | 9 successful | 25,078 bytes / 19 records |
+| `individual` | Completed | No; four required roles absent | 2/10 | 8.027 ms | 176 | 1 successful | 2,657 bytes / 3 records |
+| `pair` | Completed | No; three required roles absent | 2/10 | 9.600 ms | 304 | 2 successful | 6,283 bytes / 7 records |
+| `full_department` | Completed | Yes; all five roles present | 10/10 | 22.274 ms | 756 | 2 successful | 19,514 bytes / 19 records |
 
-The fixture mutation self-check passed: all three deliberately false pricing
-mutations were rejected. The four-record report is self-consistent at 41,587
-bytes. Fetch interception was enabled and recorded zero attempted fetches.
+The fixture mutation self-check passed: three deliberately false pricing
+mutations and one step-scope pseudo-write mutation were rejected. The
+four-record report is self-consistent at 32,430 bytes. Fetch interception was
+enabled and recorded zero attempted fetches.
 Completion in the one- and two-agent rows means their configured paths ran to a
 terminal state; it does not mean they covered the five-role objective.
 
@@ -126,6 +127,22 @@ terminal state; it does not mean they covered the five-role objective.
 The separate [technical-lead review](../artifacts/benchmarks/2026-09-17-real-named-review.json)
 keeps semantic correctness distinct from the automatic structural checks and
 preserves the first pair attempt as incident evidence.
+
+## Post-guardrail reruns
+
+The runtime then restricted every fixed step to its exact tool subset and added
+one bounded retry for a model response containing neither text nor tool calls.
+The global call limits did not increase. The same failed pair and department
+fixtures were each rerun once; the earlier artifacts remain unchanged.
+
+| Artifact | Runtime outcome | Human review | Tokens | Tools | Wall time | Storage | Peak sampled RAM / sampled CPU |
+| --- | --- | --- | ---: | --- | ---: | ---: | --- |
+| [`pair`, attempt 3](../artifacts/benchmarks/2026-09-17-real-named-pair-attempt3.json) | `completed`; 11/11 structural checks | **Partial:** both agents verified 2,040 THB, but their final prose omitted the exact four-working-day lead time | 3,414 | 4 successful | 22,256 ms | 6,615 bytes / 7 records | about 2,025.8 MiB / 160.500 s |
+| [`full_department`, attempt 2](../artifacts/benchmarks/2026-09-17-real-named-full-department-attempt2.json) | `failed`; 11/11 structural checks | Suri read the document and calculated 5,000 THB, then two empty replies exhausted the one permitted retry; four dependent roles were blocked | 3,334 | 2 successful | 13,092 ms | 7,080 bytes / 11 records | about 2,235.4 MiB / 100.203 s |
+
+The [post-guardrail technical review](../artifacts/benchmarks/2026-09-17-real-named-review-after-guardrails.json)
+records the before/after limits. A structurally completed workflow is not a
+business-quality pass when required answer content is missing.
 
 Here, **failed safely** means the failure and blocked states were persisted, the
 runner closed, and ephemeral storage was removed. It does not mean the business

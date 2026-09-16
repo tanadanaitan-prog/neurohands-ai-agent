@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
-    "check": "node --check src/server.js && node --check src/platform/router.js && node --check src/platform/repository.js && node --check src/agent/profiles.mjs && node --check src/agent/workflow.mjs && node --check scripts/setup-richmenu.js && node --check scripts/team-workflow-benchmark.mjs && node --check scripts/real-named-workflow-benchmark.mjs && node scripts/setup-richmenu.js --check",
+    "check": "node --check src/server.js && node --check src/platform/router.js && node --check src/platform/repository.js && node --check src/agent/team.mjs && node --check src/agent/profiles.mjs && node --check src/agent/workflow.mjs && node --check scripts/setup-richmenu.js && node --check scripts/team-workflow-benchmark.mjs && node --check scripts/real-named-workflow-benchmark.mjs && node scripts/setup-richmenu.js --check",
     "test": "node --test",
     "richmenu:check": "node scripts/setup-richmenu.js --check",
     "richmenu:setup": "node --env-file-if-exists=.env scripts/setup-richmenu.js",

@@ -14,7 +14,7 @@ LINE; Gemini takeover is not connected.
 chat and 24/36 with tools. All 11 local tool/state workflows and 219 automated
 tests passed at that measured revision. After incorporating the production
 Gemini adapter repair and the named-workflow runtime, the local branch passed
-252 automated tests on 17 September 2026; this does not change the recorded
+259 automated tests on 17 September 2026; this does not change the recorded
 model benchmark. The remaining model-answer failures are recorded in the
 [benchmark report](docs/AGENT_BENCHMARK_RESULTS.md); the new local graphs are
 experimental and are not deployed to LINE.
@@ -29,14 +29,16 @@ reads, tool allowlists, idempotency, terminal failures and evidence storage. It
 does not measure model reasoning, answer quality or business correctness.
 
 One real-model sample per topology used local Ollama with `qwen3:1.7b`. The
-individual workflow passed its basic example. The pair workflow and full
-department workflow failed safely: the pair ended when QA returned an empty
-final response, and the five-role run stopped after a tool rejected an
-unverified order identifier, so downstream roles did not proceed on unconfirmed
-evidence. One sample across structurally different duties is not a reliability
-estimate or a capability ranking. See the [named-agent workflow guide](docs/NAMED_AGENT_WORKFLOW.md)
-and [manual review artifact](artifacts/benchmarks/2026-09-17-real-named-review.json).
-No production connection, deployment or capability ranking is claimed.
+individual workflow passed its basic example. Initial pair and full-department
+runs failed safely. After exact step-level tool scopes and one bounded empty
+reply retry were added, the repeated pair run completed structurally but still
+omitted the document's exact four-working-day lead time; the repeated five-role
+run still failed after two empty final replies and blocked all downstream roles.
+These small development samples are not a reliability estimate or capability
+ranking. See the [named-agent workflow guide](docs/NAMED_AGENT_WORKFLOW.md),
+[initial review](artifacts/benchmarks/2026-09-17-real-named-review.json), and
+[post-guardrail review](artifacts/benchmarks/2026-09-17-real-named-review-after-guardrails.json).
+No production connection or deployment is claimed.
 
 Neurohands aims to give a business an AI workforce that can answer questions, use approved business tools, work with company documents and report what it did. The owner decides each agent's responsibilities and access.
 

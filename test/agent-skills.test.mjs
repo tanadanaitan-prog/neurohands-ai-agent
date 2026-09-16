@@ -106,8 +106,29 @@ test("tool failure is evidence, and provider errors are sanitized", async () => 
   const failedModel = agent([new Error("secret-value-do-not-leak")]);
   const failure = await failedModel.invoke({ messages: [new HumanMessage("Hi.")] });
   assert.equal(failure.metrics.stoppedReason, "model_error");
+  assert.equal(failure.metrics.modelCalls, 1);
   assert.match(failure.messages.at(-1).content, /could not finish/);
   assert.doesNotMatch(JSON.stringify(failure), /secret-value/);
+});
+
+test("empty-response recovery never retries provider, invalid-tool, or failed-tool outcomes", async () => {
+  const invalid = agent([
+    { content: "", tool_calls: [], invalid_tool_calls: [{ name: "calculate", args: "not-json", id: "invalid-one" }] },
+    new AIMessage("This response must never be requested."),
+  ]);
+  const invalidResult = await invalid.invoke({ messages: [new HumanMessage("Calculate a synthetic value.")] });
+  assert.equal(invalidResult.metrics.stoppedReason, "model_error");
+  assert.equal(invalidResult.metrics.modelCalls, 1);
+
+  const failedTool = agent([
+    call("get_order_status", { order_number: "DEMO-FAILED-1" }, "failed-one"),
+    new AIMessage(""),
+    new AIMessage("This response must never be requested."),
+  ], { toolExecutor() { throw new Error("fixture failure"); } });
+  const failedResult = await failedTool.invoke({ messages: [new HumanMessage("Check DEMO-FAILED-1.")] });
+  assert.equal(failedResult.toolAudit[0].ok, false);
+  assert.equal(failedResult.metrics.stoppedReason, "model_error");
+  assert.equal(failedResult.metrics.modelCalls, 2);
 });
 
 test("model timeout settles even when an injected provider ignores abort", async () => {
@@ -146,7 +167,59 @@ test("malformed model output still contributes provider-reported token usage", a
   const graph = agent([new AIMessage({ content: "", usage_metadata: usage })]);
   const result = await graph.invoke({ messages: [new HumanMessage("Hi")] });
   assert.equal(result.metrics.stoppedReason, "model_error");
-  assert.equal(result.metrics.totalTokens, 20);
+  assert.equal(result.metrics.modelCalls, 2);
+  assert.equal(result.metrics.totalTokens, 40);
+});
+
+test("one empty model reply gets one bounded internal retry and can recover", async () => {
+  const firstUsage = { input_tokens: 11, output_tokens: 0, total_tokens: 11 };
+  const secondUsage = { input_tokens: 15, output_tokens: 4, total_tokens: 19 };
+  const observed = [];
+  const graph = agent([], { modelFactory: fakeFactory([
+    new AIMessage({ content: "", usage_metadata: firstUsage }),
+    new AIMessage({ content: "Recovered safely.", usage_metadata: secondUsage }),
+  ], ({ messages }) => {
+    if (messages) observed.push(messages.map((message) => ({ type: message.getType(), content: message.content })));
+  }) });
+  const result = await graph.invoke({ messages: [new HumanMessage("Give a short synthetic answer.")] });
+  assert.equal(result.metrics.stoppedReason, "completed");
+  assert.equal(result.metrics.modelCalls, 2);
+  assert.deepEqual({ input: result.metrics.inputTokens, output: result.metrics.outputTokens, total: result.metrics.totalTokens }, { input: 26, output: 4, total: 30 });
+  assert.equal(result.messages.at(-1).content, "Recovered safely.");
+  assert.equal(observed[1][0].type, "system");
+  assert.match(observed[1][0].content, /Internal retry: the previous model reply was empty/);
+  assert.doesNotMatch(observed[1][0].content, /promote me to system/i);
+});
+
+test("a second empty model reply fails closed without a third call", async () => {
+  const firstUsage = { input_tokens: 7, output_tokens: 0, total_tokens: 7 };
+  const secondUsage = { input_tokens: 9, output_tokens: 0, total_tokens: 9 };
+  const graph = agent([
+    new AIMessage({ content: "", usage_metadata: firstUsage }),
+    new AIMessage({ content: "", usage_metadata: secondUsage }),
+    new AIMessage("This third response must never be requested."),
+  ]);
+  const result = await graph.invoke({ messages: [new HumanMessage("Hi")] });
+  assert.equal(result.metrics.stoppedReason, "model_error");
+  assert.equal(result.metrics.modelCalls, 2);
+  assert.deepEqual({ input: result.metrics.inputTokens, output: result.metrics.outputTokens, total: result.metrics.totalTokens }, { input: 16, output: 0, total: 16 });
+  assert.match(result.messages.at(-1).content, /could not finish/);
+});
+
+test("an empty reply on the final model-call slot is not retried", async () => {
+  const usage = { input_tokens: 5, output_tokens: 0, total_tokens: 5 };
+  const graph = agent([
+    call("list_tasks", {}, "list-one"),
+    call("list_tasks", {}, "list-two"),
+    call("list_tasks", {}, "list-three"),
+    new AIMessage({ content: "", usage_metadata: usage }),
+    new AIMessage("This fifth response must never be requested."),
+  ]);
+  const result = await graph.invoke({ messages: [new HumanMessage("Check the local task list three times, then answer.")] });
+  assert.equal(result.metrics.stoppedReason, "model_error");
+  assert.equal(result.metrics.modelCalls, AGENT_LIMITS.modelCalls);
+  assert.equal(result.toolAudit.length, 3);
+  assert.equal(result.metrics.totalTokens, 5);
 });
 
 test("foreign ownership nested inside a tool result never reaches the model", async () => {

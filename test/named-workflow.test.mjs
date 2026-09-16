@@ -17,6 +17,7 @@ import {
   WorkflowAuthorizationError,
   createWorkflowRunner,
   getWorkflowTemplate,
+  validateWorkflowTemplates,
 } from "../src/agent/workflow.mjs";
 
 const PROFILE_CONTRACT = Object.freeze([
@@ -34,18 +35,26 @@ const PROFILE_CONTRACT = Object.freeze([
 
 const TEMPLATE_CONTRACT = Object.freeze({
   individual: Object.freeze([
-    Object.freeze({ stepId: "requirements_quote", agentId: "sales-suri", dependsOn: Object.freeze([]) }),
+    Object.freeze({ stepId: "requirements_quote", agentId: "sales-suri", dependsOn: Object.freeze([]),
+      allowedTools: Object.freeze(["lookup_company", "calculate", "get_order_status", "read_document", "list_tasks", "create_task"]) }),
   ]),
   pair: Object.freeze([
-    Object.freeze({ stepId: "requirements_quote", agentId: "sales-suri", dependsOn: Object.freeze([]) }),
-    Object.freeze({ stepId: "final_verification", agentId: "ai-qa-quinn", dependsOn: Object.freeze(["requirements_quote"]) }),
+    Object.freeze({ stepId: "requirements_quote", agentId: "sales-suri", dependsOn: Object.freeze([]),
+      allowedTools: Object.freeze(["read_document", "calculate"]) }),
+    Object.freeze({ stepId: "final_verification", agentId: "ai-qa-quinn", dependsOn: Object.freeze(["requirements_quote"]),
+      allowedTools: Object.freeze(["read_document", "calculate"]) }),
   ]),
   full_department: Object.freeze([
-    Object.freeze({ stepId: "requirements_quote", agentId: "sales-suri", dependsOn: Object.freeze([]) }),
-    Object.freeze({ stepId: "marketing_proposal", agentId: "marketing-mira", dependsOn: Object.freeze(["requirements_quote"]) }),
-    Object.freeze({ stepId: "connector_permission_review", agentId: "it-ivo", dependsOn: Object.freeze(["marketing_proposal"]) }),
-    Object.freeze({ stepId: "crm_persistence_design", agentId: "backend-beck", dependsOn: Object.freeze(["connector_permission_review"]) }),
-    Object.freeze({ stepId: "final_verification", agentId: "ai-qa-quinn", dependsOn: Object.freeze(["crm_persistence_design"]) }),
+    Object.freeze({ stepId: "requirements_quote", agentId: "sales-suri", dependsOn: Object.freeze([]),
+      allowedTools: Object.freeze(["read_document", "calculate"]) }),
+    Object.freeze({ stepId: "marketing_proposal", agentId: "marketing-mira", dependsOn: Object.freeze(["requirements_quote"]),
+      allowedTools: Object.freeze(["lookup_company", "read_document", "calculate"]) }),
+    Object.freeze({ stepId: "connector_permission_review", agentId: "it-ivo", dependsOn: Object.freeze(["marketing_proposal"]),
+      allowedTools: Object.freeze(["read_document", "list_tasks"]) }),
+    Object.freeze({ stepId: "crm_persistence_design", agentId: "backend-beck", dependsOn: Object.freeze(["connector_permission_review"]),
+      allowedTools: Object.freeze(["list_tasks", "create_task", "remember", "recall", "calculate"]) }),
+    Object.freeze({ stepId: "final_verification", agentId: "ai-qa-quinn", dependsOn: Object.freeze(["crm_persistence_design"]),
+      allowedTools: Object.freeze(["read_document", "calculate"]) }),
   ]),
 });
 
@@ -200,10 +209,28 @@ test("individual, pair and full-department templates use unique agents in the re
   for (const [templateId, expected] of Object.entries(TEMPLATE_CONTRACT)) {
     const template = getWorkflowTemplate(templateId);
     assert.equal(template, WORKFLOW_TEMPLATES[templateId]);
-    assert.deepEqual(template.steps.map(({ stepId, agentId, dependsOn }) => ({ stepId, agentId, dependsOn })), expected);
+    assert.deepEqual(template.steps.map(({ stepId, agentId, dependsOn, allowedTools }) => ({ stepId, agentId, dependsOn, allowedTools })), expected);
     assert.equal(new Set(template.steps.map(({ agentId }) => agentId)).size, template.steps.length);
   }
   assert.throws(() => getWorkflowTemplate("invented-template"), /unknown|template/i);
+});
+
+test("workflow template validation requires unique, registered, profile-authorized step tools", () => {
+  const missing = structuredClone(WORKFLOW_TEMPLATES);
+  delete missing.pair.steps[0].allowedTools;
+  assert.throws(() => validateWorkflowTemplates(missing), /allowedTools|unsupported fields/i);
+
+  const unknown = structuredClone(WORKFLOW_TEMPLATES);
+  unknown.pair.steps[0].allowedTools = ["invented_admin_tool"];
+  assert.throws(() => validateWorkflowTemplates(unknown), /unknown tool/i);
+
+  const outsideProfile = structuredClone(WORKFLOW_TEMPLATES);
+  outsideProfile.pair.steps[0].allowedTools = ["remember"];
+  assert.throws(() => validateWorkflowTemplates(outsideProfile), /not authorized|sales-suri/i);
+
+  const duplicate = structuredClone(WORKFLOW_TEMPLATES);
+  duplicate.pair.steps[0].allowedTools = ["calculate", "calculate"];
+  assert.throws(() => validateWorkflowTemplates(duplicate), /duplicate/i);
 });
 
 test("wrong tool, client and recipient identities are denied before tool execution", async (t) => {
@@ -245,6 +272,94 @@ test("wrong tool, client and recipient identities are denied before tool executi
   assert.deepEqual(f.counts(), { modelCalls: 0, toolCalls: 0 });
   const recipientRecords = await f.runner.readRecords({ clientId: "client-fixture-a", workflowId: "workflow-auth-recipient" });
   assert.equal(recipientRecords.some(({ recordType }) => recordType === "handoff"), false);
+});
+
+test("full-department step scopes deny sales task and order tools while allowing Beck to create a task", async (t) => {
+  const deniedTools = [];
+  let deniedExecutorCalls = 0;
+  const denied = await fixture(t, {
+    toolExecutor: async () => { deniedExecutorCalls += 1; return { ok: true }; },
+    agentInvoker: async (profile, step, context) => {
+      if (profile.agentId === "sales-suri") {
+        const name = context.objective.includes("order") ? "get_order_status" : "create_task";
+        assert.deepEqual(context.allowedTools, ["read_document", "calculate"]);
+        try {
+          await context.executeTool({ name, args: {} });
+          assert.fail(`${name} unexpectedly passed the full-department sales step scope.`);
+        } catch (error) {
+          deniedTools.push(name);
+          assert.equal(error instanceof WorkflowAuthorizationError, true);
+        }
+      }
+      return {
+        output: `${profile.agentId} completed its synthetic step`, evidence: [], toolAudit: [],
+        metrics: { modelCalls: 0, toolCalls: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0, durationMs: 1 },
+      };
+    },
+  });
+  for (const [objective, workflowId, idempotencyKey] of [
+    ["attempt sales create task", "workflow-sales-create-denied", "sales-create-denied"],
+    ["attempt sales order lookup", "workflow-sales-order-denied", "sales-order-denied"],
+  ]) {
+    const result = await denied.runner.run(request({ templateId: "full_department", objective, workflowId, idempotencyKey }));
+    assert.equal(result.status, "failed");
+    assert.equal(result.steps[0].status, "failed");
+    assert.equal(result.steps[0].toolAudit[0].status, "denied");
+  }
+  assert.deepEqual(deniedTools.sort(), ["create_task", "get_order_status"]);
+  assert.equal(deniedExecutorCalls, 0);
+
+  const executorContexts = [];
+  const allowed = await fixture(t, {
+    toolExecutor: async (name, args, fixedContext) => {
+      executorContexts.push({ name, args, fixedContext });
+      return { ok: true, taskId: "task-beck-1" };
+    },
+    agentInvoker: async (profile, step, context) => {
+      if (profile.agentId === "backend-beck") {
+        assert.ok(context.allowedTools.includes("create_task"));
+        await context.executeTool({ name: "create_task", args: { title: "Synthetic CRM persistence task" } });
+      }
+      return {
+        output: `${profile.agentId} completed its synthetic step`, evidence: [], toolAudit: [],
+        metrics: { modelCalls: 0, toolCalls: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0, durationMs: 1 },
+      };
+    },
+  });
+  const completed = await allowed.runner.run(request({
+    templateId: "full_department", workflowId: "workflow-beck-create-allowed", idempotencyKey: "beck-create-allowed",
+  }));
+  assert.equal(completed.status, "completed");
+  const beck = completed.steps.find(({ agentId }) => agentId === "backend-beck");
+  assert.deepEqual(beck.toolAudit.map(({ name, status }) => ({ name, status })), [{ name: "create_task", status: "completed" }]);
+  assert.equal(executorContexts.length, 1);
+  assert.equal(executorContexts[0].fixedContext.agentId, "backend-beck");
+  assert.deepEqual(executorContexts[0].fixedContext.allowedTools, ["list_tasks", "create_task", "remember", "recall", "calculate"]);
+});
+
+test("default named agents receive only the tools authorized for their fixed workflow step", async (t) => {
+  const boundToolNames = [];
+  const f = await fixture(t, {
+    defaultAgent: true,
+    modelFactory: () => ({
+      bindTools(definitions) {
+        boundToolNames.push(definitions.map(({ function: definition }) => definition.name));
+        return this;
+      },
+      async invoke() {
+        return new AIMessage({
+          content: "Synthetic step completed without a tool call.",
+          usage_metadata: { input_tokens: 1, output_tokens: 1, total_tokens: 2 },
+        });
+      },
+    }),
+  });
+  const result = await f.runner.run(request({
+    templateId: "full_department", workflowId: "workflow-default-step-scopes", idempotencyKey: "default-step-scopes",
+  }));
+  assert.equal(result.status, "completed");
+  assert.deepEqual(boundToolNames.map((names) => [...names].sort()),
+    WORKFLOW_TEMPLATES.full_department.steps.map(({ allowedTools }) => [...allowedTools].sort()));
 });
 
 test("a two-agent workflow records queued, running, handoff and completed lifecycle state", async (t) => {
@@ -406,7 +521,7 @@ test("run metrics aggregate agent time, token use, step counts and exact persist
       await context.handoff({ toAgentId: "ai-qa-quinn", evidence: [{ artifact: "quote-v1", bytes: 321 }] });
     }
     for (let index = 0; index < synthetic[profile.agentId].toolCalls; index += 1) {
-      await context.executeTool({ name: profile.allowedTools[0], args: { fixtureCall: index + 1 } });
+      await context.executeTool({ name: step.allowedTools[0], args: { fixtureCall: index + 1 } });
     }
     return {
       output: `${step.stepId} output`, evidence: [{ agentId: profile.agentId, stored: true }],

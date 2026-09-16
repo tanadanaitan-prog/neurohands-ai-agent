@@ -74,6 +74,8 @@ For a task with multiple requirements, handle the necessary steps and check the 
 ${extra || ""}`;
 }
 
+const EMPTY_RESPONSE_RETRY_REMINDER = "Internal retry: the previous model reply was empty. Return a concise final answer or valid tool calls based only on the existing task and evidence.";
+
 // This is a conservative estimate, not a model tokenizer or reported usage.
 // Actual token counts come only from Ollama's response metadata.
 export function estimateContextTokens(messages, definitions) {
@@ -164,6 +166,8 @@ export function createAgentGraph({ role = "aria", env = process.env, modelFactor
       const runnable = names.length ? model.bindTools(definitions) : model;
       const messages = [new SystemMessage(promptFor(activeRole, clientId, extra)), ...conversation];
       const roleCallLimit = depth ? Math.min(AGENT_LIMITS.modelCalls - 1, metrics.modelCalls + 2) : AGENT_LIMITS.modelCalls;
+      let emptyRetryUsed = false;
+      let previousToolBatchFailed = false;
       while (metrics.modelCalls < roleCallLimit) {
         while (estimateContextTokens(messages, definitions) + AGENT_LIMITS.outputTokens > AGENT_LIMITS.contextTokens) {
           const nextHuman = messages.findIndex((message, index) => index > 1 && message.getType() === "human");
@@ -183,10 +187,20 @@ export function createAgentGraph({ role = "aria", env = process.env, modelFactor
         if (calls.length > AGENT_LIMITS.toolCalls) throw new Error("The model returned too many tool calls at once.");
         if (response.invalid_tool_calls?.length) throw new Error("The model returned invalid tool calls.");
         const responseText = contentText(response.content);
-        if (!responseText.trim() && !calls.length) throw new Error("The model returned an empty response.");
+        if (!responseText.trim() && !calls.length) {
+          if (!emptyRetryUsed && !previousToolBatchFailed && metrics.modelCalls < roleCallLimit) {
+            emptyRetryUsed = true;
+            // This fixed reminder stays inside the trusted system message. No
+            // user text or model output is promoted into the system role.
+            messages[0] = new SystemMessage(`${contentText(messages[0].content)}\n${EMPTY_RESPONSE_RETRY_REMINDER}`);
+            continue;
+          }
+          throw new Error("The model returned an empty response.");
+        }
         const reply = signMessage(new AIMessage({ content: responseText, tool_calls: calls, id: response.id, usage_metadata: response.usage_metadata, response_metadata: response.response_metadata }), role, clientId);
         messages.push(reply); generated.push(reply);
         if (!calls.length) return generated;
+        let toolBatchFailed = false;
         for (const call of calls) {
           let result;
           let ok = false;
@@ -228,11 +242,13 @@ export function createAgentGraph({ role = "aria", env = process.env, modelFactor
           }
           audit.result = result; audit.ok = ok;
           toolAudit.push(audit);
+          if (!ok) toolBatchFailed = true;
           let content = JSON.stringify(result);
           if (content.length > AGENT_LIMITS.toolResultCharacters) content = JSON.stringify({ ok, truncated: true, excerpt: content.slice(0, AGENT_LIMITS.toolResultCharacters - 80) });
           const toolReply = signMessage(new ToolMessage({ content, tool_call_id: call.id || `lab-call-${metrics.toolCalls}`, name: call.name, status: ok ? "success" : "error" }), role, clientId);
           messages.push(toolReply); generated.push(toolReply);
         }
+        previousToolBatchFailed = toolBatchFailed;
       }
       metrics.stoppedReason = "call_limit";
       generated.push(signMessage(new AIMessage("This task reached the local model-call limit. The tool results above show what was completed. Please split the remaining work into a smaller request."), role, clientId));

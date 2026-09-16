@@ -25,7 +25,7 @@
       "stepId": "requirements_quote",
       "role": "Sales lead",
       "responsibility": "Confirm the commercial requirements, calculate the proposal, and create the sales evidence.",
-      "allowedTools": ["calculate", "create_task"]
+      "plannedTools": ["calculate"]
     },
     {
       "id": "marketing-mira",
@@ -34,7 +34,7 @@
       "stepId": "marketing_proposal",
       "role": "Marketing strategist",
       "responsibility": "Turn the verified proposal into a bounded positioning brief and a draft-only campaign plan.",
-      "allowedTools": ["create_task"]
+      "plannedTools": []
     },
     {
       "id": "it-ivo",
@@ -43,7 +43,7 @@
       "stepId": "connector_permission_review",
       "role": "IT and connector operator",
       "responsibility": "Specify connector ownership, least-privilege permissions, tenant boundaries, freshness, and audit controls.",
-      "allowedTools": ["create_task"]
+      "plannedTools": []
     },
     {
       "id": "backend-beck",
@@ -52,7 +52,7 @@
       "stepId": "crm_persistence_design",
       "role": "Backend and software engineer",
       "responsibility": "Define idempotent CRM persistence and the measurable runtime data contract.",
-      "allowedTools": ["remember"]
+      "plannedTools": []
     },
     {
       "id": "ai-qa-quinn",
@@ -61,7 +61,7 @@
       "stepId": "final_verification",
       "role": "AI quality engineer",
       "responsibility": "Independently recompute the evidence gate and verify the cross-department handoff chain.",
-      "allowedTools": ["calculate"]
+      "plannedTools": ["calculate"]
     }
   ],
   "scenarios": [
@@ -106,6 +106,7 @@
   "expectedEvidence": {
     "sales_quote": {
       "ownerAgentId": "sales-suri",
+      "source": "trusted_injected_agent_result",
       "data": {
         "seats": 5,
         "currency": "THB",
@@ -118,6 +119,7 @@
     },
     "marketing_brief": {
       "ownerAgentId": "marketing-mira",
+      "source": "trusted_injected_agent_result",
       "data": {
         "audience": "Thai SME owner evaluating an AI workforce",
         "valueProposition": "Five accountable specialist agents with measured handoffs and owner-controlled tools",
@@ -127,6 +129,7 @@
     },
     "campaign_plan": {
       "ownerAgentId": "marketing-mira",
+      "source": "trusted_injected_agent_result",
       "data": {
         "channel": "owner-approved direct proposal",
         "callToAction": "Review scope, permissions, and evidence before activation",
@@ -136,6 +139,7 @@
     },
     "connector_authorization": {
       "ownerAgentId": "it-ivo",
+      "source": "trusted_injected_agent_result",
       "data": {
         "sales-suri": ["pricing.read", "proposal.draft"],
         "marketing-mira": ["proposal.read", "campaign.draft"],
@@ -146,6 +150,7 @@
     },
     "security_controls": {
       "ownerAgentId": "it-ivo",
+      "source": "trusted_injected_agent_result",
       "data": {
         "tenantScope": "CONFORMANCE-CLIENT-A",
         "leastPrivilege": true,
@@ -156,6 +161,7 @@
     },
     "crm_persistence_design": {
       "ownerAgentId": "backend-beck",
+      "source": "trusted_injected_agent_result",
       "data": {
         "idempotencyKeyRequired": true,
         "records": ["workflow", "step", "tool_call", "handoff", "evidence"],
@@ -165,6 +171,7 @@
     },
     "measurement_plan": {
       "ownerAgentId": "backend-beck",
+      "source": "trusted_injected_agent_result",
       "data": {
         "perAgent": ["wall_ms", "input_tokens", "output_tokens", "total_tokens", "tool_calls", "tool_failure_count", "failed_step_count", "blocked_step_count", "repeated_identical_tool_call_count"],
         "workflow": ["conformance_checks_passed", "conformance_checks_total", "jsonl_bytes", "storage_bytes", "record_count"],
@@ -175,90 +182,36 @@
   "plans": {
     "requirements_quote": {
       "agentId": "sales-suri",
+      "evidenceTypes": ["sales_quote"],
       "usage": { "inputTokens": 128, "outputTokens": 48, "totalTokens": 176, "durationMs": 4 },
       "tools": [
         {
           "name": "calculate",
           "args": { "operation": "calculate_pricing", "seatCount": 5, "monthlyPricePerSeat": 1000, "discountPercent": 10, "setupFee": 2000 }
-        },
-        {
-          "name": "create_task",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "sales_quote",
-            "data": { "seats": 5, "currency": "THB", "monthlyTotal": 4500, "firstMonthTotal": 6500, "setupFee": 2000, "discountPercent": 10, "status": "draft_pending_approval" }
-          }
         }
       ]
     },
     "marketing_proposal": {
       "agentId": "marketing-mira",
+      "evidenceTypes": ["marketing_brief", "campaign_plan"],
       "usage": { "inputTokens": 96, "outputTokens": 42, "totalTokens": 138, "durationMs": 4 },
-      "tools": [
-        {
-          "name": "create_task",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "marketing_brief",
-            "data": { "audience": "Thai SME owner evaluating an AI workforce", "valueProposition": "Five accountable specialist agents with measured handoffs and owner-controlled tools", "verifiedMonthlyTHB": 4500, "verifiedFirstMonthTHB": 6500 }
-          }
-        },
-        {
-          "name": "create_task",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "campaign_plan",
-            "data": { "channel": "owner-approved direct proposal", "callToAction": "Review scope, permissions, and evidence before activation", "externalSend": false, "claimsRequireEvidence": true }
-          }
-        }
-      ]
+      "tools": []
     },
     "connector_permission_review": {
       "agentId": "it-ivo",
+      "evidenceTypes": ["connector_authorization", "security_controls"],
       "usage": { "inputTokens": 104, "outputTokens": 44, "totalTokens": 148, "durationMs": 4 },
-      "tools": [
-        {
-          "name": "create_task",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "connector_authorization",
-            "data": { "sales-suri": ["pricing.read", "proposal.draft"], "marketing-mira": ["proposal.read", "campaign.draft"], "it-ivo": ["connector.inspect", "permission.review"], "backend-beck": ["crm.schema", "crm.write-test"], "ai-qa-quinn": ["audit.read", "quality.verify"] }
-          }
-        },
-        {
-          "name": "create_task",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "security_controls",
-            "data": { "tenantScope": "CONFORMANCE-CLIENT-A", "leastPrivilege": true, "freshnessRecorded": true, "auditTrailRequired": true, "productionCredentialsUsed": false }
-          }
-        }
-      ]
+      "tools": []
     },
     "crm_persistence_design": {
       "agentId": "backend-beck",
+      "evidenceTypes": ["crm_persistence_design", "measurement_plan"],
       "usage": { "inputTokens": 116, "outputTokens": 50, "totalTokens": 166, "durationMs": 4 },
-      "tools": [
-        {
-          "name": "remember",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "crm_persistence_design",
-            "data": { "idempotencyKeyRequired": true, "records": ["workflow", "step", "tool_call", "handoff", "evidence"], "failureRecovery": "resume_from_last_completed_step", "externalWrite": false }
-          }
-        },
-        {
-          "name": "remember",
-          "args": {
-            "operation": "store_evidence",
-            "evidenceType": "measurement_plan",
-            "data": { "perAgent": ["wall_ms", "input_tokens", "output_tokens", "total_tokens", "tool_calls", "tool_failure_count", "failed_step_count", "blocked_step_count", "repeated_identical_tool_call_count"], "workflow": ["conformance_checks_passed", "conformance_checks_total", "jsonl_bytes", "storage_bytes", "record_count"], "interpretation": "conformance_only_no_optimization_claim" }
-          }
-        }
-      ]
+      "tools": []
     },
     "final_verification": {
       "agentId": "ai-qa-quinn",
+      "evidenceTypes": [],
       "usage": { "inputTokens": 90, "outputTokens": 38, "totalTokens": 128, "durationMs": 4 },
       "tools": [
         { "name": "calculate", "args": { "operation": "verify_evidence" } }

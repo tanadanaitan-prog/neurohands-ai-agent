@@ -5,9 +5,10 @@ import path from "node:path";
 import { HumanMessage } from "@langchain/core/messages";
 import { createAgentGraph } from "./team.mjs";
 import { AGENT_PROFILE_BY_ID, getAgentProfile } from "./profiles.mjs";
+import { TOOL_SCHEMAS } from "./skills.mjs";
 
 const ID = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,119}$/;
-const STEP_FIELDS = Object.freeze(["stepId", "agentId", "instruction", "dependsOn"]);
+const STEP_FIELDS = Object.freeze(["stepId", "agentId", "instruction", "dependsOn", "allowedTools"]);
 const TEMPLATE_FIELDS = Object.freeze(["templateId", "displayName", "version", "steps"]);
 const APPROVED_SIZES = Object.freeze({ individual: 1, pair: 2, full_department: 5 });
 const TEMPLATE_ALIASES = Object.freeze({ single: "individual", single_agent: "individual", two_agent: "pair", five_agent: "full_department", department: "full_department" });
@@ -79,6 +80,10 @@ export function validateWorkflowTemplates(input) {
       const profile = AGENT_PROFILE_BY_ID[step.agentId];
       if (!profile || agentIds.has(step.agentId)) throw new Error(`${key} contains an unknown or repeated agent.`);
       agentIds.add(step.agentId);
+      if (!Array.isArray(step.allowedTools) || !step.allowedTools.length || step.allowedTools.some((name) => typeof name !== "string" || !name.trim())) throw new Error(`${key}.${step.stepId} must declare a nonempty allowedTools array.`);
+      if (new Set(step.allowedTools).size !== step.allowedTools.length) throw new Error(`${key}.${step.stepId}.allowedTools cannot contain duplicates.`);
+      if (step.allowedTools.some((name) => !Object.hasOwn(TOOL_SCHEMAS, name))) throw new Error(`${key}.${step.stepId}.allowedTools contains an unknown tool.`);
+      if (step.allowedTools.some((name) => !profile.allowedTools.includes(name))) throw new Error(`${key}.${step.stepId}.allowedTools contains a tool not authorized for ${profile.agentId}.`);
       if (typeof step.instruction !== "string" || !step.instruction.trim() || step.instruction.length > 1000) throw new Error(`${key}.${step.stepId} has an invalid instruction.`);
       const expectedDependencies = index ? [template.steps[index - 1].stepId] : [];
       if (!Array.isArray(step.dependsOn) || JSON.stringify(step.dependsOn) !== JSON.stringify(expectedDependencies)) throw new Error(`${key}.${step.stepId} must depend only on the immediately preceding step.`);
@@ -95,67 +100,75 @@ export const WORKFLOW_TEMPLATES = validateWorkflowTemplates({
   individual: {
     templateId: "individual",
     displayName: "Individual sales assessment",
-    version: 1,
+    version: 2,
     steps: [{
       stepId: "requirements_quote",
       agentId: "sales-suri",
       instruction: "Gather the requirements and prepare a quotation brief using verified evidence only.",
       dependsOn: [],
+      allowedTools: ["lookup_company", "calculate", "get_order_status", "read_document", "list_tasks", "create_task"],
     }],
   },
   pair: {
     templateId: "pair",
     displayName: "Sales and quality verification",
-    version: 1,
+    version: 2,
     steps: [
       {
         stepId: "requirements_quote",
         agentId: "sales-suri",
         instruction: "Gather the requirements and prepare a quotation brief using verified evidence only.",
         dependsOn: [],
+        allowedTools: ["read_document", "calculate"],
       },
       {
         stepId: "final_verification",
         agentId: "ai-qa-quinn",
         instruction: "Verify the quotation evidence and return either a supported result or a concrete blocker.",
         dependsOn: ["requirements_quote"],
+        allowedTools: ["read_document", "calculate"],
       },
     ],
   },
   full_department: {
     templateId: "full_department",
     displayName: "Five-department delivery workflow",
-    version: 1,
+    version: 2,
     steps: [
       {
         stepId: "requirements_quote",
         agentId: "sales-suri",
         instruction: "Gather the requirements and prepare a quotation brief using verified evidence only.",
         dependsOn: [],
+        allowedTools: ["read_document", "calculate"],
       },
       {
         stepId: "marketing_proposal",
         agentId: "marketing-mira",
         instruction: "Turn the approved requirements into an evidence-grounded proposal without adding unsupported claims.",
         dependsOn: ["requirements_quote"],
+        allowedTools: ["lookup_company", "read_document", "calculate"],
       },
       {
         stepId: "connector_permission_review",
         agentId: "it-ivo",
         instruction: "Check the required connectors, tool permissions, and client boundary assumptions.",
         dependsOn: ["marketing_proposal"],
+        allowedTools: ["read_document", "list_tasks"],
       },
       {
         stepId: "crm_persistence_design",
         agentId: "backend-beck",
         instruction: "Specify idempotent, recoverable CRM persistence for the approved proposal.",
         dependsOn: ["connector_permission_review"],
+        allowedTools: ["list_tasks", "create_task", "remember", "recall", "calculate"],
       },
       {
         stepId: "final_verification",
         agentId: "ai-qa-quinn",
         instruction: "Verify all supplied evidence and return either a supported final result or a concrete blocker.",
         dependsOn: ["crm_persistence_design"],
+        allowedTools: ["read_document", "calculate"],
       },
     ],
   },
@@ -495,7 +508,7 @@ export function createWorkflowRunner({
       role: profile.role,
       env,
       modelFactory,
-      allowedTools: profile.allowedTools,
+      allowedTools: step.allowedTools,
       toolExecutor: (name, args) => context.executeTool({ name, args }),
       systemContext: {
         clientId: context.clientId,
@@ -663,7 +676,7 @@ export function createWorkflowRunner({
             if (!active) throw new WorkflowAuthorizationError("Workflow authorization denied: this step is no longer active.");
             if (!spec || typeof spec !== "object") deny(new WorkflowAuthorizationError("Workflow authorization denied: invalid tool request."));
             assertRequestIdentity(spec, { tool: true });
-            if (typeof spec.name !== "string" || !profile.allowedTools.includes(spec.name)) deny(new WorkflowAuthorizationError("Workflow authorization denied: this tool is not allowed for the fixed agent."));
+            if (typeof spec.name !== "string" || !step.allowedTools.includes(spec.name)) deny(new WorkflowAuthorizationError("Workflow authorization denied: this tool is not allowed for the fixed workflow step."));
             if (!toolExecutor) deny(new WorkflowAuthorizationError("Workflow authorization denied: no local tool executor was supplied."));
             if (aggregate.toolCalls + observedToolCalls >= budget.maxToolCalls) deny(new WorkflowBudgetError("Workflow tool-call budget exceeded."));
             const args = safeJson(spec.args || {}, "Tool arguments", 12_000);
@@ -673,7 +686,7 @@ export function createWorkflowRunner({
               clientId, workflowId, templateId: template.templateId, stepId: step.stepId,
               agentId: profile.agentId, departmentId: profile.departmentId,
               idempotencyKey, profileVersion: profile.version,
-              allowedTools: Object.freeze([...profile.allowedTools]), signal: controller.signal,
+              allowedTools: Object.freeze([...step.allowedTools]), signal: controller.signal,
             });
             const result = await abortable(Promise.resolve().then(() => toolExecutor(spec.name, args, fixedContext)));
             if (!active) throw new WorkflowBudgetError("Workflow step ended before the tool result was confirmed.");
@@ -733,6 +746,7 @@ export function createWorkflowRunner({
         clientId, workflowId, templateId: template.templateId, stepId: step.stepId,
         agentId: profile.agentId, departmentId: profile.departmentId, idempotencyKey,
         objective, evidence: deepFreeze(safeJson(incoming, "Incoming evidence", 10_000)), remainingBudget,
+        allowedTools: Object.freeze([...step.allowedTools]),
         signal: controller.signal, executeTool, handoff,
       });
       let stepMetrics = normalizeMetrics();
