@@ -1,13 +1,20 @@
 # Neurohands — AI agents for business
 
-**Local LangGraph lab:** use `npm run lab:studio`, select `neurohands_chat`,
-and open **Chat** to test a real local model through Ollama (`qwen3:1.7b`).
-Use `npm run lab:chat` for a fixed model test with token and time measurements,
-or `npm run lab:chat:trace` to record that synthetic test in LangSmith.
-The original `neurohands_test` echo and its `lab:check` / `lab:trace` commands
-remain available. Follow the [step-by-step test guide](docs/LANGGRAPH_LOCAL_TEST.md).
-This local chat has no business tools or LINE connection; Gemini fallback is
-not connected. Verified results and remaining limits are listed in the guide.
+**Local agent lab:** run `npm run lab:studio`, select `neurohands_concierge`,
+`neurohands_aria` or `neurohands_jarvis`, and open **Chat**. These roles use the
+same local Qwen model with permitted tools for fictional company information,
+orders, documents, calculation, local tasks, memory and team delegation.
+Follow [the agent test guide](docs/LOCAL_AGENT_LAB.md) for examples and the
+18-scenario before-and-after benchmark. `neurohands_chat` remains the plain-chat
+baseline; `neurohands_test` remains the echo check. The [original setup guide](docs/LANGGRAPH_LOCAL_TEST.md)
+explains installation and private settings. This lab is separate from production
+LINE; Gemini takeover is not connected.
+
+**Measured local result, 16 September 2026:** 17/36 task checks passed in plain
+chat and 24/36 with tools. All 11 local tool/state workflows and 219 automated
+tests passed. The remaining model-answer failures are recorded in the
+[benchmark report](docs/AGENT_BENCHMARK_RESULTS.md); the new local graphs are
+experimental and are not deployed to LINE.
 
 Neurohands aims to give a business an AI workforce that can answer questions, use approved business tools, work with company documents and report what it did. The owner decides each agent's responsibilities and access.
 

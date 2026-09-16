@@ -18,7 +18,11 @@
     "lab:trace": "node scripts/langgraph-lab.mjs trace",
     "lab:studio": "node scripts/langgraph-lab.mjs studio",
     "lab:chat": "node scripts/langgraph-lab.mjs chat",
-    "lab:chat:trace": "node scripts/langgraph-lab.mjs chat-trace"
+    "lab:chat:trace": "node scripts/langgraph-lab.mjs chat-trace",
+    "lab:agent:trace": "node scripts/langgraph-lab.mjs agent-trace",
+    "lab:agent:check": "node scripts/agent-demo-check.mjs",
+    "lab:benchmark:baseline": "node scripts/agent-benchmark.mjs baseline",
+    "lab:benchmark:equipped": "node scripts/agent-benchmark.mjs enhanced"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",

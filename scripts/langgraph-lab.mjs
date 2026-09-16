@@ -23,6 +23,7 @@ const sample = "Hello Neurohands test";
 const expected = `Neurohands LangGraph received: ${sample}`;
 const input = { messages: [{ role: "user", content: sample }] };
 const chatInput = { messages: [{ role: "user", content: "A fictional shop sold three notebooks at 40 baht each. What is the total? Answer in one short sentence." }] };
+const agentInput = { messages: [{ role: "user", content: "Use your order tool to check the status of fictional order DEMO-ORDER-001, then tell me the status and expected ship date." }] };
 
 async function prepareChat() {
   const { graph, readChatConfig } = await import("../src/agent/chat.mjs");
@@ -80,7 +81,7 @@ async function check() {
   }
 }
 
-async function trace(useModel = false) {
+async function trace(useModel = false, useAgent = false) {
   if (!process.env.LANGSMITH_API_KEY?.trim().startsWith("lsv2_")) {
     console.error("LangSmith key missing. Save it privately after LANGSMITH_API_KEY= in .env.langgraph, then run npm run lab:trace again.");
     process.exitCode = 1;
@@ -88,22 +89,27 @@ async function trace(useModel = false) {
   }
   const { Client } = await import("langsmith");
   const { LangChainTracer } = await import("@langchain/core/tracers/tracer_langchain");
-  const { graph, settings } = useModel
+  const prepared = useModel
     ? await prepareChat()
     : await import("../src/agent/graph.mjs");
+  const settings = prepared.settings;
+  const graph = useAgent ? (await import("../src/agent/team.mjs")).ariaGraph : prepared.graph;
   const projectName = process.env.LANGSMITH_PROJECT || "neurohands-local-test";
   const client = new Client({ timeout_ms: 15000, tracingSamplingRate: 1 });
   const tracer = new LangChainTracer({ client, projectName });
   const runId = randomUUID();
   const start = performance.now();
-  const result = await graph.invoke(useModel ? chatInput : input, {
+  const result = await graph.invoke(useAgent ? agentInput : useModel ? chatInput : input, {
     callbacks: [tracer],
     runId,
-    runName: useModel ? "neurohands-local-model-check" : "neurohands-synthetic-connection-check",
+    runName: useAgent ? "neurohands-local-aria-tool-check" : useModel ? "neurohands-local-model-check" : "neurohands-synthetic-connection-check",
     tags: ["synthetic", useModel ? "local-llm" : "no-llm", "local-lab"],
     metadata: { purpose: "connection-check", contains_customer_data: false },
   });
   const durationMs = performance.now() - start;
+  if (useAgent && (result.metrics?.stoppedReason !== "completed" || !result.toolAudit?.some((item) => item.name === "get_order_status" && item.ok))) {
+    throw new Error("The local agent tool test did not complete successfully.");
+  }
   if (!useModel) assert.equal(result.messages.at(-1).content, expected);
   await client.awaitPendingTraceBatches();
 
@@ -132,6 +138,7 @@ async function trace(useModel = false) {
   }
   console.log(JSON.stringify({
     ...(useModel ? chatReport(result, durationMs, settings.model) : { status: "passed", reply: expected, modelCalls: 0 }),
+    ...(useAgent ? { test: "one local Aria tool workflow with fictional data", modelCalls: result.metrics.modelCalls, usage: { input_tokens: result.metrics.inputTokens, output_tokens: result.metrics.outputTokens, total_tokens: result.metrics.totalTokens }, toolAudit: result.toolAudit } : {}),
     langsmithUpload: "verified by reading the completed run",
     project: projectName,
     runId,
@@ -145,7 +152,7 @@ async function studio() {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const entry = typeof manifest.bin === "string" ? manifest.bin : manifest.bin.langgraphjs;
   if (!entry) throw new Error("LangGraph CLI entry is unavailable.");
-  console.log("Starting Studio on http://127.0.0.1:2024. Select neurohands_chat for the local AI, or neurohands_test for the echo check. Automatic tracing is OFF. Use fictional input; press Ctrl+C to stop Studio.");
+  console.log("Starting Studio on http://127.0.0.1:2024. Select neurohands_concierge, neurohands_aria or neurohands_jarvis for local agent tools; neurohands_chat for plain chat; neurohands_test for echo. Automatic tracing is OFF. Use fictional input; press Ctrl+C to stop Studio.");
   // Run the CLI in this process so its own server shutdown handlers receive
   // Ctrl+C on Windows, instead of killing only an intermediate process.
   process.chdir(root);
@@ -161,9 +168,10 @@ try {
   else if (mode === "trace") await trace();
   else if (mode === "chat") await chat();
   else if (mode === "chat-trace") await trace(true);
+  else if (mode === "agent-trace") await trace(true, true);
   else if (mode === "studio") await studio();
   else {
-    console.error("Choose check, trace, chat, chat-trace or studio.");
+    console.error("Choose check, trace, chat, chat-trace, agent-trace or studio.");
     process.exitCode = 1;
   }
 } catch (error) {

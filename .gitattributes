@@ -1,0 +1,4 @@
+# Preserve the bytes used by benchmark and review SHA-256 checks on Windows.
+artifacts/benchmarks/*.json text eol=lf
+reviews/*.json text eol=lf
+test/fixtures/agent-abilities*.json text eol=lf

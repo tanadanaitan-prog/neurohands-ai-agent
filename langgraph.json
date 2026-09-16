@@ -2,7 +2,10 @@
   "node_version": "24",
   "graphs": {
     "neurohands_test": "./src/agent/graph.mjs:graph",
-    "neurohands_chat": "./src/agent/chat.mjs:graph"
+    "neurohands_chat": "./src/agent/chat.mjs:graph",
+    "neurohands_concierge": "./src/agent/team.mjs:conciergeGraph",
+    "neurohands_aria": "./src/agent/team.mjs:ariaGraph",
+    "neurohands_jarvis": "./src/agent/team.mjs:jarvisGraph"
   },
   "env": ".env.langgraph"
 }

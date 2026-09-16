@@ -1,0 +1,112 @@
+{
+  "observedAtUtc": "2026-09-16T15:50:13.6609972Z",
+  "scope": "Read-only production connectivity inspection; no model inference or production mutation",
+  "publicChecks": [
+    {
+      "url": "https://neurohands-ai-agent-production.up.railway.app/",
+      "httpStatus": 200,
+      "result": "Neurohands v3.10 agent gateway is running"
+    },
+    {
+      "url": "https://neurohands-ai-agent-production.up.railway.app/ready",
+      "httpStatus": 200,
+      "ready": true
+    },
+    {
+      "url": "https://neurohands-ai-agent-production.up.railway.app/version",
+      "httpStatus": 200,
+      "version": "3.10.0",
+      "commit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb"
+    }
+  ],
+  "deployment": {
+    "status": "SUCCESS",
+    "id": "fb73eecf-bbb6-4305-b033-b12575d52924",
+    "createdAtUtc": "2026-09-09T16:50:58.653Z",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent"
+  },
+  "recentWebhookEvidence": {
+    "httpRequests": [
+      {
+        "timestampUtc": "2026-09-16T15:47:49.143828452Z",
+        "method": "POST",
+        "path": "/webhook",
+        "httpStatus": 200,
+        "proxyDurationMs": 320
+      },
+      {
+        "timestampUtc": "2026-09-16T15:48:18.376918497Z",
+        "method": "POST",
+        "path": "/webhook",
+        "httpStatus": 200,
+        "proxyDurationMs": 1314
+      }
+    ],
+    "handlerCompletions": [
+      {
+        "timestampUtc": "2026-09-16T15:47:58.441188500Z",
+        "status": "completed",
+        "elapsedMs": 1904
+      },
+      {
+        "timestampUtc": "2026-09-16T15:48:28.221484856Z",
+        "status": "completed",
+        "elapsedMs": 877
+      }
+    ],
+    "limitation": "Proxy and handler timings are separate observations, not full customer latency or AI model measurements. No message bodies were read."
+  },
+  "userVerification": {
+    "founderHelpReplyConfirmed": true,
+    "source": "User report relayed by coordinating agent",
+    "healthCommand": "User supplied actual LINE health response: Gemini disabled or not configured; fallback paused - authentication rejected.",
+    "healthCommandUsesModelInference": false
+  },
+  "historicalProviderFailure": {
+    "timestampUtc": "2026-09-10T04:34:16.210650711Z",
+    "provider": "openai",
+    "model": "gpt-4.1-mini",
+    "httpStatus": 401,
+    "failureReason": "authentication_rejected",
+    "classification": "Historical log from the current deployment, not a new provider probe",
+    "currentStatus": "Current pause confirmed by user-supplied LINE health reply before configuration repair."
+  },
+  "configurationInspection": {
+    "variableNamesRead": true,
+    "secretValuesRead": false,
+    "modelConfigurationValuesRead": false,
+    "connectorValuesRedacted": true,
+    "requiredConnectionVariableNamesPresent": true,
+    "thirdApiKeyVariableNamePresent": false,
+    "limitation": "Variable-name presence does not prove validity or usability."
+  },
+  "currentModelAbilityVerified": false,
+  "newLocalGraphsConnectedToLine": false,
+  "localConnectionLimitation": "Railway cannot reach the laptop's loopback Ollama or Studio address. A test-only connection needs an authenticated bridge or separate test deployment and channel.",
+  "actions": {
+    "modelInferenceCalls": 0,
+    "messagesSentByInspector": 0,
+    "productionMutations": 1,
+    "deploymentsTriggered": 1,
+    "supabaseConnectorQueries": 0
+  },
+  "repair": {
+    "userConfirmedGeminiFreeTier": true,
+    "changedVariableValues": {
+      "GEMINI_ENABLED": "true",
+      "GEMINI_MODEL": "gemini-3.6-flash",
+      "FALLBACK_PROVIDER": "",
+      "FALLBACK_BASE_URL": ""
+    },
+    "secretValuesChanged": false,
+    "experimentalCodeDeployed": false,
+    "sourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
+    "deploymentId": "3a9dabfb-c98e-49be-baf5-574ea8814389",
+    "status": "SUCCESS",
+    "modelReplyVerified": false,
+    "postDeploymentReadyHttpStatus": 200,
+    "postDeploymentSourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
+    "testStatus": "Awaiting user LINE reply to synthetic 12 + 5 test"
+  }
+}

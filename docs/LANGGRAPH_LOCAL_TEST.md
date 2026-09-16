@@ -1,5 +1,7 @@
 # Neurohands local model chat and LangGraph test
 
+**Agent tools are now available in separate graphs.** Follow [the local agent guide](LOCAL_AGENT_LAB.md) for Concierge, Aria, Jarvis and the benchmark. This document describes the original `neurohands_chat` comparison baseline and its installation. The prepared laptop now uses a dedicated Ollama endpoint on port `11435`; preserve that value in your private file.
+
 This lab lets you test one AI model on your computer through LangSmith Studio. The model is `qwen3:1.7b`, run by Ollama. It can answer questions from its training and the recent messages included in your test conversation. It has no internet search, business tools, customer documents, or connection to the LINE Official Account.
 
 ```text

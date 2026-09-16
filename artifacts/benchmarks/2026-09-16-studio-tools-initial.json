@@ -1,0 +1,536 @@
+{
+  "startedAt": "2026-09-16T15:45:47.073Z",
+  "scope": "Local synthetic Studio API acceptance",
+  "checks": [
+    {
+      "graph": "neurohands_concierge",
+      "threadId": "01a0aae5-4467-70ae-af84-3003bba02001",
+      "prompt": "Look up Mango Works and tell me its services.",
+      "answer": "Mango Works offers notebook sales and notebook cover printing. It is open from Monday to Friday, 09:00 to 17:00.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 962,
+        "outputTokens": 56,
+        "totalTokens": 1018,
+        "durationMs": 4914,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "concierge",
+          "name": "lookup_company",
+          "args": {
+            "query": "Mango Works"
+          },
+          "result": {
+            "company": "Mango Works",
+            "description": "A fictional notebook shop for local agent testing.",
+            "services": [
+              "notebook sales",
+              "notebook cover printing"
+            ],
+            "opening_hours": "Monday to Friday, 09:00 to 17:00",
+            "source": "local fictional company card"
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-5a30-725a-9eff-fb573f760308",
+      "prompt": "Check order DEMO-ORDER-001.",
+      "answer": "The order DEMO-ORDER-001 is currently in the \"packing\" stage. It includes 12 notebooks, and it is expected to be shipped on September 18, 2026.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1733,
+        "outputTokens": 75,
+        "totalTokens": 1808,
+        "durationMs": 8031,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "get_order_status",
+          "args": {
+            "order_number": "DEMO-ORDER-001"
+          },
+          "result": {
+            "order_number": "DEMO-ORDER-001",
+            "status": "packing",
+            "items": "12 notebooks",
+            "expected_ship_date": "2026-09-18",
+            "client_id": "DEMO-CLIENT",
+            "source": "local fictional order fixture"
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-7bdc-74a3-bd24-cacb05bbbd71",
+      "prompt": "Read DEMO-DOC-001 and tell me the cover-printing lead time.",
+      "answer": "The cover-printing lead time for DEMO-DOC-001 is 4 working days after artwork approval.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1771,
+        "outputTokens": 63,
+        "totalTokens": 1834,
+        "durationMs": 3793,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "read_document",
+          "args": {
+            "client_id": "DEMO-CLIENT",
+            "doc_code": "DEMO-DOC-001"
+          },
+          "result": {
+            "doc_code": "DEMO-DOC-001",
+            "title": "Mango Works fictional service guide",
+            "text": "Mango Works sells notebooks and offers notebook cover printing. Standard cover printing takes 4 working days after artwork approval. This is fictional test data.",
+            "source": "local fictional demo guide",
+            "client_id": "DEMO-CLIENT"
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-8ce9-76c5-b657-22a26e137f0f",
+      "prompt": "Calculate (7 * 45 + 3 * 18) * 0.9 + 25.",
+      "answer": "The result of the calculation is 357.1.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1755,
+        "outputTokens": 54,
+        "totalTokens": 1809,
+        "durationMs": 3325,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "calculate",
+          "args": {
+            "expression": "(7 * 45 + 3 * 18) * 0.9 + 25"
+          },
+          "result": {
+            "expression": "(7 * 45 + 3 * 18) * 0.9 + 25",
+            "result": 357.1
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-9c10-729e-bf53-6ecabe44dd20",
+      "prompt": "Save this fictional fact using remember: key delivery_day, value Tuesday.",
+      "answer": "Fact saved under key \"delivery_day\".",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1705,
+        "outputTokens": 35,
+        "totalTokens": 1740,
+        "durationMs": 2273,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "remember",
+          "args": {
+            "key": "delivery_day",
+            "value": "Tuesday"
+          },
+          "result": {
+            "saved": true,
+            "key": "delivery_day",
+            "client_id": "DEMO-CLIENT",
+            "local_thread_only": true
+          },
+          "ok": true
+        }
+      ],
+      "memory": {
+        "delivery_day": "Tuesday"
+      },
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-9c10-729e-bf53-6ecabe44dd20",
+      "prompt": "Use recall with key delivery_day and tell me its value.",
+      "answer": "The value associated with the key \"delivery_day\" is \"Tuesday\".",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1873,
+        "outputTokens": 34,
+        "totalTokens": 1907,
+        "durationMs": 2551,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "recall",
+          "args": {
+            "key": "delivery_day"
+          },
+          "result": {
+            "key": "delivery_day",
+            "value": "Tuesday",
+            "client_id": "DEMO-CLIENT"
+          },
+          "ok": true
+        }
+      ],
+      "memory": {
+        "delivery_day": "Tuesday"
+      },
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-b35e-7729-bc63-ba00935f972c",
+      "prompt": "Create a local task titled Prepare demo quote.",
+      "answer": "A local task titled \"Prepare demo quote\" has been created. The task ID is DEMO-TASK-80945527f058216b7a1d. The task is pending and belongs to the \"demo\" domain with a due date of 2023-10-15.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1831,
+        "outputTokens": 141,
+        "totalTokens": 1972,
+        "durationMs": 7756,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "create_task",
+          "args": {
+            "client_id": "DEMO-CLIENT",
+            "domain": "demo",
+            "due_date": "2023-10-15",
+            "idempotency_key": "task-123",
+            "title": "Prepare demo quote"
+          },
+          "result": {
+            "task": {
+              "title": "Prepare demo quote",
+              "domain": "demo",
+              "due_date": "2023-10-15",
+              "id": "DEMO-TASK-80945527f058216b7a1d",
+              "client_id": "DEMO-CLIENT",
+              "idempotency_key": "task-123",
+              "idempotency_keys": [
+                "task-123"
+              ],
+              "content_digest": "80945527f058216b7a1d",
+              "status": "pending"
+            },
+            "duplicate": false,
+            "simulated": true
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [
+        {
+          "title": "Prepare demo quote",
+          "domain": "demo",
+          "due_date": "2023-10-15",
+          "id": "DEMO-TASK-80945527f058216b7a1d",
+          "client_id": "DEMO-CLIENT",
+          "idempotency_key": "task-123",
+          "idempotency_keys": [
+            "task-123"
+          ],
+          "content_digest": "80945527f058216b7a1d",
+          "status": "pending"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-b35e-7729-bc63-ba00935f972c",
+      "prompt": "Create the same local task titled Prepare demo quote again.",
+      "answer": "A task titled \"Prepare demo quote\" already exists. A new task with the same title, domain, and due date was attempted but found to be a duplicate. The task will be handled accordingly.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 2407,
+        "outputTokens": 100,
+        "totalTokens": 2507,
+        "durationMs": 9379,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "create_task",
+          "args": {
+            "client_id": "DEMO-CLIENT",
+            "domain": "demo",
+            "due_date": "2023-10-15",
+            "idempotency_key": "task-123",
+            "title": "Prepare demo quote"
+          },
+          "result": {
+            "task": {
+              "title": "Prepare demo quote",
+              "domain": "demo",
+              "due_date": "2023-10-15",
+              "id": "DEMO-TASK-80945527f058216b7a1d",
+              "client_id": "DEMO-CLIENT",
+              "idempotency_key": "task-123",
+              "idempotency_keys": [
+                "task-123"
+              ],
+              "content_digest": "80945527f058216b7a1d",
+              "status": "pending"
+            },
+            "duplicate": true,
+            "simulated": true
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [
+        {
+          "title": "Prepare demo quote",
+          "domain": "demo",
+          "due_date": "2023-10-15",
+          "id": "DEMO-TASK-80945527f058216b7a1d",
+          "client_id": "DEMO-CLIENT",
+          "idempotency_key": "task-123",
+          "idempotency_keys": [
+            "task-123"
+          ],
+          "content_digest": "80945527f058216b7a1d",
+          "status": "pending"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae5-b35e-7729-bc63-ba00935f972c",
+      "prompt": "List my local tasks.",
+      "answer": "A local task titled \"Prepare demo quote\" has been listed. The task belongs to the \"demo\" domain, has a due date of 2023-10-15, and is pending. The task ID is DEMO-TASK-80945527f058216b7a1d.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 2876,
+        "outputTokens": 98,
+        "totalTokens": 2974,
+        "durationMs": 8968,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "list_tasks",
+          "args": {
+            "client_id": "DEMO-CLIENT"
+          },
+          "result": {
+            "tasks": [
+              {
+                "title": "Prepare demo quote",
+                "domain": "demo",
+                "due_date": "2023-10-15",
+                "id": "DEMO-TASK-80945527f058216b7a1d",
+                "client_id": "DEMO-CLIENT",
+                "idempotency_key": "task-123",
+                "idempotency_keys": [
+                  "task-123"
+                ],
+                "content_digest": "80945527f058216b7a1d",
+                "status": "pending"
+              }
+            ],
+            "client_id": "DEMO-CLIENT",
+            "simulated": true
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [
+        {
+          "title": "Prepare demo quote",
+          "domain": "demo",
+          "due_date": "2023-10-15",
+          "id": "DEMO-TASK-80945527f058216b7a1d",
+          "client_id": "DEMO-CLIENT",
+          "idempotency_key": "task-123",
+          "idempotency_keys": [
+            "task-123"
+          ],
+          "content_digest": "80945527f058216b7a1d",
+          "status": "pending"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_aria",
+      "threadId": "01a0aae6-2049-725c-91e1-736430fc5df7",
+      "prompt": "Use recall with key delivery_day. If no saved fact exists, say so.",
+      "answer": "No saved fact with the key \"delivery_day\" exists in this thread.",
+      "metrics": {
+        "modelCalls": 2,
+        "toolCalls": 1,
+        "inputTokens": 1699,
+        "outputTokens": 36,
+        "totalTokens": 1735,
+        "durationMs": 2709,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "aria",
+          "name": "recall",
+          "args": {
+            "key": "delivery_day"
+          },
+          "result": {
+            "ok": false,
+            "error": "No saved fact has that key in this thread."
+          },
+          "ok": false
+        }
+      ],
+      "memory": {},
+      "tasks": [],
+      "passed": true
+    },
+    {
+      "graph": "neurohands_jarvis",
+      "threadId": "01a0aae6-2d2d-70a0-9e07-22273c26807b",
+      "prompt": "Use delegate_to_agent to ask Concierge to look up Mango Works services, then summarize its answer.",
+      "answer": "The summary of Mango Works services is as follows: They provide notebook sales and notebook cover printing, and they are open from Monday to Friday, 09:00 to 17:00.",
+      "metrics": {
+        "modelCalls": 4,
+        "toolCalls": 2,
+        "inputTokens": 2954,
+        "outputTokens": 136,
+        "totalTokens": 3090,
+        "durationMs": 13851,
+        "firstTokenMs": null,
+        "stoppedReason": "completed",
+        "modelApiCost": 0
+      },
+      "toolAudit": [
+        {
+          "agent": "concierge",
+          "name": "lookup_company",
+          "args": {
+            "query": "mango works"
+          },
+          "result": {
+            "company": "Mango Works",
+            "description": "A fictional notebook shop for local agent testing.",
+            "services": [
+              "notebook sales",
+              "notebook cover printing"
+            ],
+            "opening_hours": "Monday to Friday, 09:00 to 17:00",
+            "source": "local fictional company card"
+          },
+          "ok": true
+        },
+        {
+          "agent": "jarvis",
+          "name": "delegate_to_agent",
+          "args": {
+            "agent": "concierge",
+            "task": "lookup_mango_works_services"
+          },
+          "result": {
+            "agent": "concierge",
+            "answer": "The company \"Mango Works\" provides notebook sales and notebook cover printing. It is open from Monday to Friday, 09:00 to 17:00.",
+            "toolAudit": [
+              {
+                "agent": "concierge",
+                "name": "lookup_company",
+                "args": {
+                  "query": "mango works"
+                },
+                "result": {
+                  "company": "Mango Works",
+                  "description": "A fictional notebook shop for local agent testing.",
+                  "services": [
+                    "notebook sales",
+                    "notebook cover printing"
+                  ],
+                  "opening_hours": "Monday to Friday, 09:00 to 17:00",
+                  "source": "local fictional company card"
+                },
+                "ok": true
+              }
+            ],
+            "simulated": true
+          },
+          "ok": true
+        }
+      ],
+      "memory": {},
+      "tasks": [],
+      "passed": true
+    }
+  ],
+  "finishedAt": "2026-09-16T15:47:01.115Z",
+  "passed": 11,
+  "total": 11
+}
