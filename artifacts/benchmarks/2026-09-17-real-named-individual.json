@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "real-local-qwen-named-workflow-v1-20260916172010",
+  "status": "finished",
+  "startedAt": "2026-09-16T17:20:10.651Z",
+  "finishedAt": "2026-09-16T17:20:26.278Z",
+  "scope": {
+    "execution": "Sequential local Ollama inference through the fixed named-agent workflow runtime.",
+    "network": "Loopback Ollama only. No production services, external connectors, or LangSmith upload.",
+    "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+    "grading": "Only deterministic structural checks are automatic. Model prose and business correctness require human review."
+  },
+  "selectedTopology": "individual",
+  "executionOrder": [
+    "basic-individual"
+  ],
+  "executionMode": "sequential",
+  "suiteTimeoutMs": 180000,
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "architecture": "x64",
+    "cpuModel": "AMD Ryzen 7 5825U with Radeon Graphics         ",
+    "logicalCores": 16,
+    "totalRamBytes": 16538972160,
+    "nodeVersion": "v24.15.0",
+    "timezone": "Asia/Bangkok",
+    "ollamaOrigin": "http://127.0.0.1:11435",
+    "environmentSha256": "a3e4821dc1a235f65848f5d2f51c7eaa147037b9c06acb2c85962507a36b22e5"
+  },
+  "model": {
+    "configuredName": "qwen3:1.7b",
+    "reportedName": "qwen3:1.7b",
+    "artifactDigest": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
+    "sizeBytes": 1359293444,
+    "modifiedAt": "2026-09-16T22:10:13.2505907+07:00",
+    "details": {
+      "context_length": 40960,
+      "embedding_length": 2048,
+      "families": [
+        "qwen3"
+      ],
+      "family": "qwen3",
+      "format": "gguf",
+      "parameter_size": "2.0B",
+      "parent_model": "",
+      "quantization_level": "Q4_K_M"
+    },
+    "ollamaVersion": "0.34.1",
+    "modelMetadataSha256": "94ae3b884bb67b9dc6bad7ed11b6e4ae43be08158e88ffcb35035184a7f9c27b"
+  },
+  "generation": {
+    "temperature": 0.2,
+    "seed": 42,
+    "contextTokens": 4096,
+    "outputTokensPerCall": 256,
+    "think": false
+  },
+  "restrictions": {
+    "network": "loopback Ollama only",
+    "productionServices": false,
+    "externalConnectors": false,
+    "langsmithUpload": false,
+    "tracingEnvironmentForcedOff": {
+      "LANGSMITH_TRACING": true,
+      "LANGSMITH_TRACING_V2": true,
+      "LANGCHAIN_TRACING": true,
+      "LANGCHAIN_TRACING_V2": true
+    },
+    "fixtureContainsOnlySyntheticData": true,
+    "networkEnforcement": "Validated loopback Ollama base URL, same-origin request wrapper, fixed local tools, and tracing forced off."
+  },
+  "processSampling": {
+    "available": true,
+    "intervalMs": 500,
+    "scope": "All local ollama and llama-server processes; excludes runner and whole-machine peaks.",
+    "reason": null
+  },
+  "provenance": {
+    "fixtureSha256": "6a69bb428345db79ae7b92cc39abb21e8e8bd1c8bd921a9ff79bf2ff436dfe5c",
+    "sourceSha256": {
+      "scripts/real-named-workflow-benchmark.mjs": "ac22ac1c5376e6bd8040beb567924bbcd7bc64b3953f8f1fbb380b7d016dddd6",
+      "test/fixtures/real-named-workflow-benchmark.json": "6a69bb428345db79ae7b92cc39abb21e8e8bd1c8bd921a9ff79bf2ff436dfe5c",
+      "src/agent/workflow.mjs": "7ec65b6e637d056c0409ee94e7af9c3d450228494fb382edc1f5bb38646630fc",
+      "src/agent/profiles.mjs": "f2b18b2a50b9f843fa710e8453e283fe6e582d3df1150667de9c649c87bcc7d8",
+      "src/agent/team.mjs": "f93c2b954a378cd3126c29698e03fcfb5b948e337fbda760a1cd20e2538591a9",
+      "src/agent/skills.mjs": "c9894eeb7c9b83cab43bc20f632029542f2937e6d42f3a358a6c5b9a12e4adef",
+      "package-lock.json": "14879c6cc97bdfef7c482adf8b00258750f05c7975cd326b7201918ac2fa9304"
+    },
+    "provenanceSha256": "f1ece3db0d79d5c3019af8131cbed0c7ba84a78a59c43ed9f5a42e3953e396c3"
+  },
+  "grading": {
+    "automatic": "deterministic structural checks only",
+    "semanticCorrectness": "not automatically graded from model prose",
+    "humanReview": null
+  },
+  "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+  "limitations": [
+    "Loopback-only access is enforced by benchmark application checks and tracing-off settings; this is not a process-wide network sandbox or operating-system firewall.",
+    "The three topologies have different duties and task complexity, so their outputs are not a fair model-quality comparison or evidence of optimization.",
+    "Model prose is preserved for human review and is not automatically graded for semantic correctness.",
+    "Ollama/LangChain may omit token metadata; absent values remain null or not_available.",
+    "CPU and RAM are sampled for all local Ollama model processes, so short calls may have no sample and concurrent local inference can affect measurements."
+  ],
+  "scenarios": [
+    {
+      "scenarioId": "basic-individual",
+      "complexity": {
+        "level": "basic",
+        "ordinal": 1,
+        "description": "One named sales agent prepares a small arithmetic-backed fictional quotation brief.",
+        "taskDimensions": [
+          "one supplied arithmetic expression",
+          "one expected local calculator opportunity",
+          "no inter-agent handoff"
+        ]
+      },
+      "topology": {
+        "templateId": "individual",
+        "agentCount": 1,
+        "sequential": true,
+        "agentIds": [
+          "sales-suri"
+        ],
+        "stepIds": [
+          "requirements_quote"
+        ],
+        "edges": []
+      },
+      "objective": "This is a fictional local benchmark for benchmark-basic-client. Prepare a concise quotation brief for 18 notebooks at 125 THB each plus a fixed 350 THB setup fee. Use the local calculate skill for the exact expression 18 * 125 + 350. State which figures came from this request and keep the result draft-only. Do not contact anyone or use any external service.",
+      "clientId": "benchmark-basic-client",
+      "authorizedClientIds": [
+        "benchmark-basic-client"
+      ],
+      "status": "completed",
+      "workflowId": "basic-individual-workflow",
+      "effectiveBudget": {
+        "maxModelCalls": 4,
+        "maxToolCalls": 8,
+        "maxTokens": 12000,
+        "maxDurationMs": 120000,
+        "maxStoredBytes": 1000000
+      },
+      "execution": {
+        "startedAt": "2026-09-16T17:20:10.658Z",
+        "finishedAt": "2026-09-16T17:20:26.272Z",
+        "sequential": true,
+        "isolatedStorage": true,
+        "runnerClosed": true,
+        "ephemeralStorageRemoved": true
+      },
+      "measurements": {
+        "workflowWallMs": 15614,
+        "summedStepWallMs": 15604.5487,
+        "durationNote": "Workflow wall time is measured end to end; summed step wall time is reported separately and is not substituted for it.",
+        "runtime": {
+          "modelCalls": 2,
+          "toolCalls": 1,
+          "inputTokens": 1738,
+          "outputTokens": 147,
+          "totalTokens": 1885,
+          "durationMs": 15604.5487,
+          "storedBytes": 2598,
+          "completedSteps": 1,
+          "failedSteps": 0,
+          "blockedSteps": 0
+        },
+        "tools": {
+          "callCount": 1,
+          "successfulCallCount": 1,
+          "failedCallCount": 0,
+          "callsByName": {
+            "calculate": 1
+          }
+        },
+        "ollamaTokenMetadata": {
+          "callCount": 2,
+          "providerReportedCallCount": 2,
+          "providerMissingCallCount": 0,
+          "totals": {
+            "inputTokens": 1738,
+            "outputTokens": 147,
+            "totalTokens": 1885
+          }
+        },
+        "modelProcess": {
+          "sampleCount": 30,
+          "peakSampledRamBytes": 2029592576,
+          "cpuSecondsSampled": 95.156,
+          "averageCpuPercentOfMachine": 39.16
+        },
+        "storage": {
+          "format": "JSONL",
+          "bytes": 2598,
+          "recordCount": 3,
+          "recordsByType": {
+            "step": 3
+          },
+          "recordsByStatus": {
+            "queued": 1,
+            "running": 1,
+            "completed": 1
+          }
+        }
+      },
+      "steps": [
+        {
+          "stepId": "requirements_quote",
+          "agentId": "sales-suri",
+          "departmentId": "sales",
+          "status": "completed",
+          "error": null,
+          "answer": "The calculation using the local calculate skill resulted in 2600 THB. The figures used are 18 notebooks at 125 THB each and a fixed setup fee of 350 THB. The quotation brief is prepared as follows:\n\nQuotation Brief:\n- Total Cost: 2600 THB\n- Breakdown:\n  - 18 notebooks: 125 THB each\n  - Setup fee: 350 THB\n\nThis result is draft-only and does not involve any external service or contact.",
+          "evidence": {
+            "source": "agent_prose",
+            "verified": false,
+            "summary": "The calculation using the local calculate skill resulted in 2600 THB. The figures used are 18 notebooks at 125 THB each and a fixed setup fee of 350 THB. The quotation brief is prepared as follows:\n\nQuotation Brief:\n- Total Cost: 2600 THB\n- Breakdown:\n  - 18 notebooks: 125 THB each\n  - Setup fee: 350 THB\n\nThis result is draft-only and does not involve any external service or contact."
+          },
+          "toolAudit": [
+            {
+              "agent": "aria",
+              "name": "calculate",
+              "args": {
+                "expression": "18 * 125 + 350"
+              },
+              "result": {
+                "expression": "18 * 125 + 350",
+                "result": 2600
+              },
+              "ok": true
+            }
+          ],
+          "measurements": {
+            "workflowStepWallMs": 15604.5487,
+            "modelCalls": 2,
+            "toolCalls": 1,
+            "inputTokens": 1738,
+            "outputTokens": 147,
+            "totalTokens": 1885,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 30,
+              "peakSampledRamBytes": 2029592576,
+              "cpuSecondsSampled": 95.156,
+              "averageCpuPercentOfMachine": 39.16
+            }
+          },
+          "ollamaCalls": [
+            {
+              "callIndex": 1,
+              "startedAt": "2026-09-16T17:20:10.684Z",
+              "startedAtMs": 1789579210684,
+              "finishedAtMs": 1789579220004,
+              "wallMs": 9320,
+              "inputMessageCount": 2,
+              "inputCharacters": 1903,
+              "outputCharacters": 0,
+              "toolCallCount": 1,
+              "usageMetadata": {
+                "input_tokens": 837,
+                "output_tokens": 30,
+                "total_tokens": 867
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:20:20.0017221Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 9312543200,
+                "load_duration": 3856804800,
+                "prompt_eval_count": 837,
+                "prompt_eval_duration": 4017318000,
+                "eval_count": 30,
+                "eval_duration": 1428436000
+              },
+              "error": null
+            },
+            {
+              "callIndex": 2,
+              "startedAt": "2026-09-16T17:20:20.007Z",
+              "startedAtMs": 1789579220007,
+              "finishedAtMs": 1789579226263,
+              "wallMs": 6256,
+              "inputMessageCount": 4,
+              "inputCharacters": 1948,
+              "outputCharacters": 386,
+              "toolCallCount": 0,
+              "usageMetadata": {
+                "input_tokens": 901,
+                "output_tokens": 117,
+                "total_tokens": 1018
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:20:26.2631567Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 6252554200,
+                "load_duration": 3116900,
+                "prompt_eval_count": 901,
+                "prompt_eval_duration": 415543000,
+                "eval_count": 117,
+                "eval_duration": 5821401000
+              },
+              "error": null
+            }
+          ]
+        }
+      ],
+      "handoffs": [],
+      "answerAndEvidenceReview": "Preserved verbatim below each step; not semantically graded.",
+      "structuralChecks": {
+        "policy": "Deterministic structure only; no model-prose or business-correctness grading.",
+        "checks": [
+          {
+            "id": "result_identity",
+            "status": "pass",
+            "detail": "Result template and client must match the fixed scenario."
+          },
+          {
+            "id": "fixed_topology",
+            "status": "pass",
+            "detail": "Step and named-agent order must match the fixed runtime template."
+          },
+          {
+            "id": "terminal_step_states",
+            "status": "pass",
+            "detail": "Every fixed step must end in completed, failed, or blocked state."
+          },
+          {
+            "id": "authorized_client_scope",
+            "status": "pass",
+            "detail": "Every ledger record must remain inside the runner's single authorized client."
+          },
+          {
+            "id": "workflow_scope",
+            "status": "pass",
+            "detail": "Every ledger record must belong to the reported workflow."
+          },
+          {
+            "id": "jsonl_storage_accounting",
+            "status": "pass",
+            "detail": "Measured JSONL bytes must equal the runtime's stored-byte total."
+          },
+          {
+            "id": "jsonl_records_parseable",
+            "status": "pass",
+            "detail": "Every nonempty JSONL line must parse as a versioned workflow record."
+          },
+          {
+            "id": "fixed_handoff_chain",
+            "status": "pass",
+            "detail": "Completed workflows require the exact chain; incomplete workflows may contain only its valid prefix."
+          },
+          {
+            "id": "tool_audit_shape",
+            "status": "pass",
+            "detail": "Every recorded tool call must name a tool allowed for that fixed agent and expose a boolean outcome."
+          },
+          {
+            "id": "model_session_attribution",
+            "status": "pass",
+            "detail": "Model sessions must map to the fixed step order without extra agents."
+          },
+          {
+            "id": "provider_token_metadata",
+            "status": "pass",
+            "detail": "Available provider token metadata must contain nonnegative numeric values only."
+          }
+        ],
+        "summary": {
+          "pass": 11
+        }
+      },
+      "humanReview": null
+    }
+  ],
+  "humanReview": null,
+  "measurements": {
+    "suiteWallMs": 15627,
+    "scenarioCount": 1,
+    "executedScenarioCount": 1
+  }
+}

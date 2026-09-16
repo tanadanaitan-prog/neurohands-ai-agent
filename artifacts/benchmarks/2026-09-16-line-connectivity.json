@@ -112,6 +112,26 @@
     "investigationHypothesis": "Request-format/schema mismatch; not yet causally confirmed",
     "limitation": "Request and webhook durations measure different scopes. Missing usage is unknown, not zero."
   },
+  "postCodeRepairSuccessEvidence": {
+    "deploymentId": "8cbb1ef5-6b15-4d79-87e3-98c239f42bd5",
+    "windowUtc": {
+      "start": "2026-09-16T16:17:17.517Z",
+      "end": "2026-09-16T16:25:03.192Z"
+    },
+    "completedModelRuns": 6,
+    "providerAttempts": 16,
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "httpStatus": 200,
+    "status": "usable_response",
+    "reportedTotalTokens": 41827,
+    "summedProviderRequestElapsedMs": 35034,
+    "completedWebhookElapsedMs": [4867, 5258, 10519, 22692, 16785, 11188],
+    "deliveryEvidence": "Each associated webhook finished with status completed. In the deployed runtime, that status follows accepted LINE delivery and persistence of outgoing evidence.",
+    "privacy": "No incoming or outgoing message bodies were read for this observation.",
+    "proves": "The deployed LINE to Railway to Gemini to LINE path can complete successfully after the code repair.",
+    "doesNotProve": "Answer correctness, useful tool execution, task completion, five-agent coordination or reliability under repeated load."
+  },
   "historicalProviderFailure": {
     "timestampUtc": "2026-09-10T04:34:16.210650711Z",
     "provider": "openai",
@@ -168,9 +188,10 @@
     "healthCheckPassedAtUtc": "2026-09-16T16:14:09Z",
     "postDeploymentReady": true,
     "postDeploymentSourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
-    "liveReplyVerified": false,
-    "testStatus": "Awaiting user's new LINE math reply after the adapter repair deployment",
-    "causalLimitation": "The request-contract repair is deployed; its relationship to the earlier HTTP 400 is not yet established by a successful live retry."
+    "liveReplyVerified": true,
+    "answerCorrectnessVerified": false,
+    "testStatus": "Six post-deployment Gemini runs returned usable HTTP 200 responses and their webhook handlers completed. Message bodies were not read, so answer correctness remains unverified.",
+    "causalLimitation": "The earlier request failed with HTTP 400 and the repaired deployment later completed the same provider path successfully. The logs do not isolate which individual contract change resolved the request."
   },
   "repair": {
     "userConfirmedGeminiFreeTier": true,

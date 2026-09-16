@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "real-local-qwen-named-workflow-v1",
+  "executionOrder": [
+    "basic-individual",
+    "intermediate-pair",
+    "advanced-full-department"
+  ],
+  "scope": {
+    "execution": "Sequential local Ollama inference through the fixed named-agent workflow runtime.",
+    "network": "Loopback Ollama only. No production services, external connectors, or LangSmith upload.",
+    "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+    "grading": "Only deterministic structural checks are automatic. Model prose and business correctness require human review."
+  },
+  "scenarios": [
+    {
+      "id": "basic-individual",
+      "clientId": "benchmark-basic-client",
+      "complexity": {
+        "level": "basic",
+        "ordinal": 1,
+        "description": "One named sales agent prepares a small arithmetic-backed fictional quotation brief.",
+        "taskDimensions": [
+          "one supplied arithmetic expression",
+          "one expected local calculator opportunity",
+          "no inter-agent handoff"
+        ]
+      },
+      "topology": {
+        "templateId": "individual",
+        "agentCount": 1,
+        "sequential": true,
+        "agentIds": [
+          "sales-suri"
+        ],
+        "stepIds": [
+          "requirements_quote"
+        ],
+        "edges": []
+      },
+      "objective": "This is a fictional local benchmark for benchmark-basic-client. Prepare a concise quotation brief for 18 notebooks at 125 THB each plus a fixed 350 THB setup fee. Use the local calculate skill for the exact expression 18 * 125 + 350. State which figures came from this request and keep the result draft-only. Do not contact anyone or use any external service.",
+      "budget": {
+        "maxModelCalls": 4,
+        "maxToolCalls": 8,
+        "maxTokens": 12000,
+        "maxDurationMs": 120000,
+        "maxStoredBytes": 1000000
+      }
+    },
+    {
+      "id": "intermediate-pair",
+      "clientId": "benchmark-pair-client",
+      "complexity": {
+        "level": "intermediate",
+        "ordinal": 2,
+        "description": "A sales agent prepares a document-grounded fictional quote and a QA agent independently reviews the handoff.",
+        "taskDimensions": [
+          "one supplied local document identifier",
+          "one arithmetic expression",
+          "one sequential evidence handoff",
+          "independent second-agent verification"
+        ]
+      },
+      "topology": {
+        "templateId": "pair",
+        "agentCount": 2,
+        "sequential": true,
+        "agentIds": [
+          "sales-suri",
+          "ai-qa-quinn"
+        ],
+        "stepIds": [
+          "requirements_quote",
+          "final_verification"
+        ],
+        "edges": [
+          {
+            "fromAgentId": "sales-suri",
+            "toAgentId": "ai-qa-quinn"
+          }
+        ]
+      },
+      "objective": "This is a fictional local benchmark for benchmark-pair-client. Prepare and verify a quote for 24 notebook covers at 85 THB each. The user-supplied local document identifier is DEMO-DOC-001. Use only the local read_document and calculate skills when they help your fixed step. Ground any lead-time statement in the document result, calculate 24 * 85, keep the quote draft-only, and pass reviewable evidence through the fixed handoff. Do not contact anyone or use any external service.",
+      "budget": {
+        "maxModelCalls": 8,
+        "maxToolCalls": 16,
+        "maxTokens": 24000,
+        "maxDurationMs": 240000,
+        "maxStoredBytes": 2000000
+      }
+    },
+    {
+      "id": "advanced-full-department",
+      "clientId": "benchmark-advanced-client",
+      "complexity": {
+        "level": "advanced",
+        "ordinal": 3,
+        "description": "Five named departments build, constrain, persist, and review a fictional launch dossier through four sequential handoffs.",
+        "taskDimensions": [
+          "local company and document evidence",
+          "one arithmetic expression",
+          "permission and client-boundary analysis",
+          "idempotent local simulated task opportunity",
+          "four sequential evidence handoffs",
+          "final independent QA"
+        ]
+      },
+      "topology": {
+        "templateId": "full_department",
+        "agentCount": 5,
+        "sequential": true,
+        "agentIds": [
+          "sales-suri",
+          "marketing-mira",
+          "it-ivo",
+          "backend-beck",
+          "ai-qa-quinn"
+        ],
+        "stepIds": [
+          "requirements_quote",
+          "marketing_proposal",
+          "connector_permission_review",
+          "crm_persistence_design",
+          "final_verification"
+        ],
+        "edges": [
+          {
+            "fromAgentId": "sales-suri",
+            "toAgentId": "marketing-mira"
+          },
+          {
+            "fromAgentId": "marketing-mira",
+            "toAgentId": "it-ivo"
+          },
+          {
+            "fromAgentId": "it-ivo",
+            "toAgentId": "backend-beck"
+          },
+          {
+            "fromAgentId": "backend-beck",
+            "toAgentId": "ai-qa-quinn"
+          }
+        ]
+      },
+      "objective": "This is a fictional local benchmark for benchmark-advanced-client. Build a reviewable five-department launch dossier for Mango Works using the fixed role instructions and sequential handoffs. The user-supplied local document identifier is DEMO-DOC-001. The commercial quantity is 40 notebooks at 110 THB each plus a 600 THB setup fee; use the local calculate skill for 40 * 110 + 600 when relevant. Use local company or document evidence instead of inventing facts. The IT step must keep every capability local, client-scoped, and free of external connectors. The backend step may create exactly one title-only simulated task named Prepare fictional Mango Works launch dossier; repeated creation must remain idempotent. Quinn must review the recorded handoffs and tool evidence. Do not send messages, use production data, or access any external service.",
+      "budget": {
+        "maxModelCalls": 20,
+        "maxToolCalls": 40,
+        "maxTokens": 60000,
+        "maxDurationMs": 540000,
+        "maxStoredBytes": 4000000
+      }
+    }
+  ]
+}

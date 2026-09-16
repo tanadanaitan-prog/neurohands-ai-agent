@@ -13,10 +13,30 @@ LINE; Gemini takeover is not connected.
 **Measured local result, 16 September 2026:** 17/36 task checks passed in plain
 chat and 24/36 with tools. All 11 local tool/state workflows and 219 automated
 tests passed at that measured revision. After incorporating the production
-Gemini adapter repair, the local branch passed 226 automated tests; this does
-not change the recorded model benchmark. The remaining model-answer failures are recorded in the
+Gemini adapter repair and the named-workflow runtime, the local branch passed
+252 automated tests on 17 September 2026; this does not change the recorded
+model benchmark. The remaining model-answer failures are recorded in the
 [benchmark report](docs/AGENT_BENCHMARK_RESULTS.md); the new local graphs are
 experimental and are not deployed to LINE.
+
+**Named-agent workflow laboratory, 17 September 2026:** the repository now has
+fixed local workflows for one role (`individual`), two roles (`pair`) and five
+roles (`full_department`). They use synthetic local data and approved local
+tools only; they are not connected to production LINE, customer data, Railway,
+Supabase or external connectors. The deterministic conformance run checks
+workflow plumbing and safety controls such as fixed roles and handoffs, scoped
+reads, tool allowlists, idempotency, terminal failures and evidence storage. It
+does not measure model reasoning, answer quality or business correctness.
+
+One real-model sample per topology used local Ollama with `qwen3:1.7b`. The
+individual workflow passed its basic example. The pair workflow and full
+department workflow failed safely: the pair ended when QA returned an empty
+final response, and the five-role run stopped after a tool rejected an
+unverified order identifier, so downstream roles did not proceed on unconfirmed
+evidence. One sample across structurally different duties is not a reliability
+estimate or a capability ranking. See the [named-agent workflow guide](docs/NAMED_AGENT_WORKFLOW.md)
+and [manual review artifact](artifacts/benchmarks/2026-09-17-real-named-review.json).
+No production connection, deployment or capability ranking is claimed.
 
 Neurohands aims to give a business an AI workforce that can answer questions, use approved business tools, work with company documents and report what it did. The owner decides each agent's responsibilities and access.
 
@@ -30,15 +50,15 @@ Neurohands aims to give a business an AI workforce that can answer questions, us
 | **Aria — customer business agent, AGT-001** | An activated customer | Uses permitted tools to look up products, orders and lead times; read that customer's available documents; record useful customer facts, support cases and follow-up tasks. |
 | **Concierge — public receptionist** | A visitor who has not activated customer access | Explains the business using configured company information and guides visitors toward a demo or activation. It does not receive private customer tools. |
 
-These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. As of **16 September 2026**, the production route is configured for **Gemini / `gemini-3.6-flash`**. The owner confirmed that the existing Gemini key is valid and uses the Free Tier. The configuration is deployed and readiness checks pass, but the subsequent LINE math test failed: Jarvis returned an unverified-request message instead of the answer. Successful live AI conversation remains unproven. See the dated status below.
+These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. As of **16 September 2026**, the production route is configured for **Gemini / `gemini-3.6-flash`**. The owner confirmed that the existing Gemini key is valid and uses the Free Tier. After the adapter repair, six observed Gemini runs returned usable HTTP 200 responses and their LINE webhook handlers completed. This proves the repaired provider and delivery path can complete; it does not yet establish answer correctness, useful tool execution or repeated reliability. See the dated status below.
 
-The first September 16 repair set `GEMINI_ENABLED=true` and cleared `FALLBACK_PROVIDER` and `FALLBACK_BASE_URL` to remove the broken fallback route, without changing existing secrets. After that deployment's math test failed, [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) corrected the Gemini request adapter and deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. Its release version and readiness checks pass; the user's new LINE math test is pending. Neither repair deploys the local agent lab or connects automatic Ollama-to-Gemini takeover. OpenRouter remains a separate optional route requiring its own key and verified allowance.
+The first September 16 repair set `GEMINI_ENABLED=true` and cleared `FALLBACK_PROVIDER` and `FALLBACK_BASE_URL` to remove the broken fallback route, without changing existing secrets. After that deployment's math test failed, [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) corrected the Gemini request adapter and deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. Its release version, readiness and later provider/delivery path checks pass. Neither repair deploys the local agent lab or connects automatic Ollama-to-Gemini takeover. OpenRouter remains a separate optional route requiring its own key and verified allowance.
 
 The owner selected **Inkling Small (free)** as a third configuration for synthetic tests only. Its separate harness checks a fictional order and tool call. It never receives LINE conversations, KNC documents or memories. See [third-model setup](docs/PUBLIC_MODEL_TEST.md). A successful synthetic test will not replace the real Aria customer proof.
 
-Jarvis currently provides an operator interface. Automatic delegation among independent agents, departments and managers is part of the future platform.
+Jarvis currently provides an operator interface. Fixed one-, two- and five-role workflows are available only in the isolated local named-agent laboratory. Automatic delegation among independent agents, departments and managers in production is part of the future platform.
 
-The **deployed Jarvis repair** adds conversational business tools, a short history of the operator's own delivered conversations, confirmed notes, and proposals that require approval. The September 16 live math test failed after the first configuration repair. A subsequent Gemini adapter repair passed automated checks, deployed successfully and passed release health checks; a new live reply is not yet verified. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
+The **deployed Jarvis repair** adds conversational business tools, a short history of the operator's own delivered conversations, confirmed notes, and proposals that require approval. The September 16 live math test failed after the first configuration repair. A subsequent Gemini adapter repair passed automated checks, deployed successfully and has since completed six observed model-and-delivery runs. Their message bodies were not inspected, so answer quality remains a separate acceptance test. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
 
 ## How a request moves through the system
 
@@ -87,29 +107,38 @@ The founder account routes to **Jarvis**, so use a second personal LINE account 
 
 Word, Excel and CSV extraction are implemented. Partial extraction is labeled. PDF files are currently stored without text extraction. This version uses the secure portal; files attached directly in LINE are not ingested by the application. Uploading a document does not retrain the AI model.
 
+The deployed portal remains limited to **10 MiB** per file. A production
+**100 GB** upload requires the browser to send resumable or multipart chunks
+directly to object storage under a compatible paid storage plan; Railway must
+not hold the complete file in server memory. That storage decision requires
+explicit approval, so no 100 GB production capability is claimed. See the
+[large-file upload architecture](docs/LARGE_UPLOAD_ARCHITECTURE.md).
+
 ## Current status — 16 September 2026
 
 This section supersedes older provider and deployment status statements. Historical checks remain dated below; they were not all repeated during the September 16 repairs. The [September 16 connectivity and repair record](artifacts/benchmarks/2026-09-16-line-connectivity.json) separates the initial diagnosis, first configuration repair, failed LINE test and subsequent code-repair deployment.
 
 | Status | What the evidence establishes |
 | --- | --- |
-| **Gemini adapter repair deployed; live reply pending** | [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. It corrects the JSON schema field, represents tool results with the user role, preserves tool-call IDs and records safe error categories without private details. Its production suite passed **198 tests**, code checks and build; independent review found no blocking issue. Railway deployment `8cbb1ef5-6b15-4d79-87e3-98c239f42bd5` succeeded, with its health check passing at `2026-09-16T16:14:09Z`. Public `/version` matched the repair commit and `/ready` returned `ready: true`. The user's new LINE math reply remains unverified. |
+| **Gemini adapter and LINE delivery path working** | [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. It corrects the JSON schema field, represents tool results with the user role, preserves tool-call IDs and records safe error categories without private details. Its production suite passed **198 tests**, code checks and build; independent review found no blocking issue. Railway deployment `8cbb1ef5-6b15-4d79-87e3-98c239f42bd5` succeeded. Six later Gemini runs returned usable HTTP 200 responses and their webhook handlers completed. Across 16 provider attempts they reported 41,827 total tokens and 35,034 ms of provider request time. No message bodies were read, so correctness is still unverified. |
 | **Configuration repaired; deployment verified September 16** | Railway deployment `3a9dabfb-c98e-49be-baf5-574ea8814389` succeeded with unchanged production `main` commit `0bc4b7b35707bd2c2bba16607e024287e8c597cb`. Gemini is enabled with model `gemini-3.6-flash`; fallback provider and base URL are empty. `/ready` returned HTTP 200 with `ready: true`, and `/version` matched that commit. These checks do not prove model generation. |
 | **Historical release verification, September 9** | [PR #9](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/9) released the provider-switch and Jarvis runtime as `16a0cbe`. That Railway build passed **157 tests**; its release version and readiness checks passed without inference requests. This is prior release evidence, not the current deployment identifier or a new test count. |
 | **Historical recovery evidence, September 7–9** | The recovered Phase 1 database and private document bucket were configured. All 131 original database records were preserved and checked, and one pilot document was uploaded and parsed. Those detailed data-preservation and document checks were not rerun in the September 16 repair. |
 | **LINE connectivity verified, limited scope** | The user confirmed that the founder's `help` command replies in LINE. September 16 webhook requests and handler completions were also observed. Before repair, the user-supplied `health` reply reported Gemini disabled or unconfigured and fallback paused for authentication rejection. These deterministic replies establish connectivity, not successful model generation. |
 | **Implemented; full live proof pending** | Aria's document tools, activation, access checks, run traces and usage recording have automated tests. The full second-account customer activation → correct document answer → successful authorized trace remains unverified. |
-| **Live model test failed; cause under investigation** | After the configuration repair, the user sent `what is 12+5=` in LINE. Jarvis replied, “I could not verify that request,” followed by advice to check `pending`; it did not return `17`. At `2026-09-16T16:05:09Z`, the Gemini request logged HTTP 400 for `gemini-3.6-flash`, run `5`, attempt `1`, after 82 ms with no reported usage. The webhook run failed after 2,684 ms and delivered the failure reply. A request-format/schema mismatch is being investigated but is not yet a confirmed cause. No successful AI answer, automatic model failover or live Aria document proof is claimed. |
+| **Earlier live model test failed; later transport recovered** | After the first configuration repair, `what is 12+5=` received an unverified-request response and Gemini logged HTTP 400. After the code repair, later requests completed through Gemini and LINE. The logs support recovery of the request and delivery path but do not reveal those later answers, prove that `12+5` was answered correctly or complete the live Aria document proof. Automatic model failover is also still unverified. |
 | **Historical OpenAI failures, September 9–10** | A September 9 authenticated model-list request returned HTTP 200, but a bounded `gpt-4.1-mini` generation test returned HTTP 429 `credit_balance_exhausted` after 1,742 ms. A September 10 log reported HTTP 401 `authentication_rejected`; the pre-repair LINE health reply confirmed the fallback was paused. These are historical failures of the previous route, not a new Gemini test. See [dated provider setup and allowance checks](docs/FREE_PROVIDER_SETUP.md). |
 | **Planned / experimental** | The broader team website, automatic delegation, department workflows, recurring task execution, semantic document search and external connector framework are not established live capabilities. The experimental `/studio` website remains disabled for this milestone. |
 
 The current repository and destination service are available, but the complete original-account migration and source deployment inventory remain unfinished. Preserve the original resources until that reconciliation is complete.
 
-See the [acceptance checklist](docs/GOAL_ACCEPTANCE.md), [dated live test evidence](docs/LIVE_STATUS.md), [Phase 1 recovery record](docs/PHASE1_STATUS.md) and [longer-term project plan](docs/PROJECT_PLAN.md).
+See the [current connection matrix](docs/APP_CONNECTION_MATRIX.md), [named-agent workflow laboratory](docs/NAMED_AGENT_WORKFLOW.md), [acceptance checklist](docs/GOAL_ACCEPTANCE.md), [dated live test evidence](docs/LIVE_STATUS.md), [Phase 1 recovery record](docs/PHASE1_STATUS.md) and [longer-term project plan](docs/PROJECT_PLAN.md).
 
 ## How this can grow into an AI workforce
 
-The following describes the **intended expansion**, not a claim that these multi-agent workflows already run.
+The following describes the **intended expansion** beyond the fixed local
+one-, two- and five-role laboratory. It is not a claim that these workflows run
+in production.
 
 | Level | Example of the intended work | How it helps the business | What must be added or proven |
 | --- | --- | --- | --- |
@@ -168,6 +197,23 @@ npm run build
 ```
 
 Checks and automated tests use simulated external services and can run without real credentials. To run the application, configure `.env` privately, keep `ENABLE_STUDIO=false` for the pilot, then run `npm start`. Observe the spending requirement before enabling live provider calls.
+
+The isolated named-agent workflow laboratory has four package commands:
+
+```powershell
+npm run lab:team:check
+npm run lab:team:conformance
+npm run lab:team:model:check
+npm run lab:team:model
+```
+
+`lab:team:check` runs the deterministic fixture self-check, and
+`lab:team:conformance` records the deterministic plumbing and safety evidence.
+`lab:team:model:check` checks the real-model command inputs without calling the
+model; `lab:team:model` runs the local Ollama samples and requires
+`qwen3:1.7b`.
+Deterministic success is not evidence of model quality, and the real-model
+command does not connect to production services.
 
 `/ready` checks required runtime configuration, database readiness and private storage. `/version` identifies the deployed commit. Neither endpoint proves that an AI conversation succeeds.
 
