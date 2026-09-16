@@ -1,5 +1,11 @@
 # Neurohands — AI agents for business
 
+**Local LangGraph test setup (16 September 2026):** use `npm run lab:check`
+to verify the workflow on your computer, `npm run lab:trace` to send one fixed
+fictional test to LangSmith, and `npm run lab:studio` to open the local graph
+server. Follow the [short setup guide](docs/LANGGRAPH_LOCAL_TEST.md). This is
+a connection test; real model and LINE integration are later milestones.
+
 Neurohands aims to give a business an AI workforce that can answer questions, use approved business tools, work with company documents and report what it did. The owner decides each agent's responsibilities and access.
 
 **Today, this is a v3.10 pilot for KNC Glass.** The LINE gateway, customer agent, owner console and document portal are implemented and deployed. The next milestone is proving a complete customer conversation about a real uploaded document. The larger team and department platform is still under development.

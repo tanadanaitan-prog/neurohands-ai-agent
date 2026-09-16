@@ -1,0 +1,7 @@
+{
+  "node_version": "24",
+  "graphs": {
+    "neurohands_test": "./src/agent/graph.mjs:graph"
+  },
+  "env": ".env.langgraph"
+}
