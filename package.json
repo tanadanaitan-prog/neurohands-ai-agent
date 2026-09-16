@@ -16,7 +16,9 @@
     "dev:web": "vite --config web/vite.config.mjs",
     "lab:check": "node scripts/langgraph-lab.mjs check",
     "lab:trace": "node scripts/langgraph-lab.mjs trace",
-    "lab:studio": "node scripts/langgraph-lab.mjs studio"
+    "lab:studio": "node scripts/langgraph-lab.mjs studio",
+    "lab:chat": "node scripts/langgraph-lab.mjs chat",
+    "lab:chat:trace": "node scripts/langgraph-lab.mjs chat-trace"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0",
@@ -32,6 +34,7 @@
     "@langchain/core": "1.2.11",
     "@langchain/langgraph": "1.4.15",
     "@langchain/langgraph-cli": "1.4.6",
+    "@langchain/ollama": "1.3.0",
     "langsmith": "0.10.4",
     "supabase": "2.116.0",
     "vite": "8.2.2",

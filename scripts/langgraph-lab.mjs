@@ -10,7 +10,7 @@ const mode = process.argv[2] || "check";
 const envFile = resolve(root, ".env.langgraph");
 if (existsSync(envFile)) loadEnvFile(envFile);
 
-// Explicit callbacks below trace ONLY the fixed synthetic check. A general
+// Explicit callbacks below trace ONLY the fixed synthetic checks. A general
 // environment setting must not turn offline or interactive lab runs into uploads.
 process.env.LANGSMITH_TRACING = "false";
 process.env.LANGSMITH_TRACING_V2 = "false";
@@ -22,6 +22,36 @@ process.env.LANGGRAPH_CLI_NO_ANALYTICS = "1";
 const sample = "Hello Neurohands test";
 const expected = `Neurohands LangGraph received: ${sample}`;
 const input = { messages: [{ role: "user", content: sample }] };
+const chatInput = { messages: [{ role: "user", content: "A fictional shop sold three notebooks at 40 baht each. What is the total? Answer in one short sentence." }] };
+
+async function prepareChat() {
+  const { graph, readChatConfig } = await import("../src/agent/chat.mjs");
+  const { ensureLocalOllama } = await import("./ollama-local.mjs");
+  const settings = readChatConfig();
+  await ensureLocalOllama(settings.baseUrl, root);
+  return { graph, settings };
+}
+
+function chatReport(result, durationMs, model) {
+  const reply = result.messages.at(-1);
+  return {
+    status: "completed",
+    test: "one local LLM answer; not a business-agent acceptance test",
+    model,
+    reply: reply.content,
+    durationMs: Math.round(durationMs),
+    usage: reply.usage_metadata || null,
+    modelCalls: 1,
+    modelApiCost: 0,
+  };
+}
+
+async function chat() {
+  const { graph, settings } = await prepareChat();
+  const start = performance.now();
+  const result = await graph.invoke(chatInput, { runName: "neurohands-local-model-check" });
+  console.log(JSON.stringify({ ...chatReport(result, performance.now() - start, settings.model), langsmithUpload: false }, null, 2));
+}
 
 async function check() {
   let networkAttempts = 0;
@@ -50,7 +80,7 @@ async function check() {
   }
 }
 
-async function trace() {
+async function trace(useModel = false) {
   if (!process.env.LANGSMITH_API_KEY?.trim().startsWith("lsv2_")) {
     console.error("LangSmith key missing. Save it privately after LANGSMITH_API_KEY= in .env.langgraph, then run npm run lab:trace again.");
     process.exitCode = 1;
@@ -58,19 +88,23 @@ async function trace() {
   }
   const { Client } = await import("langsmith");
   const { LangChainTracer } = await import("@langchain/core/tracers/tracer_langchain");
-  const { graph } = await import("../src/agent/graph.mjs");
+  const { graph, settings } = useModel
+    ? await prepareChat()
+    : await import("../src/agent/graph.mjs");
   const projectName = process.env.LANGSMITH_PROJECT || "neurohands-local-test";
   const client = new Client({ timeout_ms: 15000, tracingSamplingRate: 1 });
   const tracer = new LangChainTracer({ client, projectName });
   const runId = randomUUID();
-  const result = await graph.invoke(input, {
+  const start = performance.now();
+  const result = await graph.invoke(useModel ? chatInput : input, {
     callbacks: [tracer],
     runId,
-    runName: "neurohands-synthetic-connection-check",
-    tags: ["synthetic", "no-llm", "local-lab"],
+    runName: useModel ? "neurohands-local-model-check" : "neurohands-synthetic-connection-check",
+    tags: ["synthetic", useModel ? "local-llm" : "no-llm", "local-lab"],
     metadata: { purpose: "connection-check", contains_customer_data: false },
   });
-  assert.equal(result.messages.at(-1).content, expected);
+  const durationMs = performance.now() - start;
+  if (!useModel) assert.equal(result.messages.at(-1).content, expected);
   await client.awaitPendingTraceBatches();
 
   // A local answer is not proof of upload. Read this exact trace back.
@@ -92,27 +126,26 @@ async function trace() {
     if (attempt < 3) await new Promise((done) => setTimeout(done, 1000));
   }
   if (!saved || saved.error) {
-    console.error("The local graph worked, but its completed LangSmith trace was not verified. Check key expiry, workspace and endpoint in .env.langgraph. No model was called.");
+    console.error("The local graph worked, but its completed LangSmith trace was not verified. Check key expiry, workspace and endpoint in .env.langgraph.");
     process.exitCode = 1;
     return;
   }
   console.log(JSON.stringify({
-    status: "passed",
+    ...(useModel ? chatReport(result, durationMs, settings.model) : { status: "passed", reply: expected, modelCalls: 0 }),
     langsmithUpload: "verified by reading the completed run",
     project: projectName,
     runId,
-    reply: expected,
-    modelCalls: 0,
     inputType: "fixed synthetic message",
   }, null, 2));
 }
 
 async function studio() {
+  await prepareChat();
   const manifestPath = resolve(root, "node_modules/@langchain/langgraph-cli/package.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const entry = typeof manifest.bin === "string" ? manifest.bin : manifest.bin.langgraphjs;
   if (!entry) throw new Error("LangGraph CLI entry is unavailable.");
-  console.log("Starting the local test graph on http://127.0.0.1:2024. Automatic tracing is OFF. Use fictional input only; press Ctrl+C to stop.");
+  console.log("Starting Studio on http://127.0.0.1:2024. Select neurohands_chat for the local AI, or neurohands_test for the echo check. Automatic tracing is OFF. Use fictional input; press Ctrl+C to stop Studio.");
   // Run the CLI in this process so its own server shutdown handlers receive
   // Ctrl+C on Windows, instead of killing only an intermediate process.
   process.chdir(root);
@@ -126,12 +159,18 @@ async function studio() {
 try {
   if (mode === "check") await check();
   else if (mode === "trace") await trace();
+  else if (mode === "chat") await chat();
+  else if (mode === "chat-trace") await trace(true);
   else if (mode === "studio") await studio();
   else {
-    console.error("Choose check, trace or studio.");
+    console.error("Choose check, trace, chat, chat-trace or studio.");
     process.exitCode = 1;
   }
-} catch {
-  console.error(`The LangGraph ${mode} step failed. Check dependencies and the private .env.langgraph settings. No production workflow was changed.`);
+} catch (error) {
+  // These prefixes are application-authored messages, never raw SDK responses.
+  const safeLocalError = /^(Cannot reach Ollama|The local model|Ollama did not start|LAB_OLLAMA|This lab only accepts|The model lab requires|Keep each new message|Add a nonempty|Add a Human|This test conversation|This conversation lab)/;
+  console.error(safeLocalError.test(error?.message || "")
+    ? error.message
+    : `The LangGraph ${mode} step failed. Check dependencies and the private .env.langgraph settings. No production workflow was changed.`);
   process.exitCode = 1;
 }

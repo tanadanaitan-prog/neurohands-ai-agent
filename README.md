@@ -1,10 +1,13 @@
 # Neurohands — AI agents for business
 
-**Local LangGraph test setup (16 September 2026):** use `npm run lab:check`
-to verify the workflow on your computer, `npm run lab:trace` to send one fixed
-fictional test to LangSmith, and `npm run lab:studio` to open the local graph
-server. Follow the [short setup guide](docs/LANGGRAPH_LOCAL_TEST.md). This is
-a connection test; real model and LINE integration are later milestones.
+**Local LangGraph lab:** use `npm run lab:studio`, select `neurohands_chat`,
+and open **Chat** to test a real local model through Ollama (`qwen3:1.7b`).
+Use `npm run lab:chat` for a fixed model test with token and time measurements,
+or `npm run lab:chat:trace` to record that synthetic test in LangSmith.
+The original `neurohands_test` echo and its `lab:check` / `lab:trace` commands
+remain available. Follow the [step-by-step test guide](docs/LANGGRAPH_LOCAL_TEST.md).
+This local chat has no business tools or LINE connection; Gemini fallback is
+not connected. Verified results and remaining limits are listed in the guide.
 
 Neurohands aims to give a business an AI workforce that can answer questions, use approved business tools, work with company documents and report what it did. The owner decides each agent's responsibilities and access.
 
