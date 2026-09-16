@@ -12,7 +12,9 @@ LINE; Gemini takeover is not connected.
 
 **Measured local result, 16 September 2026:** 17/36 task checks passed in plain
 chat and 24/36 with tools. All 11 local tool/state workflows and 219 automated
-tests passed. The remaining model-answer failures are recorded in the
+tests passed at that measured revision. After incorporating the production
+Gemini adapter repair, the local branch passed 226 automated tests; this does
+not change the recorded model benchmark. The remaining model-answer failures are recorded in the
 [benchmark report](docs/AGENT_BENCHMARK_RESULTS.md); the new local graphs are
 experimental and are not deployed to LINE.
 
@@ -30,13 +32,13 @@ Neurohands aims to give a business an AI workforce that can answer questions, us
 
 These are **three application roles using AI models**. We have not trained three new models. The roles can use the same AI engine while having different instructions, permissions and information. As of **16 September 2026**, the production route is configured for **Gemini / `gemini-3.6-flash`**. The owner confirmed that the existing Gemini key is valid and uses the Free Tier. The configuration is deployed and readiness checks pass, but the subsequent LINE math test failed: Jarvis returned an unverified-request message instead of the answer. Successful live AI conversation remains unproven. See the dated status below.
 
-The September 16 repair set `GEMINI_ENABLED=true` and cleared `FALLBACK_PROVIDER` and `FALLBACK_BASE_URL` to remove the broken fallback route. Existing secret values were unchanged. Railway redeployed the same production code; this did not deploy the local agent lab or connect automatic Ollama-to-Gemini takeover. OpenRouter remains a separate optional route requiring its own key and verified allowance.
+The first September 16 repair set `GEMINI_ENABLED=true` and cleared `FALLBACK_PROVIDER` and `FALLBACK_BASE_URL` to remove the broken fallback route, without changing existing secrets. After that deployment's math test failed, [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) corrected the Gemini request adapter and deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. Its release version and readiness checks pass; the user's new LINE math test is pending. Neither repair deploys the local agent lab or connects automatic Ollama-to-Gemini takeover. OpenRouter remains a separate optional route requiring its own key and verified allowance.
 
 The owner selected **Inkling Small (free)** as a third configuration for synthetic tests only. Its separate harness checks a fictional order and tool call. It never receives LINE conversations, KNC documents or memories. See [third-model setup](docs/PUBLIC_MODEL_TEST.md). A successful synthetic test will not replace the real Aria customer proof.
 
 Jarvis currently provides an operator interface. Automatic delegation among independent agents, departments and managers is part of the future platform.
 
-The **deployed Jarvis repair** adds conversational business tools, a short history of the operator's own delivered conversations, confirmed notes, and proposals that require approval. Deployment and health checks passed, but the September 16 live math test failed after the Gemini configuration repair. Its cause is under investigation. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
+The **deployed Jarvis repair** adds conversational business tools, a short history of the operator's own delivered conversations, confirmed notes, and proposals that require approval. The September 16 live math test failed after the first configuration repair. A subsequent Gemini adapter repair passed automated checks, deployed successfully and passed release health checks; a new live reply is not yet verified. See [Jarvis pilot capabilities and acceptance](docs/JARVIS_PILOT.md).
 
 ## How a request moves through the system
 
@@ -87,10 +89,11 @@ Word, Excel and CSV extraction are implemented. Partial extraction is labeled. P
 
 ## Current status — 16 September 2026
 
-This section supersedes older provider and deployment status statements. Historical checks remain dated below; they were not all repeated during the September 16 configuration repair. The [September 16 connectivity and repair record](artifacts/benchmarks/2026-09-16-line-connectivity.json) separates the initial diagnosis, authorized configuration repair and failed post-repair LINE test.
+This section supersedes older provider and deployment status statements. Historical checks remain dated below; they were not all repeated during the September 16 repairs. The [September 16 connectivity and repair record](artifacts/benchmarks/2026-09-16-line-connectivity.json) separates the initial diagnosis, first configuration repair, failed LINE test and subsequent code-repair deployment.
 
 | Status | What the evidence establishes |
 | --- | --- |
+| **Gemini adapter repair deployed; live reply pending** | [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. It corrects the JSON schema field, represents tool results with the user role, preserves tool-call IDs and records safe error categories without private details. Its production suite passed **198 tests**, code checks and build; independent review found no blocking issue. Railway deployment `8cbb1ef5-6b15-4d79-87e3-98c239f42bd5` succeeded, with its health check passing at `2026-09-16T16:14:09Z`. Public `/version` matched the repair commit and `/ready` returned `ready: true`. The user's new LINE math reply remains unverified. |
 | **Configuration repaired; deployment verified September 16** | Railway deployment `3a9dabfb-c98e-49be-baf5-574ea8814389` succeeded with unchanged production `main` commit `0bc4b7b35707bd2c2bba16607e024287e8c597cb`. Gemini is enabled with model `gemini-3.6-flash`; fallback provider and base URL are empty. `/ready` returned HTTP 200 with `ready: true`, and `/version` matched that commit. These checks do not prove model generation. |
 | **Historical release verification, September 9** | [PR #9](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/9) released the provider-switch and Jarvis runtime as `16a0cbe`. That Railway build passed **157 tests**; its release version and readiness checks passed without inference requests. This is prior release evidence, not the current deployment identifier or a new test count. |
 | **Historical recovery evidence, September 7–9** | The recovered Phase 1 database and private document bucket were configured. All 131 original database records were preserved and checked, and one pilot document was uploaded and parsed. Those detailed data-preservation and document checks were not rerun in the September 16 repair. |

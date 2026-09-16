@@ -1,6 +1,6 @@
 {
   "initialInspectionAtUtc": "2026-09-16T15:50:13.6609972Z",
-  "scope": "Initial read-only production connectivity diagnosis followed by an authorized configuration-only repair and redeployment of unchanged production code. No model inference calls or messages were sent by the inspector. The user's post-repair LINE math test failed; its cause remains under investigation.",
+  "scope": "Initial read-only production connectivity diagnosis, followed by an authorized configuration-only redeployment, a failed user LINE math test and a minimal Gemini adapter repair deployed successfully. No model inference calls or messages were sent by the inspector. The code-repair release version and readiness are verified; a new user LINE reply remains unverified.",
   "publicChecks": [
     {
       "url": "https://neurohands-ai-agent-production.up.railway.app/",
@@ -21,6 +21,14 @@
   ],
   "deployment": {
     "status": "SUCCESS",
+    "id": "8cbb1ef5-6b15-4d79-87e3-98c239f42bd5",
+    "sourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent",
+    "configurationOnlyRedeployment": false
+  },
+  "configurationOnlyDeployment": {
+    "status": "SUCCESS",
     "id": "3a9dabfb-c98e-49be-baf5-574ea8814389",
     "sourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
     "sourceBranch": "main",
@@ -33,6 +41,15 @@
     "createdAtUtc": "2026-09-09T16:50:58.653Z",
     "sourceBranch": "main",
     "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent"
+  },
+  "latestDeploymentAttempt": {
+    "status": "SUCCESS",
+    "id": "8cbb1ef5-6b15-4d79-87e3-98c239f42bd5",
+    "createdAtUtc": "2026-09-16T16:13:13.326Z",
+    "sourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent",
+    "healthCheckPassedAtUtc": "2026-09-16T16:14:09Z"
   },
   "recentWebhookEvidence": {
     "httpRequests": [
@@ -119,11 +136,41 @@
   "automaticOllamaToGeminiTakeoverConnected": false,
   "localConnectionLimitation": "Railway cannot reach the laptop's loopback Ollama or Studio address. A test-only connection needs an authenticated bridge or separate test deployment and channel.",
   "actions": {
-    "modelInferenceCalls": 0,
+    "directModelInferenceCallsByInspector": 0,
     "messagesSentByInspector": 0,
-    "productionMutations": 1,
-    "deploymentsTriggered": 1,
+    "productionMutations": 2,
+    "deploymentsTriggered": 2,
     "supabaseConnectorQueries": 0
+  },
+  "codeRepair": {
+    "pullRequest": "https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14",
+    "merged": true,
+    "mergeCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "changes": [
+      "Correct Gemini JSON schema field",
+      "Use the user role for tool results",
+      "Preserve tool-call IDs",
+      "Add static private error categories"
+    ],
+    "validation": {
+      "productionAutomatedTestsPassed": 198,
+      "codeChecksPassed": true,
+      "buildPassed": true,
+      "independentReviewBlockingIssues": 0,
+      "localLabBranchTestsAfterIncorporatingRepair": 226,
+      "localModelBenchmarkRevisionTests": 219,
+      "localModelBenchmarkRerun": false
+    },
+    "secretValuesChanged": false,
+    "paidFallbackEnabled": false,
+    "experimentalCodeDeployed": false,
+    "deploymentStatus": "SUCCESS",
+    "healthCheckPassedAtUtc": "2026-09-16T16:14:09Z",
+    "postDeploymentReady": true,
+    "postDeploymentSourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "liveReplyVerified": false,
+    "testStatus": "Awaiting user's new LINE math reply after the adapter repair deployment",
+    "causalLimitation": "The request-contract repair is deployed; its relationship to the earlier HTTP 400 is not yet established by a successful live retry."
   },
   "repair": {
     "userConfirmedGeminiFreeTier": true,
