@@ -262,6 +262,19 @@ test("untrusted stored provider labels and failure details cannot enter the trac
   assert.equal(formatRunMetrics({ ...metrics, attempts: PRIVATE, blocked_providers: PRIVATE }), expected);
 });
 
+test("Gemini request diagnostics survive metric finalization as fixed trace labels", async () => {
+  const collector = createRunMetrics(206);
+  await withRunMetrics(collector, async () => {
+    for (const reason of ["request_invalid", "request_schema_invalid"]) {
+      finishModelAttempt(beginModelAttempt("gemini", "fixture-model"), "http_error", 400, 1, undefined, reason);
+    }
+  });
+  const metrics = finalizeRunMetrics(collector);
+  assert.deepEqual(metrics.attempts.map((attempt) => attempt.failure_reason), ["request_invalid", "request_schema_invalid"]);
+  assert.match(formatRunMetrics(metrics), /Gemini: request rejected/);
+  assert.match(formatRunMetrics(metrics), /Gemini: tool schema rejected/);
+});
+
 test("successful responses cannot retain failure metadata from a prior state", () => {
   const attempt = beginModelAttempt("gemini", "fixture-model");
   attempt.failure_reason = "credit_exhausted";

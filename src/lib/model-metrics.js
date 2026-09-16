@@ -5,7 +5,8 @@ const count = (value) => Number.isSafeInteger(value) && value >= 0 ? value : nul
 const providerLabels = Object.freeze({ gemini: "Gemini", openai: "OpenAI", groq: "Groq", openrouter: "OpenRouter",
   mistral: "Mistral", cerebras: "Cerebras", custom: "Custom provider", fallback: "Fallback provider" });
 const failureLabels = Object.freeze({ authentication_rejected: "authentication rejected", credit_exhausted: "credits exhausted",
-  spend_limit_reached: "spending limit reached", quota_exhausted: "quota exhausted", http_error: "HTTP request failed" });
+  spend_limit_reached: "spending limit reached", quota_exhausted: "quota exhausted", http_error: "HTTP request failed",
+  request_invalid: "request rejected", request_schema_invalid: "tool schema rejected" });
 const safeReason = (reason) => typeof reason === "string" && Object.hasOwn(failureLabels, reason) ? reason : null;
 function safeProvider(provider) {
   if (typeof provider !== "string" || provider.length > 24) return null;

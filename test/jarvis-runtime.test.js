@@ -66,6 +66,15 @@ function fixture(t, overrides = {}) {
         assert.equal(values.GEMINI_ENABLED, "true", "Disabled Gemini must not receive a request");
         assert.equal(options.headers["x-goog-api-key"], PRIVATE);
         assert.equal(url.search, "");
+        assert.ok(body.contents.every((entry) => ["user", "model"].includes(entry.role)), "Gemini accepts user/model content roles only");
+        for (const group of body.tools || []) {
+          assert.ok(Array.isArray(group.functionDeclarations), "Use the documented Gemini declaration field");
+          for (const declaration of group.functionDeclarations) {
+            assert.equal(Object.hasOwn(declaration, "parameters"), false, "Do not send JSON Schema as the legacy Gemini Schema");
+            assert.equal(declaration.parametersJsonSchema?.type, "object");
+            assert.equal(declaration.parametersJsonSchema.additionalProperties, false, "Strict tool contracts must remain intact");
+          }
+        }
       } else assert.equal(options.headers.Authorization, `Bearer ${PRIVATE}`);
       const call = { hostname: url.hostname, body };
       state.calls.push(call);
@@ -300,6 +309,71 @@ test("primary failure after a tool preserves its evidence without restarting the
   assert.equal(f.tables.agent_runs[0].llm_metrics.attempt_count, 2);
   assert.equal(f.tables.agent_runs[0].llm_metrics.totals.total_tokens.unknown_attempts, 1);
   assert.equal(f.logs.join("\n").includes(PRIVATE), false);
+});
+
+test("Gemini answers arithmetic with the complete Jarvis JSON Schema tool declarations", async (t) => {
+  const f = fixture(t, { GEMINI_ENABLED: "true", FALLBACK_API_KEY: "" });
+  f.model = async ({ body }) => {
+    const declarations = body.tools[0].functionDeclarations;
+    assert.equal(declarations.length, 13);
+    const proposal = declarations.find((item) => item.name === "propose_action").parametersJsonSchema;
+    assert.equal(proposal.properties.tool_args.additionalProperties, false, "Nested schemas are preserved");
+    assert.deepEqual(proposal.required, ["client_code", "department", "tool_name", "tool_args"]);
+    assert.equal(body.contents.at(-1).parts[0].text, "what is 12+5=");
+    return json({ candidates: [{ content: { role: "model", parts: [{ text: "12 + 5 = 17." }] } }],
+      usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 3, totalTokenCount: 13 } });
+  };
+  await f.send("what is 12+5=");
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.tables.tool_calls.length, 0);
+  assert.equal(f.tables.agent_runs[0].status, "completed");
+  assert.equal(f.line[0].messages[0].text, "12 + 5 = 17.");
+  assert.equal(f.logs.join("\n").includes(PRIVATE), false);
+});
+
+test("Gemini read-tool continuation preserves model parts, signatures and call IDs with a user response turn", async (t) => {
+  const f = fixture(t, { GEMINI_ENABLED: "true", FALLBACK_API_KEY: "" });
+  const modelParts = [{ functionCall: { id: "fixture-gemini-call", name: "read_document", args: scoped({ doc_code: DOC_CODE }) },
+    thoughtSignature: PRIVATE }];
+  f.model = async ({ body }, round) => {
+    if (round === 1) return json({ candidates: [{ content: { role: "model", parts: modelParts } }] });
+    assert.equal(round, 2);
+    assert.deepEqual(body.contents.at(-2), { role: "model", parts: modelParts });
+    const turn = body.contents.at(-1);
+    assert.equal(turn.role, "user");
+    const response = turn.parts[0].functionResponse;
+    assert.equal(response.id, "fixture-gemini-call");
+    assert.equal(response.name, "read_document");
+    assert.equal(response.response.content.readable, true);
+    assert.equal(response.response.content.content.text, DOC_TEXT);
+    return json({ candidates: [{ content: { role: "model", parts: [{ text: `${DOC_CODE}: ${DOC_TEXT}` }] } }] });
+  };
+  await f.send("Read the KNC sales document and give its shipping reference");
+  assert.equal(f.calls.length, 2);
+  assert.equal(f.tables.agent_runs[0].status, "completed");
+  assert.deepEqual(f.tables.tool_calls.map(({ tool_name, status }) => [tool_name, status]), [["read_document", "success"]]);
+  assert.ok(f.line[0].messages[0].text.includes(DOC_TEXT));
+  assert.equal(f.logs.join("\n").includes(PRIVATE), false, "Signatures, keys and provider bodies are not logged");
+});
+
+test("Gemini structured 400 diagnostics keep request failures retryable and key failures paused without leaking content", async (t) => {
+  for (const [detail, category, expectedRequests] of [
+    [{ "@type": "type.googleapis.com/google.rpc.BadRequest", fieldViolations: [
+      { field: "tools[0].function_declarations[0].parameters", description: PRIVATE }], private: PRIVATE }, "request_schema_invalid", 2],
+    [{ "@type": "type.googleapis.com/google.rpc.ErrorInfo", reason: "API_KEY_INVALID", metadata: { value: PRIVATE } }, "authentication_rejected", 1],
+  ]) {
+    await t.test(category, async (t) => {
+      const f = fixture(t, { GEMINI_ENABLED: "true", FALLBACK_API_KEY: "" });
+      f.model = async () => json({ error: { code: 400, status: "INVALID_ARGUMENT", message: PRIVATE, details: [detail] } }, 400);
+      await f.run("what is 12+5=");
+      await f.run("what is 12+5=");
+      assert.equal(f.calls.length, expectedRequests);
+      assert.equal(f.tables.agent_runs[0].llm_metrics.attempts[0].failure_reason, category);
+      assert.equal(f.tables.agent_runs[0].status, "error");
+      assert.equal(JSON.stringify(f.tables.agent_runs).includes(PRIVATE), false);
+      assert.equal(f.logs.join("\n").includes(PRIVATE), false);
+    });
+  }
 });
 
 test("Gemini proposal also stops before another model request or duplicate proposal", async (t) => {

@@ -10,6 +10,13 @@ const failureCodes = new Map([
   ["invalid_api_key", "authentication_rejected"],
 ]);
 const permanentReasons = new Set(failureCodes.values());
+// Google reports invalid/restricted keys in ErrorInfo even with HTTP 400.
+// Return only static categories; never persist its message, metadata or fields.
+const googleKeyFailures = new Set([
+  "API_KEY_INVALID", "API_KEY_EXPIRED", "API_KEY_SERVICE_BLOCKED",
+  "API_KEY_HTTP_REFERRER_BLOCKED", "API_KEY_IP_ADDRESS_BLOCKED",
+  "API_KEY_ANDROID_APP_BLOCKED", "API_KEY_IOS_APP_BLOCKED",
+]);
 const routes = new Set(["gemini", "fallback", "third"]);
 
 function classifyProviderFailure(status, payload) {
@@ -21,6 +28,18 @@ function classifyProviderFailure(status, payload) {
     if (typeof value !== "string") continue;
     const reason = failureCodes.get(value.trim().toLowerCase());
     if (reason) return reason;
+  }
+  const details = Array.isArray(payload.error.details) ? payload.error.details.slice(0, 16) : [];
+  if (payload.error.status === "UNAUTHENTICATED" || details.some((detail) =>
+    detail?.["@type"] === "type.googleapis.com/google.rpc.ErrorInfo" && googleKeyFailures.has(detail.reason))) {
+    return "authentication_rejected";
+  }
+  if (payload.error.status === "INVALID_ARGUMENT") {
+    const schemaViolation = details.some((detail) => detail?.["@type"] === "type.googleapis.com/google.rpc.BadRequest" &&
+      Array.isArray(detail.fieldViolations) && detail.fieldViolations.slice(0, 16).some((violation) =>
+        typeof violation?.field === "string" &&
+        /^(?:generate_content_request\.|generateContentRequest\.)?tools(?:\[\d+\]|\.\d+)\./.test(violation.field)));
+    return schemaViolation ? "request_schema_invalid" : "request_invalid";
   }
   return GENERIC_FAILURE;
 }
