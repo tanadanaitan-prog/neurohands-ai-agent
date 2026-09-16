@@ -654,7 +654,10 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
       contents,
       generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
     };
-    if (tools.length) body.tools = [{ function_declarations: tools }];
+    // These are JSON Schemas, including additionalProperties. Gemini's legacy
+    // `parameters` Schema does not accept the complete JSON Schema vocabulary.
+    if (tools.length) body.tools = [{ functionDeclarations: tools.map(({ parameters, ...declaration }) =>
+      ({ ...declaration, parametersJsonSchema: parameters })) }];
 
     const data = await requestModelJson("Gemini", url,
       { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL, (data) => {
@@ -684,9 +687,11 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
       const args = call.functionCall.args || {};
       const output = await execute(ctx, runId, name, args);
       if (stopOnProposal && ctx.proposal) return { text: null, proposal: true, iterations: iteration + 1 };
-      responses.push({ functionResponse: { name, response: { content: output } } });
+      responses.push({ functionResponse: { name,
+        ...(typeof call.functionCall.id === "string" ? { id: call.functionCall.id } : {}),
+        response: { content: output } } });
     }
-    contents.push({ role: "function", parts: responses });
+    contents.push({ role: "user", parts: responses });
     iteration += 1;
   }
   return { text: null, exhausted: true, iterations: iteration };
