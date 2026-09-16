@@ -1,6 +1,6 @@
 {
-  "observedAtUtc": "2026-09-16T15:50:13.6609972Z",
-  "scope": "Read-only production connectivity inspection; no model inference or production mutation",
+  "initialInspectionAtUtc": "2026-09-16T15:50:13.6609972Z",
+  "scope": "Initial read-only production connectivity diagnosis followed by an authorized configuration-only repair and redeployment of unchanged production code. No model inference calls or messages were sent by the inspector. The user's post-repair LINE math test failed; its cause remains under investigation.",
   "publicChecks": [
     {
       "url": "https://neurohands-ai-agent-production.up.railway.app/",
@@ -20,6 +20,14 @@
     }
   ],
   "deployment": {
+    "status": "SUCCESS",
+    "id": "3a9dabfb-c98e-49be-baf5-574ea8814389",
+    "sourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent",
+    "configurationOnlyRedeployment": true
+  },
+  "initialDeployment": {
     "status": "SUCCESS",
     "id": "fb73eecf-bbb6-4305-b033-b12575d52924",
     "createdAtUtc": "2026-09-09T16:50:58.653Z",
@@ -60,8 +68,32 @@
   "userVerification": {
     "founderHelpReplyConfirmed": true,
     "source": "User report relayed by coordinating agent",
-    "healthCommand": "User supplied actual LINE health response: Gemini disabled or not configured; fallback paused - authentication rejected.",
-    "healthCommandUsesModelInference": false
+    "healthCommand": "Before configuration repair, user supplied actual LINE health response: Gemini disabled or not configured; fallback paused - authentication rejected.",
+    "healthCommandUsesModelInference": false,
+    "postRepairModelTest": {
+      "status": "failed",
+      "input": "what is 12+5=",
+      "expectedAnswer": "17",
+      "actualReply": "I could not verify that request. If you were proposing an action or note, type pending to check whether a proposal was saved before retrying.",
+      "cause": "Gemini HTTP 400 observed in the live request log. A request-format/schema mismatch is under investigation but is not yet causally confirmed."
+    }
+  },
+  "postRepairFailureEvidence": {
+    "timestampUtc": "2026-09-16T16:05:09.043574544Z",
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "runId": 5,
+    "attempt": 1,
+    "httpStatus": 400,
+    "requestElapsedMs": 82,
+    "failureReason": "http_error",
+    "reportedUsage": null,
+    "webhookStatus": "failed",
+    "webhookElapsedMs": 2684,
+    "failureReplyDelivered": true,
+    "userScreenshotSequence": "Health response at 10:49 before repair deployment; math test at 11:05 after deployment.",
+    "investigationHypothesis": "Request-format/schema mismatch; not yet causally confirmed",
+    "limitation": "Request and webhook durations measure different scopes. Missing usage is unknown, not zero."
   },
   "historicalProviderFailure": {
     "timestampUtc": "2026-09-10T04:34:16.210650711Z",
@@ -69,10 +101,11 @@
     "model": "gpt-4.1-mini",
     "httpStatus": 401,
     "failureReason": "authentication_rejected",
-    "classification": "Historical log from the current deployment, not a new provider probe",
+    "classification": "Historical log from the pre-repair deployment, not a new provider probe",
     "currentStatus": "Current pause confirmed by user-supplied LINE health reply before configuration repair."
   },
   "configurationInspection": {
+    "phase": "Initial read-only diagnosis before the configuration repair",
     "variableNamesRead": true,
     "secretValuesRead": false,
     "modelConfigurationValuesRead": false,
@@ -83,6 +116,7 @@
   },
   "currentModelAbilityVerified": false,
   "newLocalGraphsConnectedToLine": false,
+  "automaticOllamaToGeminiTakeoverConnected": false,
   "localConnectionLimitation": "Railway cannot reach the laptop's loopback Ollama or Studio address. A test-only connection needs an authenticated bridge or separate test deployment and channel.",
   "actions": {
     "modelInferenceCalls": 0,
@@ -106,7 +140,8 @@
     "status": "SUCCESS",
     "modelReplyVerified": false,
     "postDeploymentReadyHttpStatus": 200,
+    "postDeploymentReady": true,
     "postDeploymentSourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
-    "testStatus": "Awaiting user LINE reply to synthetic 12 + 5 test"
+    "testStatus": "Failed: the user's LINE math test received an unverified-request response instead of 17; cause under investigation"
   }
 }
