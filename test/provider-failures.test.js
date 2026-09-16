@@ -36,6 +36,33 @@ test("401 rejects authentication immediately without reading or awaiting body ca
   assert.equal(await readProviderFailure({ status: 401, body: { cancel() { throw new Error(PRIVATE); } } }), "authentication_rejected");
 });
 
+test("Google structured error details classify keys and invalid requests without retaining sensitive values", async () => {
+  const failures = createProviderFailures();
+  for (const reason of ["API_KEY_INVALID", "API_KEY_EXPIRED", "API_KEY_SERVICE_BLOCKED",
+    "API_KEY_HTTP_REFERRER_BLOCKED", "API_KEY_IP_ADDRESS_BLOCKED", "API_KEY_ANDROID_APP_BLOCKED", "API_KEY_IOS_APP_BLOCKED"]) {
+    const body = { error: { code: 400, status: "INVALID_ARGUMENT", message: PRIVATE,
+      details: [{ "@type": "type.googleapis.com/google.rpc.ErrorInfo", reason, metadata: { value: PRIVATE } }] } };
+    assert.equal(await readProviderFailure(jsonResponse(body, 400)), "authentication_rejected");
+  }
+  assert.equal(await readProviderFailure(jsonResponse({ error: { status: "UNAUTHENTICATED", message: PRIVATE } }, 403)), "authentication_rejected");
+  for (const field of ["tools[0].function_declarations[0].parameters", "generateContentRequest.tools[0].functionDeclarations[0].parametersJsonSchema"]) {
+    const reason = await readProviderFailure(jsonResponse({ error: { status: "INVALID_ARGUMENT", message: PRIVATE,
+      details: [{ "@type": "type.googleapis.com/google.rpc.BadRequest", fieldViolations: [{ field, description: PRIVATE }] }] } }, 400));
+    assert.equal(reason, "request_schema_invalid");
+    failures.block("gemini", reason);
+  }
+  for (const details of [null, PRIVATE, [{ reason: "API_KEY_INVALID" }],
+    [{ "@type": "type.googleapis.com/google.rpc.ErrorInfo", reason: PRIVATE }],
+    [{ "@type": "type.googleapis.com/google.rpc.BadRequest", fieldViolations: [{ field: PRIVATE, description: "API_KEY_INVALID" }] }]]) {
+    const reason = await readProviderFailure(jsonResponse({ error: { status: "INVALID_ARGUMENT", message: PRIVATE, details } }, 400));
+    assert.equal(reason, "request_invalid");
+    failures.block("gemini", reason);
+  }
+  assert.deepEqual(failures.entries(), [], "Request errors must not permanently disable a provider");
+  assert.equal(await readProviderFailure(jsonResponse({ error: { status: "RESOURCE_EXHAUSTED", message: PRIVATE } })), "http_error",
+    "A rate limit is not evidence of exhausted account credits");
+});
+
 test("generic, malformed and unknown responses do not claim billing or authentication failures", async () => {
   const cases = [
     {}, null, [], PRIVATE,
