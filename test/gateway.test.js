@@ -22,6 +22,8 @@ function loadGateway(overrides = {}) {
     FALLBACK_BASE_URL: "https://example.invalid/v1",
     FALLBACK_MODEL: "test-model",
     FALLBACK_MODELS: "",
+    RESUMABLE_UPLOAD_ENABLED: "false",
+    UPLOAD_MAX_BYTES: "50000000",
     ...overrides,
   });
   delete require.cache[require.resolve("../src/server")];
@@ -162,11 +164,38 @@ test("gateway regression checks (all external services mocked)", async (t) => {
     }
   });
 
+  await t.test("resumable readiness requires the private bucket to match the application ceiling", async (t) => {
+    let bucketLimit = 50000000;
+    t.mock.method(globalThis, "fetch", async (address) => {
+      const url = new URL(String(address));
+      assert.equal(url.hostname, "example.invalid", "Readiness must not call an AI provider");
+      if (url.pathname.startsWith("/storage/")) return new Response(JSON.stringify({ public: false, file_size_limit: bucketLimit }));
+      return new Response('[{"id":1}]');
+    });
+    const request = await serve(t, loadGateway({
+      FOUNDER_LINE_ID: "local-founder",
+      RESUMABLE_UPLOAD_ENABLED: "true",
+      UPLOAD_MAX_BYTES: "50000000",
+    }).app);
+
+    const exact = await request("/ready");
+    assert.equal(exact.status, 200);
+    assert.equal(JSON.parse(exact.text).large_upload.bucket_limit_matches, true);
+
+    bucketLimit = 50000001;
+    const larger = await request("/ready");
+    assert.equal(larger.status, 503, "A larger bucket would allow a modified browser to exceed the app ceiling");
+    assert.equal(JSON.parse(larger.text).large_upload.bucket_limit_matches, false);
+  });
+
   await t.test("upload links reject tampering, expiration and malformed claims", async (t) => {
     const gateway = loadGateway();
     const request = await serve(t, gateway.app);
     const token = gateway.makeUploadToken(42, "sales", "test-user");
-    assert.equal((await request(`/upload?t=${token}`)).status, 200);
+    const page = await request(`/upload?t=${token}`);
+    assert.equal(page.status, 200);
+    assert.match(page.text, /max 10 MiB/);
+    assert.doesNotMatch(page.text, /files above 10 MiB are stored/);
     assert.equal((await request(`/upload?t=${token}tampered`)).status, 403);
     assert.equal(gateway.checkUploadToken(token + ".extra"), null);
     const sign = (payload) => Buffer.from(payload).toString("base64url") + "." + crypto.createHmac("sha256", "test-line-secret").update(payload).digest("hex");

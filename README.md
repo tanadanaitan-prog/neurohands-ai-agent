@@ -13,9 +13,9 @@ LINE; Gemini takeover is not connected.
 **Measured local result, 16 September 2026:** 17/36 task checks passed in plain
 chat and 24/36 with tools. All 11 local tool/state workflows and 219 automated
 tests passed at that measured revision. After incorporating the production
-Gemini adapter repair and the named-workflow runtime, the local branch passed
-259 automated tests on 17 September 2026; this does not change the recorded
-model benchmark. The remaining model-answer failures are recorded in the
+Gemini adapter repair, named-workflow runtime and gated resumable-uploader
+checks, the local branch passed 275 automated tests on 17 September 2026; this
+does not change the recorded model benchmark. The remaining model-answer failures are recorded in the
 [benchmark report](docs/AGENT_BENCHMARK_RESULTS.md); the new local graphs are
 experimental and are not deployed to LINE.
 
@@ -109,11 +109,17 @@ The founder account routes to **Jarvis**, so use a second personal LINE account 
 
 Word, Excel and CSV extraction are implemented. Partial extraction is labeled. PDF files are currently stored without text extraction. This version uses the secure portal; files attached directly in LINE are not ingested by the application. Uploading a document does not retrain the AI model.
 
-The deployed portal remains limited to **10 MiB** per file. A production
-**100 GB** upload requires the browser to send resumable or multipart chunks
-directly to object storage under a compatible paid storage plan; Railway must
-not hold the complete file in server memory. That storage decision requires
-explicit approval, so no 100 GB production capability is claimed. See the
+The deployed portal remains limited to **10 MiB** per file. The connected
+Supabase organization is on the Free plan, whose verified limit is **50 MB per
+file and 1 GB total storage**. This branch contains a gated
+**50,000,000-byte** TUS path designed to send fixed 6 MiB resumable chunks from
+the browser directly to Supabase Storage while Railway authorizes the tenant,
+creates the immutable path and verifies the completed object size. It is disabled by
+default and has not been deployed or accepted with a real 50 MB upload. Local
+tests with mocked Storage exercise the staged behavior; they do not prove live
+transfer capacity. When enabled, the path is designed to retain files above
+10 MiB as private originals, but those files are not automatically extracted
+for an agent to read. See the
 [large-file upload architecture](docs/LARGE_UPLOAD_ARCHITECTURE.md).
 
 ## Current status — 16 September 2026

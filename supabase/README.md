@@ -12,6 +12,16 @@ Project `darxiaearohhnxiwhcbs` (`Neurohands - AI Agent`) belongs to the verified
 - `nh_activate_client` atomically redeems a hash of a random activation code. A live transaction checked activation, replay and the one-use limit, then rolled back; no self-test clients, bindings or codes remain. Anonymous/authenticated browser roles cannot execute that function or claim Jarvis approvals.
 - Private Storage bucket `neurohands-docs` has `public=false`, a 10,485,760-byte limit, and allowed MIME types for XLSX, XLS, CSV, TXT, DOCX, PDF and binary uploads. The gateway validates extensions and reports unsupported/partial extraction honestly. No original Storage objects existed before setup.
 
+## Staged and unapplied
+
+Migration `20260917103000_resumable_upload_metadata.sql` is present locally but
+has not been applied. When applied, it would raise only the database metadata
+constraint to an exact 50,000,000-byte ceiling for the feature-gated TUS path.
+This matches the documented Free-plan per-file maximum, but it would not change
+the live 10 MiB bucket or production portal. Keep the production feature
+disabled while quota controls, abandoned-upload cleanup, bucket configuration
+and controlled live acceptance remain incomplete.
+
 ## Jarvis operator runs — 9 September 2026
 
 The reviewed `jarvis_operator_runs` migration is applied to project `darxiaearohhnxiwhcbs`. Supabase assigned version **`20260909155146`**. The file was initially generated locally with the CLI as `20260909153735_jarvis_operator_runs.sql`, then renamed to **`20260909155146_jarvis_operator_runs.sql`** to match the recorded remote version. Its SQL content was unchanged by the rename. Apply this migration once; do not use a blanket push that includes the unapplied workspace migration.

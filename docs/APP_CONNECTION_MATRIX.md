@@ -1,8 +1,9 @@
 # Neurohands connection matrix
 
-Observed on 16 September 2026. A connection means the named boundary has
-current evidence; it does not automatically give every agent permission to use
-that service.
+Production connection evidence was observed on 16 September 2026. The storage
+plan and staged-upload notes were updated on 17 September 2026. A connection
+means the named boundary has current evidence; it does not automatically give
+every agent permission to use that service.
 
 | Boundary | Current evidence | Status | Agent access |
 | --- | --- | --- | --- |
@@ -24,12 +25,16 @@ and an audit record.
 
 ## Storage limit relevant to uploads
 
-The current portal, database constraint and private bucket each limit a file to
-10 MiB. Supabase Free permits at most 50 MB per file and includes 1 GB total
-file storage. A 100 GB cloud upload requires a paid plan and a resumable upload
-design; changing the displayed limit alone would fail and could exhaust the
-Railway process because the current endpoint buffers the complete file in
-memory. The required direct-upload and verification flow is documented in the
+The deployed portal and live private bucket still limit a file to 10 MiB.
+Supabase confirms that the connected organization is on Free, which permits at
+most 50 MB per file and includes 1 GB total file storage. A feature-gated TUS
+implementation is staged on the development branch for an exact 50,000,000-byte
+ceiling; it is designed to send 6 MiB chunks from the browser directly to
+Storage and keep file bytes out of Railway. Local mocked-Storage tests exercise
+that behavior, but no live transfer has proved it. The feature remains disabled
+until the bucket, quota and cleanup controls are ready and controlled acceptance
+passes. The required configuration, verification limits and extraction
+boundary are documented in the
 [large-file upload architecture](LARGE_UPLOAD_ARCHITECTURE.md).
 
 Evidence details and limitations are recorded in

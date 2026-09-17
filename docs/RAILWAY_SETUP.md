@@ -39,6 +39,19 @@ Enter values privately in Railway. Never put them in Git, screenshots or chat:
 
 Leave optional `JARVIS_ACTIVATION_CODE` and `CRON_SECRET` blank until those paths are needed. `ENABLE_STUDIO` remains false. Supabase publishable keys and Auth setup belong to the later website milestone. Railway supplies `PORT`; use its generated public domain for upload links or set `PUBLIC_URL` explicitly.
 
+Keep production `RESUMABLE_UPLOAD_ENABLED=false` while the staged Free-plan
+uploader has not passed acceptance. It uses `UPLOAD_MAX_BYTES=50000000`, the
+verified 50 MB per-file plan ceiling. Before controlled acceptance, apply the
+database migration, add atomic tenant quota and abandoned-upload cleanup,
+verify the project-wide limit, and set the private-bucket limit to exactly
+`50000000`.
+Temporarily enable the feature only for the controlled run, confirm `/ready`,
+and pass the real interruption, resume, access, quota and cleanup tests before
+ordinary production activation. `/ready` verifies only the private bucket; its
+`large_upload` detail does not prove a real transfer. Local mocked-Storage tests
+exercise a design that retains files above 10 MiB as private originals without
+automatic extraction, but that behavior has not been proved by a live transfer.
+
 After variables are saved, review staged changes, deploy, inspect build/runtime logs, then check `/ready` and `/version` against the intended Git commit. Verify the intended LINE channel before changing its webhook URL. Run the real KNC document proof and negative access/failure cases from `PHASE1_STATUS.md`; a successful healthcheck alone is insufficient. Follow `WEBHOOK_RECOVERY.md` for pending or uncertain events.
 
 ## Remaining ownership work

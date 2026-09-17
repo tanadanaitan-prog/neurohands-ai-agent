@@ -1,64 +1,89 @@
 # Large-file upload architecture
 
-## Current state
+## Verified current limits
 
-The production portal accepts one file through Railway, keeps the complete file
-in server memory, uploads it to Supabase Storage and then parses it. The browser,
-Express endpoint, database constraint and Storage bucket currently enforce a
-10 MiB limit.
+Checked on 17 September 2026:
 
-Changing those four numbers to 100 GB would not create a working 100 GB upload.
-It would require Railway to hold a 100 GB request in memory, exceed the current
-Supabase Free per-file and total-storage limits, and make a short network
-interruption restart the whole transfer.
+- the connected `Neurohands` Supabase organization reports plan `free`;
+- [Supabase Free allows 50 MB per file](https://supabase.com/docs/guides/storage/uploads/file-limits);
+- [Supabase Free includes 1 GB total file storage](https://supabase.com/pricing); and
+- the live private `neurohands-docs` bucket reports a 10,485,760-byte
+  (10 MiB) limit.
 
-## Safe 100 GB flow
+The production portal therefore still accepts at most 10 MiB. The development
+branch targets an exact **50,000,000-byte** ceiling, which stays within the
+documented Free-plan per-file maximum. No 100 GB production capability is
+claimed.
+
+## Staged direct-upload path
+
+Changing the old Express request limit alone would make Railway buffer the
+complete file in memory. The staged implementation is designed to:
+
+1. validate the signed LINE upload link, active client and department binding;
+2. reserve an immutable tenant-specific document path;
+3. give the browser a short-lived signed Storage capability;
+4. send fixed 6 MiB TUS chunks directly to the Supabase Storage hostname;
+5. resume interrupted transfers without mixing tenant fingerprints;
+6. refresh the short-lived signature during a long transfer;
+7. verify the authoritative stored size before finalization; and
+8. remove an object whose stored size differs from its reservation.
 
 ```mermaid
 flowchart LR
-  A[Authorized LINE upload link] --> B[Create short-lived upload session]
-  B --> C[Browser uploads resumable chunks directly to object storage]
-  C --> D[Storage completes immutable original object]
-  D --> E[Server verifies client, path, size and checksum]
-  E --> F[Document record becomes stored]
-  F --> G[Background extractor handles supported content in bounded pieces]
-  G --> H[Parsed, partial or unsupported evidence is recorded]
+  A[Authorized LINE upload link] --> B[Reserve tenant document]
+  B --> C[Create signed upload capability]
+  C --> D[Browser sends 6 MiB TUS chunks to Storage]
+  D --> E[Railway verifies stored path and size]
+  E --> F[Record parsed, partial or unsupported evidence]
 ```
 
-The production implementation must:
+Files of 10 MiB or less follow the existing bounded extractor. The staged path
+is designed to retain larger files as private originals, but automatic
+extraction is not implemented for them, so the record is labeled `unsupported`
+rather than presented as agent-readable. Local mocked-Storage tests exercise
+this behavior; no live large-file transfer has proved it.
 
-1. use a storage plan that permits a 100 GB object and enough total capacity;
-2. send file bytes directly from the browser to storage with resumable or
-   multipart upload, never through Railway memory;
-3. bind the short-lived session to one client, department, filename, object
-   path, size limit and expiry;
-4. keep service credentials in the server and never expose them to the browser;
-5. support resume, retry and cancellation without creating duplicate originals;
-6. finalize only after storage confirms the object and the server verifies its
-   expected size and checksum;
-7. parse asynchronously with strict CPU, memory, decompression and row limits;
-8. keep the original private even when extraction is partial or unsupported;
-9. record storage usage, upload duration, failures and cleanup of abandoned
-   multipart sessions; and
-10. test revoked links, wrong-client paths, altered metadata, interrupted parts,
-    duplicate finalization and quota exhaustion before enabling it for clients.
+## Activation gates
 
-## Current decision boundary
+Keep production `RESUMABLE_UPLOAD_ENABLED=false` while the path is staged.
 
-As verified against Supabase's current documentation on 17 September 2026,
-[Free projects allow at most 50 MB per file](https://supabase.com/docs/guides/storage/uploads/file-limits)
-and the [Free plan includes 1 GB of file storage](https://supabase.com/pricing).
-Paid plans can configure a larger per-file limit, but a 100 GB object still
-needs sufficient storage capacity. Supabase recommends
-[TUS resumable uploads](https://supabase.com/docs/guides/storage/uploads/resumable-uploads)
-for large browser uploads and its direct storage hostname; the standard upload
-path is not appropriate for a 100 GB file.
+Complete these prerequisites before a controlled acceptance run:
 
-Supabase Free therefore cannot supply a 100 GB production upload. The safe
-zero-cost choices are to retain the small cloud portal or build a laptop-only
-100 GB test, which would work only while that laptop and its network route are
-available. Production cloud support needs an explicitly approved compatible
-storage plan.
+1. apply `20260917103000_resumable_upload_metadata.sql`;
+2. add an atomic per-tenant quota that also protects the 1 GB Free-plan total;
+3. add cleanup for abandoned reservations and partial uploads;
+4. verify the project-wide limit permits exactly `50000000` bytes;
+5. set the private bucket limit to exactly `50000000` bytes and read it back;
+   and
+6. set `UPLOAD_MAX_BYTES=50000000` while leaving the production feature gate
+   false.
 
-Until that choice is made, the deployed 10 MiB limit remains unchanged and no
-100 GB capability is claimed.
+Then run controlled acceptance:
+
+1. enable the feature only in the controlled acceptance deployment or window;
+2. confirm `/ready` reports the exact bucket match;
+3. run real boundary, interruption, resume, expiry, revoked-user,
+   wrong-department, quota and cleanup tests; and
+4. disable the feature immediately and clean up the test state if any check
+   fails.
+
+Enable the feature for ordinary production use only after the controlled run
+passes and its evidence is retained. No paid-plan or billing change is part of
+this Free-plan acceptance path.
+
+The local tests use mocked Storage responses. They verify application behavior,
+not Supabase's live transfer capacity. `/ready` checks the private bucket when
+the feature is enabled; it does not prove a real TUS transfer.
+
+## Future 100 GB request
+
+The current Free plan cannot accept a 100 GB file. Supabase's current
+[limits page](https://supabase.com/docs/guides/storage/uploads/file-limits) and
+[pricing page](https://supabase.com/pricing) advertise up to 500 GB per file on
+paid plans, while a separate current
+[troubleshooting page](https://supabase.com/docs/guides/troubleshooting/upload-file-size-restrictions-Y4wQLT)
+still says TUS and S3 transfers support up to 50 GB. Because the official pages
+conflict, a future 100 GB design must remain a proposal until the selected paid
+plan, dashboard configuration and a representative live upload prove it. Any
+paid-plan or spending change requires explicit approval.

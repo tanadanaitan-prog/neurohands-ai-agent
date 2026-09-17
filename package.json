@@ -32,6 +32,7 @@
     "@supabase/supabase-js": "2.115.0",
     "express": "4.22.2",
     "mammoth": "1.12.2",
+    "tus-js-client": "4.3.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "overrides": {

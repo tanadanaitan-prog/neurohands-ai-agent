@@ -33,6 +33,8 @@ const {
   FALLBACK_MODEL = "",
   FALLBACK_MODELS = "",
   FALLBACK_BASE_URL = "",
+  RESUMABLE_UPLOAD_ENABLED = "false",
+  UPLOAD_MAX_BYTES = "50000000",
   PORT = 3000,
 } = process.env;
 
@@ -53,6 +55,16 @@ const DEPT_CODES = {
   sales: "SAL", marketing: "MKT", accounting: "ACC", hr: "HRS",
   finance: "FIN", support: "SUP", operations: "OPS", business: "BIZ",
 };
+
+const LEGACY_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+const TUS_CHUNK_BYTES = 6 * 1024 * 1024;
+const HARD_UPLOAD_MAX_BYTES = 50_000_000;
+const resumableUploadsEnabled = String(RESUMABLE_UPLOAD_ENABLED).trim().toLowerCase() === "true";
+const configuredUploadMax = Number(UPLOAD_MAX_BYTES);
+const uploadMaxConfigValid = Number.isSafeInteger(configuredUploadMax)
+  && configuredUploadMax > 0
+  && configuredUploadMax <= HARD_UPLOAD_MAX_BYTES;
+const uploadMaxBytes = uploadMaxConfigValid ? configuredUploadMax : HARD_UPLOAD_MAX_BYTES;
 
 function geminiConfigured() {
   return String(GEMINI_ENABLED).trim().toLowerCase() !== "false" && Boolean(GEMINI_API_KEY);
@@ -1268,6 +1280,8 @@ async function handleStaffMessage(lineUserId, text, replyToken) {
 
 // ---------- DOCUMENT PORTAL ----------
 const PUBLIC_BASE = process.env.PUBLIC_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : "");
+const TUS_BROWSER_FILE = require.resolve("tus-js-client/dist/tus.min.js");
+const DOCUMENT_EXTENSIONS = new Set([".xlsx", ".xls", ".csv", ".txt", ".docx", ".pdf"]);
 
 function makeUploadToken(clientAccountId, department, lineUserId) {
   if (!LINE_CHANNEL_SECRET) throw new Error("LINE_CHANNEL_SECRET is required to issue upload links");
@@ -1290,30 +1304,312 @@ function checkUploadToken(token) {
   return { clientAccountId: Number(clientAccountId), department, lineUserId: lineUserId || null };
 }
 
-const UPLOAD_HTML = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Neurohands Upload</title>
+function cleanUploadFilename(value) {
+  let fileName;
+  try { fileName = decodeURIComponent(String(value || "file")); }
+  catch { return null; }
+  fileName = fileName.replace(/[\\/\x00-\x1f]/g, "_").slice(0, 200);
+  return fileName && DOCUMENT_EXTENSIONS.has(path.extname(fileName).toLowerCase()) ? fileName : null;
+}
+
+function encodeStoragePath(value) {
+  return String(value).split("/").map(encodeURIComponent).join("/");
+}
+
+function directStorageEndpoint() {
+  const url = new URL(SUPABASE_URL);
+  const match = url.hostname.match(/^([a-z0-9-]+)\.supabase\.co$/i);
+  if (match) url.hostname = `${match[1]}.storage.supabase.co`;
+  // Supabase's signed TUS route is mounted below the normal authenticated
+  // endpoint. Only this /sign route verifies the x-signature capability.
+  url.pathname = "/storage/v1/upload/resumable/sign";
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+async function authorizedUploadAccount(info) {
+  const acc = (await db(`client_accounts?id=eq.${info.clientAccountId}&select=*`))?.[0];
+  if (!acc || acc.active === false) return null;
+  const issuerIsStaff = info.lineUserId && await isStaff(info.lineUserId);
+  if (!issuerIsStaff) {
+    const bindings = info.lineUserId ? await getBindings(info.lineUserId) : [];
+    if (!bindings.some((binding) => String(binding.client_account_id) === String(info.clientAccountId) && binding.department === info.department)) return null;
+  }
+  return acc;
+}
+
+function newDocumentIdentity(acc, department, fileName) {
+  const base = String(acc.client_code).toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+  if (!base) throw new Error("Invalid client code");
+  const ext = path.extname(fileName).toLowerCase();
+  const deptCode = DEPT_CODES[department] || "BIZ";
+  const now = new Date();
+  const ymd = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const ym = now.toISOString().slice(0, 7);
+  const seq = crypto.randomUUID().replace(/-/g, "").toUpperCase();
+  const doc_code = `${base}-${deptCode}-${ymd}-${seq}`;
+  return { doc_code, storage_path: `${base}/${deptCode}/${ym}/${doc_code}${ext}` };
+}
+
+async function reserveDocument({ info, acc, fileName, mime, sizeBytes, uploadedVia }) {
+  const identity = newDocumentIdentity(acc, info.department, fileName);
+  const recorded = await db("client_documents", {
+    method: "POST",
+    body: {
+      ...identity, client_account_id: info.clientAccountId, department: info.department,
+      file_name: fileName, mime, size_bytes: sizeBytes, uploaded_by: info.lineUserId,
+      uploaded_via: uploadedVia, parsed_status: "pending",
+      parsed_summary: { original_stored: false, upload_state: "reserved", expected_size_bytes: sizeBytes },
+    },
+  });
+  if (!recorded?.[0]?.id) throw new Error("Document registration failed");
+  return recorded[0];
+}
+
+async function createSignedResumableUpload(storagePath) {
+  const target = `${SUPABASE_URL}/storage/v1/object/upload/sign/neurohands-docs/${encodeStoragePath(storagePath)}`;
+  const response = await fetch(target, {
+    method: "POST",
+    headers: { ...supabaseHeaders(SUPABASE_SERVICE_KEY), "Content-Type": "application/json", "x-upsert": "false" },
+    body: "{}",
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw new Error("Storage upload authorization failed");
+  const data = await response.json();
+  const signed = typeof data?.url === "string"
+    ? new URL(data.url.startsWith("http") ? data.url : `${SUPABASE_URL}/storage/v1${data.url}`)
+    : null;
+  const signature = typeof data?.token === "string" ? data.token : signed?.searchParams.get("token");
+  if (!signature) throw new Error("Storage upload authorization was incomplete");
+  return signature;
+}
+
+async function removeStoredUpload(storagePath) {
+  const target = `${SUPABASE_URL}/storage/v1/object/neurohands-docs`;
+  const response = await fetch(target, {
+    method: "DELETE",
+    headers: { ...supabaseHeaders(SUPABASE_SERVICE_KEY), "Content-Type": "application/json" },
+    body: JSON.stringify({ prefixes: [storagePath] }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) return false;
+  const deleted = await response.json().catch(() => null);
+  return Array.isArray(deleted) && deleted.some((entry) => entry?.name === storagePath);
+}
+
+function formatUploadLimit(bytes) {
+  if (bytes >= 1_000_000_000) return `${Number((bytes / 1_000_000_000).toFixed(2))} GB`;
+  return `${Number((bytes / 1_000_000).toFixed(2))} MB`;
+}
+
+function uploadPageHtml() {
+  const displayLimit = resumableUploadsEnabled ? formatUploadLimit(uploadMaxBytes) : "10 MiB";
+  const extractionNote = resumableUploadsEnabled
+    ? "PDFs and files above 10 MiB are stored for review; this version does not extract their content automatically."
+    : "PDFs are stored for review; this version does not extract their content automatically.";
+  const uploader = resumableUploadsEnabled ? `<script src="/assets/tus-4.3.1.min.js"></script>
+<script>
+const MAX_BYTES=${uploadMaxBytes};
+const qs=location.search.slice(1);
+const statusNode=document.getElementById('st');
+const button=document.getElementById('upload-button');
+function sessionKey(file){return 'nh-upload:'+location.search+':'+file.name+':'+file.size+':'+file.lastModified}
+async function getSession(file){
+  const key=sessionKey(file),saved=localStorage.getItem(key);
+  if(saved){try{const session=JSON.parse(saved);if(Date.now()<session.reuse_until)return {key,session}}catch{}localStorage.removeItem(key)}
+  const response=await fetch('/api/upload/session?'+qs,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({file_name:file.name,mime:file.type||'application/octet-stream',size_bytes:file.size})});
+  const session=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(session.error||'Could not create upload session');
+  localStorage.setItem(key,JSON.stringify(session));return {key,session};
+}
+async function finalize(key,session){
+  const response=await fetch('/api/upload/finalize?'+qs,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({doc_code:session.doc_code})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok){if(result.terminal===true)localStorage.removeItem(key);throw new Error(result.error||'Upload could not be verified')}
+  localStorage.removeItem(key);statusNode.textContent='Filed as '+result.doc_code+' — '+result.parsed;
+}
+async function up(){
+  const input=document.getElementById('f');if(!input.files.length){statusNode.textContent='Choose a file first.';return}
+  const file=input.files[0];if(file.size>MAX_BYTES){statusNode.textContent='File exceeds ${displayLimit}.';return}
+  button.disabled=true;statusNode.textContent='Preparing secure upload…';
+  try{
+    const {key,session}=await getSession(file);
+    if(session.transfer_complete){statusNode.textContent='Verifying completed upload…';await finalize(key,session);return}
+    const upload=new tus.Upload(file,{endpoint:session.endpoint,retryDelays:[0,3000,5000,10000,20000],chunkSize:session.chunk_bytes,uploadDataDuringCreation:true,removeFingerprintOnSuccess:true,
+      fingerprint(){return Promise.resolve('nh-resumable-'+session.doc_code)},
+      headers:{'x-signature':session.signature},metadata:{bucketName:session.bucket,objectName:session.storage_path,contentType:file.type||'application/octet-stream',cacheControl:'3600',metadata:JSON.stringify({doc_code:session.doc_code})},
+      async onBeforeRequest(request){
+        if(Date.now()>session.signature_expires_at-5*60*1000){
+          const response=await fetch('/api/upload/signature?'+qs,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({doc_code:session.doc_code})});
+          const refreshed=await response.json().catch(()=>({}));if(!response.ok)throw new Error(refreshed.error||'Upload authorization could not be refreshed');
+          session.signature=refreshed.signature;session.signature_expires_at=refreshed.signature_expires_at;localStorage.setItem(key,JSON.stringify(session));
+        }
+        request.setHeader('x-signature',session.signature);
+      },
+      onError(){button.disabled=false;statusNode.textContent='Upload paused. Choose the same file to retry.'},
+      onProgress(sent,total){statusNode.textContent='Uploading '+((sent/total)*100).toFixed(1)+'%';},
+      onSuccess(){session.transfer_complete=true;localStorage.setItem(key,JSON.stringify(session));finalize(key,session).catch(error=>{button.disabled=false;statusNode.textContent=error.message})}});
+    const previous=await upload.findPreviousUploads();if(previous.length)upload.resumeFromPreviousUpload(previous[0]);upload.start();
+  }catch(error){button.disabled=false;statusNode.textContent=error.message||'Upload failed'}
+}
+</script>` : `<script>async function up(){const el=document.getElementById('f');const st=document.getElementById('st');
+if(!el.files.length){st.textContent='Choose a file first.';return}
+const f=el.files[0];st.textContent='Uploading…';
+if(f.size>${LEGACY_UPLOAD_MAX_BYTES}){st.textContent='File exceeds 10 MiB.';return}
+const r=await fetch(location.href.replace('/upload?','/api/upload?'),{method:'POST',headers:{'x-file-name':encodeURIComponent(f.name),'content-type':f.type||'application/octet-stream'},body:f}).catch(()=>null);
+if(!r){st.textContent='Connection failed. Please check the document list before retrying.';return}
+const j=await r.json().catch(()=>({}));
+st.textContent=r.ok?('Filed as '+j.doc_code+' — '+j.parsed+(j.parsed==='partial'?' (some content was not extracted)':'')):('Upload not confirmed: '+(j.error||'Failed'));}</script>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Neurohands Upload</title>
 <style>body{font-family:sans-serif;background:#E9EEF6;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
 .card{background:#fff;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 8px 30px rgba(27,36,80,.15);border-left:6px solid #2196F3}
 h1{color:#1B2450;font-size:20px;margin:0 0 6px}p{color:#555;font-size:13px}
 input{margin:14px 0}button{background:#1B2450;color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:700}
 #st{margin-top:12px;font-size:13px;color:#1B2450}</style></head>
-<body><div class="card"><h1>Neurohands secure upload</h1><p>Excel • Word • CSV • TXT (max 10 MB). PDFs are stored for review; this version does not extract their text.</p>
+<body><div class="card"><h1>Neurohands secure upload</h1><p>Excel • Word • CSV • TXT (max ${displayLimit}). ${extractionNote}</p>
 <input type="file" id="f" accept=".xlsx,.xls,.csv,.txt,.docx,.pdf"><br>
-<button onclick="up()">Upload</button><div id="st"></div></div>
-<script>async function up(){const el=document.getElementById('f');const st=document.getElementById('st');
-if(!el.files.length){st.textContent='Choose a file first.';return}
-const f=el.files[0];st.textContent='Uploading…';
-if(f.size>10*1024*1024){st.textContent='File exceeds 10 MB.';return}
-const r=await fetch(location.href.replace('/upload?','/api/upload?'),{method:'POST',headers:{'x-file-name':encodeURIComponent(f.name),'content-type':f.type||'application/octet-stream'},body:f}).catch(()=>null);
-if(!r){st.textContent='Connection failed. Please check the document list before retrying.';return}
-const j=await r.json().catch(()=>({}));
-st.textContent=r.ok?('Filed as '+j.doc_code+' — '+j.parsed+(j.parsed==='partial'?' (some content was not extracted)':'')):('Upload not confirmed: '+(j.error||'Failed'));}
-</script></body></html>`;
+<button id="upload-button" onclick="up()">Upload</button><div id="st"></div></div>${uploader}</body></html>`;
+}
 
 app.get("/upload", (req, res) => {
-  res.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff" });
+  const connectSource = resumableUploadsEnabled ? ` ${new URL(directStorageEndpoint()).origin}` : "";
+  res.set({ "Cache-Control": "no-store", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY",
+    "Content-Security-Policy": `default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'${connectSource}; img-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'` });
   if (!checkUploadToken(req.query.t)) return res.status(403).send("Invalid or expired upload link.");
-  res.type("html").send(UPLOAD_HTML);
+  res.type("html").send(uploadPageHtml());
 });
+
+app.get("/assets/tus-4.3.1.min.js", (req, res) => {
+  if (!resumableUploadsEnabled) return res.status(404).end();
+  res.set({ "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff" });
+  res.type("application/javascript").sendFile(TUS_BROWSER_FILE);
+});
+
+app.post("/api/upload/session", asyncRoute(async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!resumableUploadsEnabled) return res.status(404).json({ error: "Resumable uploads are not enabled" });
+  if (!uploadMaxConfigValid) return res.status(503).json({ error: "Resumable upload limit is not configured safely" });
+  const info = checkUploadToken(req.query.t);
+  if (!info) return res.status(403).json({ error: "Invalid or expired link" });
+  const fileName = cleanUploadFilename(req.body?.file_name);
+  const mime = typeof req.body?.mime === "string" && req.body.mime.length <= 200 ? req.body.mime.split(";")[0] : "application/octet-stream";
+  const sizeBytes = Number(req.body?.size_bytes);
+  if (!fileName) return res.status(400).json({ error: "Unsupported file type or filename" });
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1) return res.status(400).json({ error: "Invalid file size" });
+  if (sizeBytes > uploadMaxBytes) return res.status(413).json({ error: "File exceeds the configured upload limit" });
+  const acc = await authorizedUploadAccount(info);
+  if (!acc) return res.status(403).json({ error: "Upload access is unavailable" });
+  const recorded = await reserveDocument({ info, acc, fileName, mime, sizeBytes, uploadedVia: "portal_resumable" });
+  let signature;
+  try { signature = await createSignedResumableUpload(recorded.storage_path); }
+  catch (error) {
+    await db(`client_documents?doc_code=eq.${encodeURIComponent(recorded.doc_code)}&client_account_id=eq.${info.clientAccountId}`, {
+      method: "PATCH", body: { parsed_status: "failed", parsed_summary: { original_stored: false, upload_state: "authorization_failed" } },
+    });
+    throw error;
+  }
+  res.json({
+    doc_code: recorded.doc_code, storage_path: recorded.storage_path, bucket: "neurohands-docs",
+    endpoint: directStorageEndpoint(), signature, chunk_bytes: TUS_CHUNK_BYTES,
+    max_bytes: uploadMaxBytes, signature_expires_at: Date.now() + 110 * 60 * 1000,
+    reuse_until: Date.now() + 23 * 60 * 60 * 1000,
+  });
+}));
+
+app.post("/api/upload/signature", asyncRoute(async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!resumableUploadsEnabled) return res.status(404).json({ error: "Resumable uploads are not enabled" });
+  if (!uploadMaxConfigValid) return res.status(503).json({ error: "Resumable upload limit is not configured safely" });
+  const info = checkUploadToken(req.query.t);
+  if (!info) return res.status(403).json({ error: "Invalid or expired link" });
+  const acc = await authorizedUploadAccount(info);
+  if (!acc) return res.status(403).json({ error: "Upload access is unavailable" });
+  const docCode = typeof req.body?.doc_code === "string" ? req.body.doc_code : "";
+  const document = (await db(`client_documents?doc_code=eq.${encodeURIComponent(docCode)}&client_account_id=eq.${info.clientAccountId}&department=eq.${encodeURIComponent(info.department)}&select=*`))?.[0];
+  if (!document || document.uploaded_via !== "portal_resumable" || document.parsed_status !== "pending") return res.status(404).json({ error: "Active upload session was not found" });
+  const signature = await createSignedResumableUpload(document.storage_path);
+  res.json({ signature, signature_expires_at: Date.now() + 110 * 60 * 1000 });
+}));
+
+app.post("/api/upload/finalize", asyncRoute(async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  if (!resumableUploadsEnabled) return res.status(404).json({ error: "Resumable uploads are not enabled" });
+  if (!uploadMaxConfigValid) return res.status(503).json({ error: "Resumable upload limit is not configured safely" });
+  const info = checkUploadToken(req.query.t);
+  if (!info) return res.status(403).json({ error: "Invalid or expired link" });
+  const acc = await authorizedUploadAccount(info);
+  if (!acc) return res.status(403).json({ error: "Upload access is unavailable" });
+  const docCode = typeof req.body?.doc_code === "string" ? req.body.doc_code : "";
+  const document = (await db(`client_documents?doc_code=eq.${encodeURIComponent(docCode)}&client_account_id=eq.${info.clientAccountId}&department=eq.${encodeURIComponent(info.department)}&select=*`))?.[0];
+  if (!document || document.uploaded_via !== "portal_resumable") return res.status(404).json({ error: "Upload session was not found" });
+  if (["parsed", "partial", "unsupported"].includes(document.parsed_status)) return res.json({ ok: true, doc_code: document.doc_code, parsed: document.parsed_status });
+  const cleanupPending = document.parsed_status === "failed"
+    && document.parsed_summary?.upload_state === "size_mismatch_cleanup_pending";
+  const cleanupComplete = document.parsed_status === "failed"
+    && document.parsed_summary?.upload_state === "size_mismatch_removed";
+  if (cleanupComplete) return res.status(409).json({ error: "Stored file size did not match the upload session", terminal: true });
+  if (document.parsed_status !== "pending" && !cleanupPending) return res.status(409).json({ error: "Upload session cannot be finalized" });
+
+  const objectUrl = `${SUPABASE_URL}/storage/v1/object/info/neurohands-docs/${encodeStoragePath(document.storage_path)}`;
+  const objectResponse = await fetch(objectUrl, { headers: supabaseHeaders(SUPABASE_SERVICE_KEY), signal: AbortSignal.timeout(15000) });
+  if (!objectResponse.ok) {
+    if (cleanupPending && objectResponse.status === 404) {
+      await db(`client_documents?doc_code=eq.${encodeURIComponent(document.doc_code)}&client_account_id=eq.${info.clientAccountId}`, {
+        method: "PATCH", body: { parsed_status: "failed", parsed_summary: {
+          ...document.parsed_summary, original_stored: false, upload_state: "size_mismatch_removed",
+        } },
+      });
+    }
+    return res.status(409).json({ error: "Storage has not confirmed the complete file", terminal: cleanupPending && objectResponse.status === 404 });
+  }
+  const objectInfo = await objectResponse.json();
+  const actualSize = Number(objectInfo?.size ?? objectInfo?.metadata?.size);
+  if (cleanupPending || !Number.isSafeInteger(actualSize) || actualSize !== Number(document.size_bytes)) {
+    const mismatchSummary = {
+      original_stored: true,
+      upload_state: "size_mismatch_cleanup_pending",
+      expected_size_bytes: Number(document.size_bytes),
+      actual_size_bytes: Number.isSafeInteger(actualSize) ? actualSize : null,
+    };
+    if (!cleanupPending) {
+      await db(`client_documents?doc_code=eq.${encodeURIComponent(document.doc_code)}&client_account_id=eq.${info.clientAccountId}`, {
+        method: "PATCH", body: { parsed_status: "failed", parsed_summary: mismatchSummary },
+      });
+    }
+    let removed = false;
+    try { removed = await removeStoredUpload(document.storage_path); }
+    catch { removed = false; }
+    if (removed) {
+      await db(`client_documents?doc_code=eq.${encodeURIComponent(document.doc_code)}&client_account_id=eq.${info.clientAccountId}`, {
+        method: "PATCH", body: { parsed_status: "failed", parsed_summary: {
+          ...(cleanupPending ? document.parsed_summary : mismatchSummary), original_stored: false, upload_state: "size_mismatch_removed",
+        } },
+      });
+    }
+    return res.status(removed ? 409 : 503).json({ error: removed
+      ? "Stored file size did not match the upload session"
+      : "Stored file size did not match and cleanup is pending", terminal: removed });
+  }
+
+  let parsed;
+  if (actualSize <= LEGACY_UPLOAD_MAX_BYTES) {
+    const downloadUrl = `${SUPABASE_URL}/storage/v1/object/authenticated/neurohands-docs/${encodeStoragePath(document.storage_path)}`;
+    const download = await fetch(downloadUrl, { headers: supabaseHeaders(SUPABASE_SERVICE_KEY), signal: AbortSignal.timeout(30000) });
+    if (!download.ok) throw new Error("Stored document could not be read for extraction");
+    parsed = await parseDocument(document.file_name, document.mime, Buffer.from(await download.arrayBuffer()));
+    parsed.summary = { ...parsed.summary, original_stored: true, upload_protocol: "tus" };
+  } else {
+    parsed = { status: "unsupported", rows: null, summary: { original_stored: true, upload_protocol: "tus", source: { file_name: document.file_name, size_bytes: actualSize }, extraction_complete: false,
+      note: "Original stored successfully. Automatic extraction is limited to files of 10 MiB or less." } };
+  }
+  const saved = await db(`client_documents?doc_code=eq.${encodeURIComponent(document.doc_code)}&client_account_id=eq.${info.clientAccountId}`, {
+    method: "PATCH", headers: { Prefer: "return=representation" },
+    body: { parsed_status: parsed.status, parsed_summary: parsed.summary, row_count: parsed.rows ?? null },
+  });
+  if (!saved?.[0]?.id) throw new Error("Upload evidence could not be saved");
+  res.json({ ok: true, doc_code: document.doc_code, parsed: parsed.status, extraction_complete: parsed.summary.extraction_complete === true });
+}));
 
 app.post("/api/upload", express.raw({ type: "*/*", limit: "10mb" }), asyncRoute(async (req, res) => {
   res.set("Cache-Control", "no-store");
@@ -1321,40 +1617,15 @@ app.post("/api/upload", express.raw({ type: "*/*", limit: "10mb" }), asyncRoute(
   if (!info) return res.status(403).json({ error: "Invalid or expired link" });
   const buf = req.body;
   if (!Buffer.isBuffer(buf) || !buf.length) return res.status(400).json({ error: "Empty file" });
-  let fileName;
-  try { fileName = decodeURIComponent(String(req.headers["x-file-name"] || "file")).replace(/[\\/\x00-\x1f]/g, "_").slice(0, 200); }
-  catch { return res.status(400).json({ error: "Invalid filename" }); }
+  const fileName = cleanUploadFilename(req.headers["x-file-name"]);
+  if (!fileName) return res.status(400).json({ error: "Unsupported file type or filename" });
   const ext = path.extname(fileName).toLowerCase();
-  if (![".xlsx", ".xls", ".csv", ".txt", ".docx", ".pdf"].includes(ext)) return res.status(400).json({ error: "Unsupported file type" });
   const mime = String(req.headers["content-type"] || "application/octet-stream").split(";")[0];
 
-  const acc = (await db(`client_accounts?id=eq.${info.clientAccountId}&select=*`))?.[0];
-  if (!acc || acc.active === false) return res.status(403).json({ error: "Client account is unavailable" });
-  const issuerIsStaff = info.lineUserId && await isStaff(info.lineUserId);
-  if (!issuerIsStaff) {
-    const bindings = info.lineUserId ? await getBindings(info.lineUserId) : [];
-    if (!bindings.some(b => String(b.client_account_id) === String(info.clientAccountId) && b.department === info.department)) return res.status(403).json({ error: "The upload link issuer no longer has access" });
-  }
-  const base = String(acc.client_code).toUpperCase().replace(/[^A-Z0-9_-]/g, "");
-  if (!base) throw new Error("Invalid client code");
-  const deptCode = DEPT_CODES[info.department] || "BIZ";
-  const d = new Date();
-  const ymd = d.toISOString().slice(0, 10).replace(/-/g, "");
-  const ym = d.toISOString().slice(0, 7);
-  const seq = crypto.randomUUID().replace(/-/g, "").toUpperCase();
-  const doc_code = `${base}-${deptCode}-${ymd}-${seq}`;
-  const storage_path = `${base}/${deptCode}/${ym}/${doc_code}${ext}`;
-
-  // Reserve a traceable record before writing the immutable original object.
-  const recorded = await db("client_documents", {
-    method: "POST",
-    body: {
-      doc_code, client_account_id: info.clientAccountId, department: info.department,
-      file_name: fileName, mime, size_bytes: buf.length, storage_path,
-      uploaded_by: info.lineUserId, uploaded_via: "portal", parsed_status: "pending",
-    },
-  });
-  if (!recorded?.[0]?.id) throw new Error("Document registration failed");
+  const acc = await authorizedUploadAccount(info);
+  if (!acc) return res.status(403).json({ error: "Upload access is unavailable" });
+  const recorded = await reserveDocument({ info, acc, fileName, mime, sizeBytes: buf.length, uploadedVia: "portal" });
+  const { doc_code, storage_path } = recorded;
 
   const up = await fetch(`${SUPABASE_URL}/storage/v1/object/neurohands-docs/${storage_path}`, {
     method: "POST",
@@ -1448,8 +1719,22 @@ app.get("/ready", asyncRoute(async (_, res) => {
   ]);
   const bucket = await fetch(`${SUPABASE_URL}/storage/v1/bucket/neurohands-docs`, { headers: supabaseHeaders(SUPABASE_SERVICE_KEY), signal: AbortSignal.timeout(5000) });
   const metadata = bucket.ok ? await bucket.json() : null;
-  const ready=Boolean(accounts?.length && agents?.length && metadata && metadata.public === false);
-  res.status(ready ? 200 : 503).json({ready});
+  const bucketLimit = Number(metadata?.file_size_limit);
+  // Signed upload capabilities are path-bound but not length-bound. Requiring
+  // the bucket ceiling to match the application ceiling keeps a modified
+  // browser from storing an object larger than the configured maximum.
+  const bucketLimitMatches = Number.isSafeInteger(bucketLimit) && bucketLimit === uploadMaxBytes;
+  const largeUploadReady = !resumableUploadsEnabled || (uploadMaxConfigValid && bucketLimitMatches);
+  const ready=Boolean(accounts?.length && agents?.length && metadata && metadata.public === false && largeUploadReady);
+  const result = { ready };
+  if (resumableUploadsEnabled) result.large_upload = {
+      enabled: resumableUploadsEnabled,
+      config_valid: uploadMaxConfigValid,
+      configured_max_bytes: uploadMaxBytes,
+      bucket_max_bytes: Number.isSafeInteger(bucketLimit) ? bucketLimit : null,
+      bucket_limit_matches: bucketLimitMatches,
+  };
+  res.status(ready ? 200 : 503).json(result);
 }));
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
