@@ -142,6 +142,13 @@ The current repository and destination service are available, but the complete o
 
 See the [current connection matrix](docs/APP_CONNECTION_MATRIX.md), [named-agent workflow laboratory](docs/NAMED_AGENT_WORKFLOW.md), [acceptance checklist](docs/GOAL_ACCEPTANCE.md), [dated live test evidence](docs/LIVE_STATUS.md), [Phase 1 recovery record](docs/PHASE1_STATUS.md) and [longer-term project plan](docs/PROJECT_PLAN.md).
 
+The [Software Passport and admission-control record](docs/SOFTWARE_PASSPORTS.md)
+defines how provider limits, private account uncertainty, permissions, data
+conditions, and shared capacity are handled. The register is checked during the
+build. The guarded OpenRouter and LangSmith test routes block new external
+requests while their private allowances are unknown; they do not silently
+disable the existing LINE service.
+
 ## How this can grow into an AI workforce
 
 The following describes the **intended expansion** beyond the fixed local

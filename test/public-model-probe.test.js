@@ -207,3 +207,17 @@ test("CLI without a key reports a safe failure and ignores arbitrary prompt argu
   assert.equal(result.requests, 0);
   assert.equal(child.stdout.includes(KEY), false);
 });
+
+test("CLI with a key blocks before network use while account allowance is unresolved", () => {
+  const child = spawnSync(process.execPath, [require.resolve("../scripts/check-public-model")], {
+    env: { THIRD_API_KEY: KEY, THIRD_PROVIDER: "openrouter", THIRD_MODEL: MODEL, THIRD_BASE_URL: BASE_URL },
+    encoding: "utf8", timeout: 5000,
+  });
+  assert.equal(child.status, 1);
+  assert.equal(child.stderr, "");
+  const result = JSON.parse(child.stdout);
+  assert.equal(result.status, "admission_blocked");
+  assert.equal(result.admissionCode, "ALLOWANCE_UNKNOWN");
+  assert.equal(result.requests, 0);
+  assert.equal(child.stdout.includes(KEY), false);
+});

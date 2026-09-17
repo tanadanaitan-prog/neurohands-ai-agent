@@ -4,6 +4,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
+import admissionControl from "../src/lib/admission-control.js";
+import passportTools from "../src/lib/software-passports.js";
+
+const { admitPassportAction, createInMemoryCapacityStore } = admissionControl;
+const { loadPassportRegister } = passportTools;
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const mode = process.argv[2] || "check";
@@ -87,6 +92,42 @@ async function trace(useModel = false, useAgent = false) {
     process.exitCode = 1;
     return;
   }
+  const register = loadPassportRegister();
+  const gate = await admitPassportAction({
+    serviceId: "langsmith",
+    actionKey: `langsmith-synthetic-trace-${new Date().toISOString().slice(0, 10)}`,
+    operation: "export_synthetic_trace",
+    workflow: "langsmith_synthetic_trial",
+    workload: "experiment",
+  }, {
+    register,
+    capacityStore: createInMemoryCapacityStore(),
+    trustedContext: {
+      trustSource: "fixed_internal_cli", actor: "founder", dataClass: "synthetic",
+      workload: "experiment", workflow: "langsmith_synthetic_trial", goalRelevant: true,
+    },
+  });
+  if (!gate.allowed) {
+    console.error(`LangSmith trace blocked by Software Passport admission: ${gate.code}. Verify the private account allowance before another upload.`);
+    process.exitCode = 1;
+    return;
+  }
+  const dispatched = await gate.markDispatched();
+  if (!dispatched.ok) {
+    console.error("LangSmith trace blocked because its capacity reservation could not be marked dispatched.");
+    process.exitCode = 1;
+    return;
+  }
+  try {
+    await runTraceExport(useModel, useAgent);
+    await gate.settle({ outcome: process.exitCode ? "transport_uncertain" : "completed" });
+  } catch (error) {
+    await gate.settle({ outcome: "transport_uncertain" });
+    throw error;
+  }
+}
+
+async function runTraceExport(useModel = false, useAgent = false) {
   const { Client } = await import("langsmith");
   const { LangChainTracer } = await import("@langchain/core/tracers/tracer_langchain");
   const prepared = useModel

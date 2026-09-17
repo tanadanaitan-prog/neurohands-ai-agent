@@ -1,0 +1,1156 @@
+{
+  "schemaVersion": "1.0.0",
+  "registerVersion": "2026-09-18.1",
+  "reviewedOn": "2026-09-18",
+  "policy": {
+    "objective": "Reliable company answers, correct role routing, and verified LINE workflows at the lowest justified cost.",
+    "newSpendingUsd": 0,
+    "unknownAllowancePolicy": "block_new_potentially_billable_experiments",
+    "existingFrontlineUnknownPolicy": "degrade_explicitly_and_alert_founder",
+    "consequentialApprovalRole": "founder"
+  },
+  "services": [
+    {
+      "id": "railway",
+      "name": "Railway",
+      "platforms": [
+        "frontline"
+      ],
+      "purpose": "Run the accepted LINE application and approved workers.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "remainingCredit": null,
+        "resetAt": null,
+        "hardStopConfigured": null,
+        "publishedFreeMonthlyCreditUsd": 1,
+        "evidenceStatus": "published_rule"
+      },
+      "capacity": {
+        "accountVerifiedLimits": null,
+        "publishedFreeLimits": {
+          "replicas": 1,
+          "ramGb": 0.5,
+          "vcpu": 1
+        },
+        "evidenceStatus": "published_rule"
+      },
+      "executionContract": {
+        "interfaces": [
+          "GitHub deployment",
+          "HTTPS service"
+        ],
+        "retryPolicy": "bounded by application",
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "public",
+          "synthetic",
+          "customer_private",
+          "operational_metadata"
+        ],
+        "storageRule": "No durable customer documents in ephemeral service storage.",
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "deployApprover": "founder",
+        "billingChanger": "founder",
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Use within provider terms; no quota or billing evasion.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "knownGoodRevision": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+        "restartTested": false,
+        "nextReviewTrigger": "before_release",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "public",
+          "synthetic",
+          "customer_private",
+          "operational_metadata"
+        ],
+        "supportedOperations": [
+          "serve_line",
+          "deploy_reviewed_revision"
+        ],
+        "consequentialOperations": [
+          "deploy_reviewed_revision"
+        ],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "railway_account",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "serve_line": null,
+          "deploy_reviewed_revision": null
+        }
+      },
+      "evidence": [
+        {
+          "id": "railway.pricing.2026-09-18",
+          "status": "published_rule",
+          "claim": "The published Free plan has a one-dollar monthly credit and default one-replica, 0.5 GB RAM, 1 vCPU limits.",
+          "source": {
+            "type": "url",
+            "value": "https://docs.railway.com/pricing/plans"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "railway.production.2026-09-16",
+          "status": "behavior_tested",
+          "claim": "The recorded production revision deployed and passed readiness and version checks.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-16-line-connectivity.json"
+          },
+          "checkedOn": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "platforms": [
+        "engineering_recovery"
+      ],
+      "purpose": "Preserve source history and provide the reviewed software release path.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "remainingMinutes": null,
+        "resetAt": null,
+        "hardStopConfigured": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "accountVerifiedLimits": null,
+        "evidenceStatus": "unresolved"
+      },
+      "executionContract": {
+        "interfaces": [
+          "Git",
+          "pull requests"
+        ],
+        "releaseBinding": "exact commit",
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "public",
+          "synthetic",
+          "source_code",
+          "redacted_evidence"
+        ],
+        "storageRule": "No runtime credentials or private customer documents.",
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "deployApprover": "founder",
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Use Actions for software delivery, within GitHub terms.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "backupMethod": "Git history and reviewed release records",
+        "nextReviewTrigger": "before_release",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "public",
+          "synthetic",
+          "source_code",
+          "redacted_evidence"
+        ],
+        "supportedOperations": [
+          "commit_branch",
+          "open_review",
+          "merge_approved_release"
+        ],
+        "consequentialOperations": [
+          "merge_approved_release"
+        ],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "github_account",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "commit_branch": null,
+          "open_review": null,
+          "merge_approved_release": null
+        }
+      },
+      "evidence": [
+        {
+          "id": "github.actions-billing.2026-09-18",
+          "status": "published_rule",
+          "claim": "GitHub documents separate Actions meters and billing behaviour.",
+          "source": {
+            "type": "url",
+            "value": "https://docs.github.com/en/billing/concepts/product-billing/github-actions"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "github.release-link.2026-09-16",
+          "status": "behavior_tested",
+          "claim": "The recorded reviewed commit matches the deployed production revision.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-16-line-connectivity.json"
+          },
+          "checkedOn": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase",
+      "platforms": [
+        "frontline",
+        "standby"
+      ],
+      "purpose": "Store scoped business records, audit evidence, private documents, and workflow state.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "remainingCredit": null,
+        "resetAt": null,
+        "hardStopConfigured": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "publishedFreeLimits": {
+          "databaseMb": 500,
+          "ramMb": 500,
+          "fileStorageGb": 1,
+          "egressGb": 5
+        },
+        "currentUsage": null,
+        "evidenceStatus": "published_rule"
+      },
+      "executionContract": {
+        "interfaces": [
+          "PostgREST",
+          "PostgreSQL",
+          "private object storage"
+        ],
+        "tenantScope": "application-enforced for privileged server access",
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "public",
+          "synthetic",
+          "customer_private",
+          "operational_metadata",
+          "audit_record"
+        ],
+        "storageRule": "Private objects and scoped records only.",
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "privilegedBypass": "server role requires application tenant checks",
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Use within plan and service terms; unlimited API requests do not mean unlimited compute or storage.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "databaseRestoreTested": true,
+        "storageRestoreTested": false,
+        "nextReviewTrigger": "before_schema_or_storage_change",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "public",
+          "synthetic",
+          "customer_private",
+          "operational_metadata",
+          "audit_record"
+        ],
+        "supportedOperations": [
+          "read_scoped_record",
+          "write_scoped_record",
+          "store_private_document"
+        ],
+        "consequentialOperations": [
+          "write_scoped_record",
+          "store_private_document"
+        ],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "supabase_project",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "read_scoped_record": null,
+          "write_scoped_record": null,
+          "store_private_document": null
+        }
+      },
+      "evidence": [
+        {
+          "id": "supabase.pricing.2026-09-18",
+          "status": "published_rule",
+          "claim": "The published Free plan lists 500 MB database, 500 MB RAM, 1 GB file storage, and 5 GB egress.",
+          "source": {
+            "type": "url",
+            "value": "https://supabase.com/pricing"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "supabase.phase1.2026-09-18",
+          "status": "behavior_tested",
+          "claim": "The repository records the applied Phase 1 schema, private storage boundary, and service-role risk.",
+          "source": {
+            "type": "repository",
+            "value": "supabase/README.md"
+          },
+          "checkedOn": "2026-09-18"
+        }
+      ]
+    },
+    {
+      "id": "line",
+      "name": "LINE Messaging API",
+      "platforms": [
+        "frontline"
+      ],
+      "purpose": "Receive customer messages and deliver approved Neurohands replies.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "monthlyMessageLimit": null,
+        "messagesRemaining": null,
+        "resetAt": null,
+        "additionalMessagesEnabled": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "accountVerifiedLimits": null,
+        "countingRule": "Country and plan dependent",
+        "evidenceStatus": "published_rule"
+      },
+      "executionContract": {
+        "interfaces": [
+          "signed webhook",
+          "reply API",
+          "push API"
+        ],
+        "signatureRequired": true,
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "public",
+          "customer_private",
+          "operational_metadata"
+        ],
+        "storageRule": "Persist only the scoped evidence required for the accepted workflow.",
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "channelChangeApprover": "founder",
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Message pricing and allowance depend on the official account country and plan.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "webhookReplay": "encrypted inbox with bounded recovery",
+        "duplicateProtection": true,
+        "nextReviewTrigger": "before_channel_change",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "public",
+          "customer_private",
+          "operational_metadata"
+        ],
+        "supportedOperations": [
+          "receive_webhook",
+          "reply_message",
+          "push_message"
+        ],
+        "consequentialOperations": [
+          "push_message"
+        ],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "line_official_account",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "receive_webhook": null,
+          "reply_message": null,
+          "push_message": null
+        }
+      },
+      "evidence": [
+        {
+          "id": "line.pricing.2026-09-18",
+          "status": "published_rule",
+          "claim": "LINE documents country- and plan-specific message allowances and monthly usage endpoints.",
+          "source": {
+            "type": "url",
+            "value": "https://developers.line.biz/en/docs/messaging-api/pricing/"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "line.transport.2026-09-16",
+          "status": "behavior_tested",
+          "claim": "Signed webhook receipt and completed reply handling were observed in the recorded production test.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-16-line-connectivity.json"
+          },
+          "checkedOn": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "gemini",
+      "name": "Google Gemini API",
+      "platforms": [
+        "frontline"
+      ],
+      "purpose": "Generate current production agent responses and tool requests.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualTier": null,
+        "remainingRequests": null,
+        "remainingTokens": null,
+        "resetAt": null,
+        "billingLinked": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "accountVerifiedLimits": null,
+        "publishedDimensions": [
+          "requests_per_minute",
+          "input_tokens_per_minute",
+          "requests_per_day"
+        ],
+        "evidenceStatus": "published_rule"
+      },
+      "executionContract": {
+        "interface": "generateContent v1beta",
+        "configuredModel": "gemini-3.6-flash",
+        "toolSchemaAdapterTested": true,
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "public",
+          "customer_private",
+          "operational_metadata"
+        ],
+        "authorizationReviewRequired": true,
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "providerChangeApprover": "founder",
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Use the exact configured model and current project limits; no silent paid substitution.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "failureMode": "explicit unavailable response and recorded provider failure",
+        "automaticPaidFallback": false,
+        "nextReviewTrigger": "provider_or_model_change",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "runtime",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "public",
+          "customer_private",
+          "operational_metadata"
+        ],
+        "supportedOperations": [
+          "generate_agent_response"
+        ],
+        "consequentialOperations": [],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "gemini_project",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "generate_agent_response": null
+        }
+      },
+      "evidence": [
+        {
+          "id": "gemini.rate-limits.2026-09-18",
+          "status": "published_rule",
+          "claim": "Gemini limits vary by project tier and model and must be checked in AI Studio.",
+          "source": {
+            "type": "url",
+            "value": "https://ai.google.dev/gemini-api/docs/rate-limits"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "gemini.transport.2026-09-16",
+          "status": "behavior_tested",
+          "claim": "The repaired adapter completed bounded provider and LINE delivery-path tests; answer quality remains unaccepted.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-16-line-connectivity.json"
+          },
+          "checkedOn": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "langsmith",
+      "name": "LangSmith",
+      "platforms": [
+        "engineering_recovery"
+      ],
+      "purpose": "Inspect redacted synthetic agent traces and compare evaluations without controlling frontline service.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "tracesRemaining": null,
+        "resetAt": null,
+        "paymentMethodPresent": null,
+        "overageEnabled": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "publishedPersonalBaseTracesPerMonth": 5000,
+        "accountVerifiedLimits": null,
+        "evidenceStatus": "published_rule"
+      },
+      "executionContract": {
+        "interface": "LangSmith tracing client",
+        "automaticTracing": false,
+        "explicitSyntheticOnly": true,
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "synthetic",
+          "redacted_evidence"
+        ],
+        "prohibitedContent": [
+          "credentials",
+          "signed_urls",
+          "activation_codes",
+          "private_document_text"
+        ],
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "frontlineDependency": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Upload only data Neurohands has the right to submit.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "failureMode": "stop optional export without breaking customer response",
+        "nextReviewTrigger": "before_trace_export",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "synthetic",
+          "redacted_evidence"
+        ],
+        "supportedOperations": [
+          "export_synthetic_trace"
+        ],
+        "consequentialOperations": [],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "langsmith_workspace",
+          "remaining": null,
+          "unit": "base_trace"
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "export_synthetic_trace": {
+            "action": [
+              {
+                "pool": "langsmith_workspace",
+                "units": 1
+              }
+            ],
+            "verification": []
+          }
+        }
+      },
+      "evidence": [
+        {
+          "id": "langsmith.billing.2026-09-18",
+          "status": "published_rule",
+          "claim": "LangSmith documents plan-specific trace allowances and billing behaviour.",
+          "source": {
+            "type": "url",
+            "value": "https://docs.langchain.com/langsmith/billing"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "langsmith.synthetic-trace.2026-09-16",
+          "status": "behavior_tested",
+          "claim": "One fixed synthetic trace was uploaded and read back while automatic tracing remained disabled.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-16-langsmith-tool-trace.json"
+          },
+          "checkedOn": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama local runtime",
+      "platforms": [
+        "engineering_recovery"
+      ],
+      "purpose": "Run isolated local synthetic agent tests while the laptop and local model are available.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": "local_device",
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "externalInferenceCharge": false,
+        "electricityAndHardwareCost": "unmeasured",
+        "evidenceStatus": "not_applicable"
+      },
+      "capacity": {
+        "installedModel": "qwen3:1.7b",
+        "measuredConcurrency": 1,
+        "evidenceStatus": "behavior_tested"
+      },
+      "executionContract": {
+        "interface": "loopback Ollama API",
+        "remoteHostsAllowed": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "synthetic",
+          "public"
+        ],
+        "storageRule": "Local laboratory only.",
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "productionAccess": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Model-specific licenses must be reviewed separately.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "failureMode": "pause local test; do not claim cloud failover",
+        "nextReviewTrigger": "model_change",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "synthetic",
+          "public"
+        ],
+        "supportedOperations": [
+          "run_local_synthetic_model"
+        ],
+        "consequentialOperations": [],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "not_metered",
+          "poolId": "local_ollama",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "local_unmetered",
+        "operationRequirements": {
+          "run_local_synthetic_model": {
+            "action": [],
+            "verification": []
+          }
+        }
+      },
+      "evidence": [
+        {
+          "id": "ollama.readme.2026-09-18",
+          "status": "published_rule",
+          "claim": "Ollama documents a local open-model runtime and supported installation paths.",
+          "source": {
+            "type": "url",
+            "value": "https://github.com/ollama/ollama/blob/main/README.md"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "ollama.named-workflow.2026-09-18",
+          "status": "behavior_tested",
+          "claim": "The repository contains bounded local named-agent benchmark evidence and limitations.",
+          "source": {
+            "type": "repository",
+            "value": "docs/NAMED_AGENT_WORKFLOW.md"
+          },
+          "checkedOn": "2026-09-18"
+        }
+      ]
+    },
+    {
+      "id": "codex",
+      "name": "Codex engineering assistant",
+      "platforms": [
+        "engineering_recovery"
+      ],
+      "purpose": "Investigate, patch, review, and test bounded engineering changes.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "remainingUsage": null,
+        "resetAt": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "accountVerifiedLimits": null,
+        "evidenceStatus": "unresolved"
+      },
+      "executionContract": {
+        "interface": "Codex desktop task",
+        "taskBoundary": "bounded change with acceptance tests",
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "source_code",
+          "synthetic",
+          "redacted_evidence"
+        ],
+        "productionCredentialsAllowed": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "selfDeployAllowed": false,
+        "authorityIncreaseAllowed": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Codex entitlement and API billing are separate meters.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "failureMode": "preserve branch and test evidence; founder controls release",
+        "nextReviewTrigger": "before_release",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "source_code",
+          "synthetic",
+          "redacted_evidence"
+        ],
+        "supportedOperations": [
+          "inspect_code",
+          "edit_branch",
+          "run_local_tests",
+          "propose_release"
+        ],
+        "consequentialOperations": [
+          "propose_release"
+        ],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "codex_account",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "inspect_code": null,
+          "edit_branch": null,
+          "run_local_tests": null,
+          "propose_release": null
+        }
+      },
+      "evidence": [
+        {
+          "id": "codex.plan-doc.2026-09-18",
+          "status": "published_rule",
+          "claim": "OpenAI documents Codex access through ChatGPT plans with plan-dependent usage.",
+          "source": {
+            "type": "url",
+            "value": "https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "codex.repository-checks.2026-09-18",
+          "status": "behavior_tested",
+          "claim": "Codex-assisted development uses the repository check, test, and build acceptance path.",
+          "source": {
+            "type": "repository",
+            "value": "package.json"
+          },
+          "checkedOn": "2026-09-18"
+        }
+      ]
+    },
+    {
+      "id": "openai_api",
+      "name": "OpenAI API runtime",
+      "platforms": [
+        "standby"
+      ],
+      "purpose": "Remain an unapproved standby model route until allowance, model, data, and behavior are verified.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "availableCredit": null,
+        "hardLimitConfigured": null,
+        "resetAt": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "approvedModel": null,
+        "accountVerifiedLimits": null,
+        "evidenceStatus": "unresolved"
+      },
+      "executionContract": {
+        "interface": "OpenAI-compatible chat completion route",
+        "currentResult": "historical credit and authentication failures",
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [],
+        "productionAuthorization": false,
+        "evidenceStatus": "unresolved"
+      },
+      "permissions": {
+        "allowedActors": [
+          "founder"
+        ],
+        "providerChangeApprover": "founder",
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "API usage is billed separately from ChatGPT and Codex access.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "failureMode": "route stays paused; no automatic paid use",
+        "nextReviewTrigger": "before_provider_activation",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "founder"
+        ],
+        "allowedDataClasses": [],
+        "supportedOperations": [],
+        "consequentialOperations": [],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "openai_api_project",
+          "remaining": null,
+          "unit": null
+        },
+        "verificationEvidenceStatus": "unresolved",
+        "evidenceStatus": "unresolved",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {}
+      },
+      "evidence": [
+        {
+          "id": "openai.api-pricing.2026-09-18",
+          "status": "published_rule",
+          "claim": "OpenAI publishes separate model API pricing and account controls.",
+          "source": {
+            "type": "url",
+            "value": "https://developers.openai.com/api/docs/pricing"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "openai.historical-failure.2026-09-16",
+          "status": "behavior_tested",
+          "claim": "The repository records historical credit exhaustion and authentication rejection; this is not current usable allowance.",
+          "source": {
+            "type": "repository",
+            "value": "docs/LIVE_STATUS.md"
+          },
+          "checkedOn": "2026-09-16"
+        }
+      ]
+    },
+    {
+      "id": "openrouter_public_test",
+      "name": "OpenRouter public synthetic route",
+      "platforms": [
+        "engineering_recovery"
+      ],
+      "purpose": "Run one bounded public or synthetic model-tool test only after account allowance is verified.",
+      "ownership": {
+        "accountOwner": null,
+        "workspaceOwner": null,
+        "evidenceStatus": "unresolved"
+      },
+      "planBilling": {
+        "actualPlan": null,
+        "freeRequestsRemaining": null,
+        "resetAt": null,
+        "paymentMethodPresent": null,
+        "evidenceStatus": "unresolved"
+      },
+      "capacity": {
+        "approvedModel": "thinkingmachines/inkling-small:free",
+        "accountVerifiedLimits": null,
+        "evidenceStatus": "published_rule"
+      },
+      "executionContract": {
+        "interface": "OpenAI-compatible chat completion route",
+        "maxRequestsPerTest": 2,
+        "evidenceStatus": "behavior_tested"
+      },
+      "dataConditions": {
+        "allowedDataClasses": [
+          "synthetic",
+          "public"
+        ],
+        "privateBusinessDataAllowed": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "permissions": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "productionRouteAllowed": false,
+        "evidenceStatus": "behavior_tested"
+      },
+      "termsLicensing": {
+        "rule": "Free model availability and limits must be rechecked before each bounded trial.",
+        "evidenceStatus": "published_rule"
+      },
+      "recoveryChange": {
+        "failureMode": "stop after bounded failure; never substitute a paid model",
+        "nextReviewTrigger": "before_public_model_test",
+        "evidenceStatus": "behavior_tested"
+      },
+      "admission": {
+        "allowedActors": [
+          "engineer",
+          "founder"
+        ],
+        "allowedDataClasses": [
+          "synthetic",
+          "public"
+        ],
+        "supportedOperations": [
+          "run_public_synthetic_probe"
+        ],
+        "consequentialOperations": [],
+        "acceptedWorkflows": [],
+        "allowance": {
+          "status": "unknown",
+          "poolId": "openrouter_account",
+          "remaining": null,
+          "unit": "request"
+        },
+        "verificationEvidenceStatus": "behavior_tested",
+        "evidenceStatus": "behavior_tested",
+        "externalMeter": "metered_or_unknown",
+        "operationRequirements": {
+          "run_public_synthetic_probe": {
+            "action": [
+              {
+                "pool": "openrouter_account",
+                "units": 1
+              }
+            ],
+            "verification": [
+              {
+                "pool": "openrouter_account",
+                "units": 1
+              }
+            ]
+          }
+        }
+      },
+      "evidence": [
+        {
+          "id": "openrouter.limits.2026-09-18",
+          "status": "published_rule",
+          "claim": "OpenRouter documents account credit and rate-limit behavior for API requests.",
+          "source": {
+            "type": "url",
+            "value": "https://openrouter.ai/docs/api_reference/limits"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "openrouter.local-harness.2026-09-18",
+          "status": "behavior_tested",
+          "claim": "The local two-request harness validates a fictional tool call without customer data; no live provider success is claimed.",
+          "source": {
+            "type": "repository",
+            "value": "test/public-model-probe.test.js"
+          },
+          "checkedOn": "2026-09-18"
+        }
+      ]
+    }
+  ]
+}

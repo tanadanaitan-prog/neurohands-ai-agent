@@ -8,11 +8,12 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",
-    "check": "node --check src/server.js && node --check src/platform/router.js && node --check src/platform/repository.js && node --check src/agent/team.mjs && node --check src/agent/profiles.mjs && node --check src/agent/workflow.mjs && node --check scripts/setup-richmenu.js && node --check scripts/team-workflow-benchmark.mjs && node --check scripts/real-named-workflow-benchmark.mjs && node scripts/setup-richmenu.js --check",
+    "check": "node --check src/server.js && node --check src/platform/router.js && node --check src/platform/repository.js && node --check src/lib/software-passports.js && node --check src/lib/admission-control.js && node --check src/agent/team.mjs && node --check src/agent/profiles.mjs && node --check src/agent/workflow.mjs && node --check scripts/setup-richmenu.js && node --check scripts/check-software-passports.js && node --check scripts/team-workflow-benchmark.mjs && node --check scripts/real-named-workflow-benchmark.mjs && node scripts/check-software-passports.js && node scripts/setup-richmenu.js --check",
     "test": "node --test",
     "richmenu:check": "node scripts/setup-richmenu.js --check",
     "richmenu:setup": "node --env-file-if-exists=.env scripts/setup-richmenu.js",
     "build": "vite build --config web/vite.config.mjs",
+    "passport:check": "node scripts/check-software-passports.js",
     "dev:web": "vite --config web/vite.config.mjs",
     "lab:check": "node scripts/langgraph-lab.mjs check",
     "lab:trace": "node scripts/langgraph-lab.mjs trace",
