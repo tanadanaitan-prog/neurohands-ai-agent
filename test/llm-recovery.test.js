@@ -13,7 +13,7 @@ function loadGateway(t, overrides = {}) {
     FALLBACK_API_KEY: PRIVATE_MARKER, FALLBACK_PROVIDER: "groq",
     FALLBACK_BASE_URL: "https://fallback.invalid", FALLBACK_MODELS: "first,second", FALLBACK_MODEL: "",
     SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture",
-    ENABLE_STUDIO: "false", ...overrides,
+    ENABLE_STUDIO: "false", SOFTWARE_ADMISSION_ENABLED: "false", ...overrides,
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
   for (const [key, value] of Object.entries(values)) {
@@ -54,6 +54,17 @@ const primaryFailures = {
   empty_answer: () => geminiAnswer("   "),
   http_error: () => json({ error: PRIVATE_MARKER }, 429),
 };
+
+test("an incompletely configured production admission seam blocks model dispatch before fetch", async (t) => {
+  const { gateway } = loadGateway(t, { SOFTWARE_ADMISSION_ENABLED: "true" });
+  let fetches = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    fetches += 1;
+    return geminiAnswer("must not be reached");
+  });
+  assert.equal(await gateway.askAI("Policy", "Question"), null);
+  assert.equal(fetches, 0);
+});
 
 for (const [status, code] of [[401, "invalid_api_key"], [429, "credit_balance_exhausted"], [429, "project_spend_limit_exceeded"]]) {
   test(`account-wide ${code} stops model cascade and later requests until restart`, async (t) => {

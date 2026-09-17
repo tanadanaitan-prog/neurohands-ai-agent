@@ -149,6 +149,13 @@ build. The guarded OpenRouter and LangSmith test routes block new external
 requests while their private allowances are unknown; they do not silently
 disable the existing LINE service.
 
+The development branch also stages a durable Supabase reservation migration,
+a matching server-only adapter, and a production model-dispatch seam. They are
+not active in the live service: `SOFTWARE_ADMISSION_ENABLED` remains `false`,
+the migration has not been applied, and no account-specific allowance is
+treated as known. Enabling the seam before its authority, audit, accepted
+workflow and verified allowance inputs exist fails closed before a model call.
+
 ## How this can grow into an AI workforce
 
 The following describes the **intended expansion** beyond the fixed local

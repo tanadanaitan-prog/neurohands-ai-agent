@@ -109,6 +109,19 @@ test("an alert remains distinct from a hard limit and hard-limit frontline enter
   }));
   assert.equal(alert.allowed, true);
   assert.equal(alert.code, "ALLOWED_WITH_ALERT");
+  const durableAlertStore = {
+    durable: true,
+    async reserveBundle() {
+      return { ok: true, reservationId: "durable-alert", alertRequired: true };
+    },
+    async markDispatched() { return { ok: true }; },
+    async settle() { return { ok: true }; },
+  };
+  const durableAlert = await createAdmissionController({
+    enabled: true, capacityStore: durableAlertStore,
+  }).acquire(action({ actionKey: "durable-alert-threshold" }));
+  assert.equal(durableAlert.allowed, true);
+  assert.equal(durableAlert.code, "ALLOWED_WITH_ALERT");
   const stopped = await controller.acquire(action({
     actionKey: "hard-limit",
     workload: "frontline",
@@ -117,6 +130,54 @@ test("an alert remains distinct from a hard limit and hard-limit frontline enter
   assert.equal(stopped.allowed, false);
   assert.equal(stopped.mode, "continuity");
   assert.equal(stopped.code, "CONTINUITY_HARD_LIMIT");
+});
+
+test("durable last-budget races map frontline and operator work to continuity", async () => {
+  for (const workload of ["frontline", "operator"]) {
+    for (const reserveCode of [
+      "ALLOWANCE_EXHAUSTED", "ALLOWANCE_INSUFFICIENT",
+      "ALLOWANCE_UNKNOWN", "ALLOWANCE_SNAPSHOT_EXPIRED", "POOL_NOT_FOUND",
+      "ALLOWANCE_LEASE_CROSSES_RESET", "CAPACITY_UNAVAILABLE",
+      "CAPACITY_STORE_UNAVAILABLE",
+    ]) {
+      const store = {
+        durable: true,
+        async reserveBundle() { return { ok: false, code: reserveCode }; },
+      };
+      const lease = await createAdmissionController({
+        enabled: true,
+        capacityStore: store,
+      }).acquire(action({ actionKey: `${workload}-${reserveCode}`, workload }));
+      assert.equal(lease.allowed, false);
+      assert.equal(lease.mode, "continuity");
+      assert.equal(
+        lease.code,
+        [
+          "ALLOWANCE_UNKNOWN", "ALLOWANCE_SNAPSHOT_EXPIRED", "POOL_NOT_FOUND",
+          "ALLOWANCE_LEASE_CROSSES_RESET", "CAPACITY_UNAVAILABLE",
+          "CAPACITY_STORE_UNAVAILABLE",
+        ].includes(reserveCode)
+          ? "CONTINUITY_DEGRADED" : "CONTINUITY_HARD_LIMIT"
+      );
+    }
+  }
+});
+
+test("a durable store exception is sanitized and degrades continuity without escaping", async () => {
+  const store = {
+    durable: true,
+    async reserveBundle() { throw new Error("private database detail"); },
+  };
+  const frontline = await createAdmissionController({
+    enabled: true, capacityStore: store,
+  }).acquire(action({ actionKey: "store-failure-frontline", workload: "frontline" }));
+  assert.equal(frontline.code, "CONTINUITY_DEGRADED");
+  assert.equal(frontline.mode, "continuity");
+  const experiment = await createAdmissionController({
+    enabled: true, capacityStore: store,
+  }).acquire(action({ actionKey: "store-failure-experiment" }));
+  assert.equal(experiment.code, "CAPACITY_STORE_UNAVAILABLE");
+  assert.equal(experiment.mode, "enforced");
 });
 
 test("action and verification capacity are reserved together", async () => {
@@ -240,6 +301,21 @@ test("not_applicable evidence cannot satisfy behavior-tested admission", async (
   }, { register, capacityStore: createInMemoryCapacityStore(), trustedContext: trusted() });
   assert.equal(lease.allowed, false);
   assert.equal(lease.code, "INCOMPATIBLE");
+});
+
+test("frontline and operator work both require exact workflow acceptance", async () => {
+  const register = loadPassportRegister();
+  for (const workload of ["frontline", "operator"]) {
+    const lease = await admitPassportAction({
+      serviceId: "ollama", actionKey: `accepted-${workload}`, operation: "run_local_synthetic_model",
+    }, {
+      register,
+      capacityStore: createInMemoryCapacityStore(),
+      trustedContext: trusted({ workload, workflow: "unaccepted_workflow" }),
+    });
+    assert.equal(lease.allowed, false, workload);
+    assert.equal(lease.code, "INCOMPATIBLE", workload);
+  }
 });
 
 test("passport-owned consequential classification cannot be bypassed by action fields", async () => {

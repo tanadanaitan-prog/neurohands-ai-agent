@@ -99,18 +99,23 @@ function createInMemoryCapacityStore(initialPools = {}) {
 
 function decision({
   allowed = false, mode = "enforced", code, checks = [], reservationId = null,
-  store = null, policyContext = null,
+  store = null, policyContext = null, actorId = null, reservedRequirements = null,
 }) {
   return Object.freeze({
     allowed, mode, code, checks: Object.freeze(checks), reservationId,
     policyContext: policyContext ? Object.freeze({ ...policyContext }) : null,
     async markDispatched() {
       if (!reservationId || !store) return { ok: allowed };
-      return store.markDispatched({ reservationId });
+      return store.markDispatched({ reservationId, actorId });
     },
     async settle({ outcome = "completed", actualRequirements = null } = {}) {
       if (!reservationId || !store) return { ok: allowed };
-      return store.settle({ reservationId, outcome, actualRequirements });
+      return store.settle({
+        reservationId,
+        outcome,
+        actorId,
+        actualRequirements: actualRequirements || reservedRequirements,
+      });
     },
   });
 }
@@ -188,17 +193,47 @@ function createAdmissionController({
       const requirements = safeRequirements([...actionRequirements, ...verificationRequirements]);
       const actionKey = typeof input.actionKey === "string" && input.actionKey.trim() ? input.actionKey.trim() : idFactory();
       const requestDigest = digest({
-        actionKey, actionType: input.actionType || null, workload, subject: input.subject || null,
+        actionKey, actionType: input.actionType || null, actor: input.actor || null,
+        actorId: input.actorId || null,
+        workload, subject: input.subject || null,
         facts, requirements, irreversible: input.irreversible === true, policyContext,
       });
-      const reserved = await capacityStore.reserveBundle({
-        reservationKey: actionKey,
-        requirements,
-        expiresAt: new Date(now().getTime() + 5 * 60 * 1000).toISOString(),
-        requestDigest,
-      });
+      let reserved;
+      try {
+        reserved = await capacityStore.reserveBundle({
+          reservationKey: actionKey,
+          requirements,
+          actionRequirements,
+          verificationRequirements,
+          actor: input.actor || null,
+          actorId: input.actorId || input.actor || null,
+          workload,
+          operation: input.actionType || null,
+          expiresAt: new Date(now().getTime() + 5 * 60 * 1000).toISOString(),
+          requestDigest,
+        });
+      } catch {
+        reserved = { ok: false, code: "CAPACITY_STORE_UNAVAILABLE" };
+      }
       if (!reserved.ok) {
-        return finish({ code: reserved.code || "CAPACITY_UNAVAILABLE", checks });
+        const reserveCode = reserved.code || "CAPACITY_UNAVAILABLE";
+        const continuity = workload === "frontline" || workload === "operator";
+        if (continuity && ["ALLOWANCE_EXHAUSTED", "ALLOWANCE_INSUFFICIENT"].includes(reserveCode)) {
+          return finish({ code: "CONTINUITY_HARD_LIMIT", mode: "continuity", checks }, {
+            capacityCode: reserveCode,
+          });
+        }
+        if (continuity && [
+          "ALLOWANCE_UNKNOWN", "ALLOWANCE_SNAPSHOT_EXPIRED", "POOL_NOT_FOUND",
+          "ALLOWANCE_LEASE_CROSSES_RESET", "CAPACITY_UNAVAILABLE",
+          "CAPACITY_STORE_UNAVAILABLE",
+        ].includes(reserveCode)) {
+          return finish({ code: "CONTINUITY_DEGRADED", mode: "continuity", checks }, {
+            capacityCode: reserveCode,
+            policy: frontlineUnknownPolicy,
+          });
+        }
+        return finish({ code: reserveCode, checks });
       }
       if (reserved.idempotent) {
         return finish({ code: "IDEMPOTENT_REPLAY", checks, reservationId: reserved.reservationId },
@@ -206,11 +241,14 @@ function createAdmissionController({
       }
       const result = decision({
         allowed: true,
-        code: facts.alertThresholdReached === true ? "ALLOWED_WITH_ALERT" : "ALLOWED",
+        code: facts.alertThresholdReached === true || reserved.alertRequired === true
+          ? "ALLOWED_WITH_ALERT" : "ALLOWED",
         checks,
         reservationId: reserved.reservationId,
         store: capacityStore,
         policyContext,
+        actorId: input.actorId || input.actor || null,
+        reservedRequirements: requirements,
       });
       await audit({ actionKey, outcome: result.code, reservationId: result.reservationId, policyContext, checks });
       return result;
@@ -252,6 +290,8 @@ async function admitPassportAction(action, options = {}) {
   return controller.acquire({
     actionKey: action.actionKey,
     actionType: action.operation,
+    actor: trustedContext.actor,
+    actorId: trustedContext.actorId || trustedContext.actor,
     workload: trustedContext.workload,
     subject: action.subject || null,
     policyContext,
@@ -264,7 +304,8 @@ async function admitPassportAction(action, options = {}) {
       goalRelevant: trustedContext.goalRelevant === true,
       permissionGranted: actorAllowed && operationAllowed && (trustedContext.founderApproved === true || !irreversible),
       dataPermitted: dataAllowed,
-      compatible: compatibilityReady && (workflowAccepted || trustedContext.workload !== "frontline"),
+      compatible: compatibilityReady &&
+        (workflowAccepted || !["frontline", "operator"].includes(trustedContext.workload)),
       allowanceStatus: admission.allowance.status,
       failureSafe,
       verificationPossible,

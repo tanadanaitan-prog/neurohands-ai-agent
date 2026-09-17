@@ -22,6 +22,23 @@ the live 10 MiB bucket or production portal. Keep the production feature
 disabled while quota controls, abandoned-upload cleanup, bucket configuration
 and controlled live acceptance remain incomplete.
 
+Migration `20260917174745_durable_allowance_admission.sql` is also present
+locally and has not been applied. It stages service-role-only allowance pools,
+atomic multi-pool action-and-verification reservations, lifecycle transitions,
+expiry reconciliation and an append-only audit. Reservations retain the exact
+allowance epoch; old-period refunds cannot alter a refreshed pool, and expired
+verified snapshots deny new reservations. Leases cannot cross a known reset,
+dispatch rechecks current epoch and expiry, and an epoch cannot refresh while
+dispatched work is unresolved. Snapshot creation/refresh is intentionally left
+to a private database-owner procedure after personal account verification; the
+runtime service role cannot write snapshots. It can inspect ledger evidence but
+has no direct insert/update/delete permission; narrowly granted,
+fixed-search-path transition RPCs own mutations. Isolated PGlite tests verify
+these boundaries and browser-role denial. This is not a live
+multi-connection Supabase load test. Do not include it in a blanket migration
+push; first review and test it on an isolated Supabase branch or disposable
+project, then bind it to an exact accepted passport revision.
+
 ## Jarvis operator runs — 9 September 2026
 
 The reviewed `jarvis_operator_runs` migration is applied to project `darxiaearohhnxiwhcbs`. Supabase assigned version **`20260909155146`**. The file was initially generated locally with the CLI as `20260909153735_jarvis_operator_runs.sql`, then renamed to **`20260909155146_jarvis_operator_runs.sql`** to match the recorded remote version. Its SQL content was unchanged by the rename. Apply this migration once; do not use a blanket push that includes the unapplied workspace migration.

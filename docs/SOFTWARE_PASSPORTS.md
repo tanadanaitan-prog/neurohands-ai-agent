@@ -73,9 +73,27 @@ flowchart LR
 
 The action and the resources needed to verify it are reserved together. The
 test-only capacity store is atomic within one Node.js process and proves the
-decision rules. It is **not** a durable production budget. Railway replicas and
-separate processes require a single Supabase transaction or RPC before this
-control can enforce shared live allowances.
+decision rules. A staged Supabase migration now implements the durable version
+as one transaction: it locks every named pool in stable order, reserves the
+action and verification bundles together, and writes the audit record before
+commit. Isolated PostgreSQL tests cover last-budget contention, rollback when
+audit fails, unknown versus verified-zero allowance, dispatch, cancellation,
+uncertain transport, settlement, expiry reconciliation, and browser denial.
+An action or verification side may be empty only when the exact passport cost
+model says it consumes no separate unit; the combined metered bundle may never
+be empty. Verified snapshots stop authorizing new work after their recorded
+reset/expiry time. Every reservation captures the pool's allowance epoch, so a
+late cancellation or reconciliation cannot refund an old period into a newly
+verified period. A lease cannot cross a known reset, dispatch rechecks both the
+epoch and snapshot expiry, and the database refuses an epoch refresh while any
+dispatched use from that epoch remains unresolved. The service role has
+read-only ledger access and can mutate state only through the fixed-search-path
+transition RPCs. Creating or refreshing verified allowance snapshots remains a
+private founder/database-owner procedure; no runtime RPC can invent them.
+
+The migration is **not applied to the live Supabase project**. Its test uses
+PGlite rather than concurrent live Supabase connections, so it is development
+evidence rather than a production capacity guarantee.
 
 Actor, data class, workload, workflow, and goal relevance must come from an
 authenticated server policy context in production. The two bounded synthetic
@@ -106,13 +124,22 @@ the request or completed the action.
 - Credential-like values and signed URLs are rejected from the register.
 - Trace redaction removes credential fields, signed URLs, activation codes,
   and LINE identifiers in deterministic tests.
+- A production admission factory now uses a closed action catalog, a
+  server-owned authority resolver, tenant/resource scope, a durable-store
+  readiness check, and audited early denials. Its Supabase adapter matches the
+  staged multi-pool RPC contract.
+- `SOFTWARE_ADMISSION_ENABLED=false` is the only supported deployed setting for
+  this milestone. In this mode the model seam preserves existing behavior and
+  does not load passports, reserve capacity, resolve authority, or write an
+  admission audit. If the flag is enabled before the missing dependencies are
+  supplied, model dispatch stops before an external request.
 
-The production LINE/Gemini path has not been switched to the new controller.
-That is deliberate: the passport reports several unknown account allowances,
-and the policy forbids silently shutting down an existing customer path merely
-to make a budget claim. Production remains on its existing behavior while the
-durable reservation layer and explicit continuity behavior are built and
-tested behind a disabled flag.
+The production server contains the disabled model-dispatch seam, but live
+LINE/Gemini admission is not enabled. Tool calls, database writes, LINE replies
+and pushes are not yet connected to the new controller. This is deliberate:
+the passport reports several unknown account allowances, no production
+workflow is founder-accepted, and the policy forbids silently shutting down an
+existing customer path merely to make a budget claim.
 
 ## Current result
 
@@ -153,14 +180,19 @@ previous invoice.
 
 ## Next implementation milestone
 
-1. Add private, server-only allowance snapshots and atomic reservations in a
-   new isolated Supabase migration.
-2. Prove concurrent last-budget requests, expiry, reconciliation, and browser
-   denial in isolated tests.
-3. Add a disabled production admission seam before provider and consequential
-   tool calls.
-4. Enable one read-only founder synthetic workflow only after the exact account
-   allowance is verified and the founder accepts the exact revision.
+1. Independently review the staged migration and adapter, then test the RPCs on
+   an isolated Supabase branch or disposable project; do not apply them to the
+   live project first.
+2. Add the server-owned authority resolver and durable early-denial audit
+   writer, then thread stable action keys and lifecycle settlement through the
+   model seam.
+3. Add explicit admission points for scoped tools, database writes, LINE reply
+   and push operations, including a tested static continuity reply and founder
+   alert.
+4. Privately verify the relevant account allowance and keep unknown values
+   `null`. Bind founder acceptance to the exact passport revision and commit.
+5. Enable one read-only founder workflow on the inactive test path, verify it,
+   and only then consider a controlled Frontline release.
 
 This keeps the order: reproduce, patch, isolate, review, approve, release, and
 verify. It does not deploy a repair or alter production authority automatically.

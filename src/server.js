@@ -14,6 +14,7 @@ const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt,
 const { readProviderFailure, createProviderFailures } = require("./lib/provider-failures");
 const { JARVIS_OBJECTIVE, loadJarvisContext } = require("./lib/jarvis-context");
 const { createJarvisTools } = require("./lib/jarvis-tools");
+const { createProductionAdmission } = require("./lib/production-admission");
 
 const {
   LINE_CHANNEL_SECRET,
@@ -35,8 +36,14 @@ const {
   FALLBACK_BASE_URL = "",
   RESUMABLE_UPLOAD_ENABLED = "false",
   UPLOAD_MAX_BYTES = "50000000",
+  SOFTWARE_ADMISSION_ENABLED = "false",
   PORT = 3000,
 } = process.env;
+
+// This seam is deliberately disabled until its server-owned authority resolver,
+// durable audit writer, accepted workflows, and verified allowance snapshots
+// are all configured. If the flag is enabled early, model dispatch fails closed.
+const productionAdmission = createProductionAdmission({ flag: SOFTWARE_ADMISSION_ENABLED });
 
 const app = express();
 app.use("/webhook", express.raw({ type: "*/*", limit: "1mb" }));
@@ -122,6 +129,14 @@ function modelHealthText() {
 async function requestModelJson(provider, url, headers, body, model, usable = () => true) {
   const route = provider === "Gemini" ? "gemini" : "fallback";
   const metricProvider = modelProviderLabel(provider);
+  const actionId = provider === "Gemini"
+    ? "model.gemini.frontline"
+    : `model.${metricProvider}.frontline`;
+  const admission = await productionAdmission.acquire(actionId);
+  if (!admission.allowed) {
+    console.error("Model request blocked by production admission", admission.code);
+    return null;
+  }
   const blocked = providerFailures.get(route);
   if (blocked) { recordProviderBlocked(metricProvider, blocked); return null; }
   const started = performance.now();
@@ -1708,6 +1723,9 @@ app.get("/", (_, res) => res.send("Neurohands v3.10 agent gateway is running"));
 app.get("/version", (_, res) => res.json({ version: "3.10.0", commit: process.env.RAILWAY_GIT_COMMIT_SHA || "unknown" }));
 app.get("/ready", asyncRoute(async (_, res) => {
   res.set("Cache-Control", "no-store");
+  if (!productionAdmission.ready) {
+    return res.status(503).json({ ready: false, admission: productionAdmission.statusCode });
+  }
   if (![LINE_CHANNEL_SECRET,LINE_CHANNEL_ACCESS_TOKEN,SUPABASE_URL,SUPABASE_SERVICE_KEY,FOUNDER_LINE_ID,NEUROHANDS_API_KEY].every(Boolean) || !(geminiConfigured() || fallbackBase())) return res.status(503).json({ready:false});
   encryptionKey(WEBHOOK_ENCRYPTION_KEY);
   const [accounts, agents] = await Promise.all([

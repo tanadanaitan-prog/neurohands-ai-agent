@@ -24,6 +24,7 @@ function loadGateway(overrides = {}) {
     FALLBACK_MODELS: "",
     RESUMABLE_UPLOAD_ENABLED: "false",
     UPLOAD_MAX_BYTES: "50000000",
+    SOFTWARE_ADMISSION_ENABLED: "false",
     ...overrides,
   });
   delete require.cache[require.resolve("../src/server")];
