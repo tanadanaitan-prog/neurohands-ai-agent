@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-18T13:43:16.9954146+07:00",
+  "purpose": "Verify one permitted Aria tool loop through the same local LangGraph API used by Studio.",
+  "environment": "local_synthetic_only",
+  "dataClass": "synthetic",
+  "reservation": {
+    "maximumModelCalls": 4,
+    "maximumToolCalls": 8,
+    "maximumOutputTokensPerCall": 256,
+    "contextTokens": 4096,
+    "timeoutMs": 120000,
+    "externalModelApiBudget": 0
+  },
+  "model": {
+    "name": "qwen3.5:4b",
+    "thinkingOutputDisabled": true
+  },
+  "request": {
+    "agent": "aria",
+    "clientId": "DEMO-CLIENT",
+    "summary": "Read fictional order DEMO-ORDER-001 and report its verified status and expected ship date."
+  },
+  "result": {
+    "status": "completed",
+    "answer": "Order DEMO-ORDER-001 status: packing. Expected ship date: 2026-09-18.",
+    "verifiedOutcome": "passed",
+    "verification": "The permitted get_order_status tool succeeded and the final answer exactly matched its fictional fixture status and date.",
+    "metrics": {
+      "modelCalls": 2,
+      "toolCalls": 1,
+      "inputTokens": 2317,
+      "outputTokens": 81,
+      "totalTokens": 2398,
+      "durationMs": 40601,
+      "modelApiCost": 0
+    },
+    "toolEvidence": {
+      "name": "get_order_status",
+      "ok": true,
+      "orderNumber": "DEMO-ORDER-001",
+      "status": "packing",
+      "expectedShipDate": "2026-09-18",
+      "source": "local fictional order fixture"
+    },
+    "langsmithUpload": false
+  },
+  "limits": [
+    "This is one accepted synthetic tool-loop example, not a reliability percentage or production proof.",
+    "No LINE, Railway, Supabase customer data, Gemini fallback, Llama checker or embedding retrieval was used."
+  ]
+}

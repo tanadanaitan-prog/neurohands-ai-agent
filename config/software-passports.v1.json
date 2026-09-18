@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "registerVersion": "2026-09-18.2",
+  "registerVersion": "2026-09-18.3",
   "reviewedOn": "2026-09-18",
   "policy": {
     "objective": "Reliable company answers, correct role routing, and verified LINE workflows at the lowest justified cost.",
@@ -853,6 +853,16 @@
           "source": {
             "type": "repository",
             "value": "artifacts/benchmarks/2026-09-18-qwen35-smoke.json"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "ollama.qwen35-aria-tool-smoke.2026-09-18",
+          "status": "behavior_tested",
+          "claim": "The configured qwen3.5:4b model completed one bounded local Aria tool loop using only the permitted fictional order fixture.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-18-qwen35-aria-tool-smoke.json"
           },
           "checkedOn": "2026-09-18"
         }

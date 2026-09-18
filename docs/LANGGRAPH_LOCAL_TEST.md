@@ -151,6 +151,12 @@ in 10,947 ms. Ollama reported 144 input tokens, 21 output tokens and 165 total
 tokens. The exact model digest and reservation are stored in
 `artifacts/benchmarks/2026-09-18-qwen35-smoke.json`.
 
+One Aria check through the running Studio API also completed. Aria called only
+the permitted `get_order_status` tool for fictional order `DEMO-ORDER-001` and
+returned the fixture's `packing` status and `2026-09-18` ship date. The run used
+two model calls, one tool call, 2,398 reported tokens and 40,601 ms. Its bounded
+record is `artifacts/benchmarks/2026-09-18-qwen35-aria-tool-smoke.json`.
+
 `llama3.2:3b` and `qwen3-embedding:0.6b` are installed, but installation alone
 does not establish checker quality, retrieval quality, workflow integration or
 production readiness. They remain disconnected candidates until separately
