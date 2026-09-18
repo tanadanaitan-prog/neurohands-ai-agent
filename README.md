@@ -42,8 +42,10 @@ No production connection or deployment is claimed.
 
 The staged software-admission work is also not a production release. Its model
 transport lifecycle is connected locally while `SOFTWARE_ADMISSION_ENABLED`
-remains `false`; the machine-readable release pack currently records **2 of 12
-controls passed locally and 10 partial**. Run `npm run release:audit` to inspect
+remains `false`; the machine-readable release pack currently records **4 of 12
+controls passed and 8 partial**. Six controls have passing deterministic local
+machine probes, but C03 and C04 remain partial because their production and
+founder-acceptance requirements are incomplete. Run `npm run release:audit` to inspect
 that evidence. `npm run release:gate` is expected to fail until all controls
 have verified evidence and founder acceptance.
 

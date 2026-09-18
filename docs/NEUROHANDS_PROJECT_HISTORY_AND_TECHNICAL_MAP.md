@@ -31,7 +31,7 @@ Repository files, commit history, machine-readable evidence, and dated runtime o
 | Production runtime evidence | Latest repository evidence is dated 16 September 2026. Railway could not be freshly queried from the current restricted environment. |
 | Local runtime now | Direct checks on 18 September found ports `127.0.0.1:2024` and `127.0.0.1:11434` unavailable. LangGraph Studio and Ollama are currently stopped, although earlier bounded tests passed. |
 | Current automated source checks | `npm run check`, **511/511** tests, and `npm run build` passed on 18 September 2026. |
-| Release gate | **Failed by design:** 4 controls pass and 8 remain partial. No release acceptance or founder approval is recorded. |
+| Release gate | **Failed by design:** 4 controls pass and 8 remain partial. Six controls have passing deterministic local machine probes; C03 and C04 remain partial because live requirements are incomplete. No release acceptance or founder approval is recorded. |
 | Account allowances | Nine externally metered services have unresolved private allowance data. No unknown balance is treated as available capacity. |
 | Sineid Glass Decor | On hold by founder instruction. Its current local profile/documents are untracked and must not be represented as an implemented pilot. |
 
@@ -417,7 +417,8 @@ These migrations must not be pushed as an undifferentiated batch. Each needs iso
 - External services with unresolved allowance: 9.
 - Release register version: `2026-09-18.10`.
 - Release controls: 4 pass, 8 partial, 0 missing.
-- Verified controls: C01 unknown allowance, C02 atomic shared capacity, C11 provider/SDK compatibility, C12 isolated backup and restore.
+- Passing deterministic local machine probes: C01 unknown allowance, C02 atomic shared capacity, C03 threshold-alert continuity, C04 hard-limit continuity, C11 provider/SDK compatibility, and C12 isolated backup and restore.
+- C03 and C04 remain partial despite their local probes because production wiring, private settings, and founder acceptance are incomplete.
 - Partial controls: C03 through C10.
 - `npm run release:gate`: expected to fail until every control has verified evidence and exact founder acceptance.
 

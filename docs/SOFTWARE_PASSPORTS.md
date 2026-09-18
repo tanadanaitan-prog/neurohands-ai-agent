@@ -176,7 +176,10 @@ Software-Aware Operation Policy. Inspect it without changing the release gate:
 npm run release:audit
 ```
 
-The current evidence result is **2 pass and 10 partial**. `npm run release:gate`
+The current register result is **4 pass and 8 partial**. Six controls have
+passing deterministic local machine probes, but C03 and C04 remain partial
+because their production wiring and founder-acceptance requirements are not
+complete. `npm run release:gate`
 therefore exits with failure by design. It must remain failed until every
 control is tested and explicitly accepted; test counts alone do not authorize
 a production release.

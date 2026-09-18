@@ -55,6 +55,50 @@ const MACHINE_PROBES = Object.freeze({
       ]),
     }),
   ]),
+  C03: Object.freeze([
+    Object.freeze({
+      id: "C03-TEST-ALLOWANCE-CONTINUITY",
+      kind: "node-test",
+      files: Object.freeze([
+        "test/allowance-continuity.test.js",
+        "test/allowance-continuity-postgres.test.js",
+      ]),
+      minimumPassingTests: 24,
+      expectedTestNames: Object.freeze([
+        "C03: successful accepted work sends one idempotent threshold alert with required evidence",
+        "C03: failed founder delivery is recorded once without a delivery claim or retry loop",
+        "C03: an alert failure does not undo the already settled customer action",
+        "C03: a stalled founder notifier never delays the settled customer result",
+        "C03: a late notifier completion remains uncertain and is never retried",
+        "C03: concurrent threshold completions share one durable alert claim",
+        "C03: an unconfirmed receipt and a lost completion record never become false delivery claims",
+        "C03: threshold alert waits for verified settlement",
+        "concurrent claims create one durable alert and later claims are replays",
+        "uncertain, failed and delivered outcomes are explicit terminal states",
+      ]),
+    }),
+  ]),
+  C04: Object.freeze([
+    Object.freeze({
+      id: "C04-TEST-ALLOWANCE-CONTINUITY",
+      kind: "node-test",
+      files: Object.freeze([
+        "test/allowance-continuity.test.js",
+        "test/allowance-continuity-postgres.test.js",
+      ]),
+      minimumPassingTests: 24,
+      expectedTestNames: Object.freeze([
+        "C04: optional exhausted work stops before transport without fallback or provider change",
+        "C04: exhausted Frontline records a static response, alerts once and never dispatches",
+        "C04: storage failure still denies transport and cannot invent an alert delivery",
+        "C04: a stalled continuity store returns the approved static response within its deadline",
+        "alert wording rejects unverified hard-limit facts",
+        "hard-limit continuity evidence is durable, idempotent and conflict detecting",
+        "browser roles cannot read or invoke continuity storage",
+        "service role cannot forge a delivered receipt through direct table writes",
+      ]),
+    }),
+  ]),
   C11: Object.freeze([
     Object.freeze({
       id: "C11-TEST-PROVIDER-COMPATIBILITY",
