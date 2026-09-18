@@ -30,6 +30,18 @@ const {
   geminiParts,
   usableFallbackMessage,
 } = require("./lib/provider-contracts");
+const {
+  C06_DATABASE_DEGRADED_ID,
+  C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID,
+  getCustomerSafeResponse,
+} = require("./lib/customer-safe-responses");
+const {
+  issueMandatoryAgentRunAuditReceipt,
+  scheduleOptionalTraceAfterAudit,
+} = require("./lib/optional-trace-runtime");
+
+const C06_DATABASE_DEGRADED_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
+const C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID).message;
 
 const {
   LINE_CHANNEL_SECRET,
@@ -819,6 +831,7 @@ async function completeAgentRun(runId, status, output, iterations, error = null,
   if (!runId) return;
   const saved = await db(`agent_runs?id=eq.${runId}`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status, output, iterations, error, completed_at: new Date().toISOString(), llm_metrics: metrics } });
   if (!saved?.[0]?.id) throw new Error("Run completion could not be saved");
+  return issueMandatoryAgentRunAuditReceipt(saved[0].id, status);
 }
 
 async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId, {
@@ -925,11 +938,12 @@ async function runOpenAIToolLoop(systemContext, userMessage, toolSchemas, ctx, r
   return { text: null, exhausted: true, iterations: iteration };
 }
 
-async function runAgent(ctx, userText, agent) {
+async function runAgent(ctx, userText, agent, runtimeOptions = {}) {
+  const optionalTraceRuntime = runtimeOptions?.optionalTraceRuntime || null;
   const guard = inputGuardrail(userText);
   if (!guard.ok) return guard.reply;
   let runId, metrics, toolExecutions = 0;
-  const partialWorkReply = "I could not complete that request. Some work may already be saved. Please ask the team to check what was completed before repeating the request.";
+  const partialWorkReply = C06_DATABASE_DEGRADED_RESPONSE;
   try {
     const binding = (await getBindings(ctx.lineUserId)).find((item) =>
       String(item.client_account_id) === String(ctx.clientAccountId) && item.department === ctx.department);
@@ -959,12 +973,18 @@ async function runAgent(ctx, userText, agent) {
         if (fb.text) result = fb;
       }
       if (!result.text || result.exhausted) throw new Error("No complete model answer was returned");
-      const finalText = ctx.toolFailed ? (toolExecutions > 0 ? partialWorkReply : "I could not verify the requested information because a tool did not succeed. Please try again or contact the team.") : outputGuardrail(result.text);
+      const databaseFailure = databaseFailureCode({ code: ctx.failureCode });
+      const finalText = ctx.toolFailed
+        ? (databaseFailure
+          ? (toolExecutions > 0 ? C06_DATABASE_DEGRADED_RESPONSE : C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE)
+          : (toolExecutions > 0 ? partialWorkReply : "I could not verify the requested information because a tool did not succeed. Please try again or contact the team."))
+        : outputGuardrail(result.text);
       ctx.runStatus = ctx.toolFailed ? "error" : "completed";
       const runFailure = ctx.toolFailed
         ? (databaseFailureCode({ code: ctx.failureCode }) || "tool_execution_failed")
         : null;
-      await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, runFailure, finalizeRunMetrics(metrics));
+      const auditReceipt = await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, runFailure, finalizeRunMetrics(metrics));
+      scheduleOptionalTraceAfterAudit({ runtime: optionalTraceRuntime, auditReceipt });
       return finalText;
     });
   } catch (err) {
@@ -973,7 +993,9 @@ async function runAgent(ctx, userText, agent) {
     console.error("Agent run failed");
     try { await completeAgentRun(runId, "error", null, 0, "Execution or evidence persistence failed", finalizeRunMetrics(metrics)); }
     catch { console.error("Could not persist agent failure"); }
-    return toolExecutions > 0 ? partialWorkReply : "Sorry, I could not complete that request. Please try again or contact the team.";
+    return databaseFailureCode({ code: ctx.failureCode })
+      ? (toolExecutions > 0 ? C06_DATABASE_DEGRADED_RESPONSE : C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE)
+      : (toolExecutions > 0 ? partialWorkReply : C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE);
   }
 }
 

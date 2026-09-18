@@ -9,7 +9,12 @@ import optionalTraceTools from "../src/lib/optional-trace-export.js";
 import passportTools from "../src/lib/software-passports.js";
 
 const { admitPassportAction, createInMemoryCapacityStore, redactTracePayload } = admissionControl;
-const { exportOptionalTrace, issueFixedSyntheticTraceAuthority } = optionalTraceTools;
+const {
+  SYNTHETIC_PROJECT_NAME,
+  createFixedSyntheticTracePayload,
+  exportOptionalTrace,
+  issueFixedSyntheticTraceAuthority,
+} = optionalTraceTools;
 const { loadPassportRegister } = passportTools;
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -146,7 +151,7 @@ async function runTraceExport(useModel = false, useAgent = false, { beforeTransp
     : await import("../src/agent/graph.mjs");
   const settings = prepared.settings;
   const graph = useAgent ? (await import("../src/agent/team.mjs")).ariaGraph : prepared.graph;
-  const projectName = process.env.LANGSMITH_PROJECT || "neurohands-local-test";
+  const projectName = SYNTHETIC_PROJECT_NAME;
   const client = new Client({
     timeout_ms: 5_000,
     callerOptions: { maxRetries: 0, maxConcurrency: 1 },
@@ -172,24 +177,24 @@ async function runTraceExport(useModel = false, useAgent = false, { beforeTransp
   }
   if (!useModel) assert.equal(result.messages.at(-1).content, expected);
   const reply = result.messages.at(-1);
-  const runName = useAgent ? "neurohands-local-aria-tool-check" : useModel ? "neurohands-local-model-check" : "neurohands-synthetic-connection-check";
-  const tracePayload = {
-    id: runId,
-    trace_id: runId,
-    name: runName,
-    run_type: "chain",
-    project_name: projectName,
-    start_time: startedAt,
-    end_time: Date.now(),
-    inputs: graphInput,
-    outputs: {
-      reply: reply?.content,
-      usage: reply?.usage_metadata || null,
-      toolAudit: useAgent ? result.toolAudit : undefined,
-    },
-    tags: ["synthetic", useModel ? "local-llm" : "no-llm", "local-lab"],
-    extra: { metadata: { purpose: "connection-check", data_class: "synthetic", contains_customer_data: false, contains_private_document: false } },
-  };
+  const usage = useAgent
+    ? { input_tokens: result.metrics.inputTokens, output_tokens: result.metrics.outputTokens }
+    : reply?.usage_metadata || {};
+  const safeCount = (value) => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+  const inputTokens = safeCount(usage.input_tokens);
+  const outputTokens = safeCount(usage.output_tokens);
+  const tracePayload = createFixedSyntheticTracePayload({
+    scenario: useAgent ? "aria-tool-check" : useModel ? "local-model-check" : "connection-check",
+    runId,
+    startedAt,
+    endedAt: Date.now(),
+    durationMs: safeCount(Math.round(durationMs)),
+    modelCalls: useAgent ? safeCount(result.metrics.modelCalls) : useModel ? 1 : 0,
+    inputTokens,
+    outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    toolVerified: useAgent,
+  });
   const authority = issueFixedSyntheticTraceAuthority(tracePayload);
   if (!authority) {
     console.error("The fixed synthetic trace did not receive trusted export authority. Optional export stopped before transport.");

@@ -3,6 +3,9 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  SYNTHETIC_PROJECT_NAME,
+  SYNTHETIC_TRACE_SCHEMA,
+  createFixedSyntheticTracePayload,
   exportOptionalTrace,
   finalizeAuditedWorkflow,
   issueFixedSyntheticTraceAuthority,
@@ -32,7 +35,22 @@ function assertAbsent(haystacks, needles) {
   for (const needle of needles) assert.equal(combined.includes(needle), false, `Sensitive fixture leaked: ${needle}`);
 }
 
-function trustedSynthetic(payload) {
+let syntheticSequence = 0;
+
+function trustedSynthetic({ scenario = "connection-check", toolVerified = false, modelCalls = 0 } = {}) {
+  syntheticSequence += 1;
+  const payload = createFixedSyntheticTracePayload({
+    scenario,
+    runId: `11111111-1111-4111-8111-${syntheticSequence.toString(16).padStart(12, "0")}`,
+    startedAt: 1,
+    endedAt: 2,
+    durationMs: 1,
+    modelCalls,
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    toolVerified,
+  });
   const authority = issueFixedSyntheticTraceAuthority(payload);
   assert.ok(authority, "Fixed synthetic fixture must receive trusted authority");
   return { payload, authority };
@@ -80,10 +98,9 @@ test("disabled, rejected, and timed-out optional exports preserve the customer r
     let auditCalls = 0;
     let transportCalls = 0;
     const originalTransport = scenario.trace.transport;
-    const tracePayload = { inputs: { question: "fictional service question" }, outputs: customerResult };
     const trace = {
       ...scenario.trace,
-      ...trustedSynthetic(tracePayload),
+      ...trustedSynthetic(),
       ...(originalTransport ? {
         transport: async (...args) => {
           transportCalls += 1;
@@ -133,7 +150,7 @@ test("mandatory audit failure blocks a consequential action and skips optional t
   assert.equal(transportCalls, 0);
 });
 
-test("the actual outbound transport receives only the bounded redacted trace", async () => {
+test("caller-provided free-form trace data cannot receive authority or reach transport", async () => {
   const fixtures = sensitiveFixtures();
   const transport = [];
   const notifications = [];
@@ -152,28 +169,21 @@ test("the actual outbound transport receives only the bounded redacted trace", a
     outputs: { reply: "synthetic answer" },
     metadata: { purpose: "fixed test", contains_private_document: false },
   };
+  assert.equal(issueFixedSyntheticTraceAuthority(payload), null);
   const result = await exportOptionalTrace({
     enabled: true,
     timeoutMs: 50,
-    ...trustedSynthetic(payload),
+    payload,
+    authority: null,
     transport: async (outbound) => { transport.push(outbound); return acceptedReceipt(); },
     notify: async (event) => { notifications.push(event); },
   });
 
-  assert.deepEqual(result, { status: "exported", code: "TRACE_EXPORTED", attempts: 1, settlement: "completed" });
-  assert.equal(transport.length, 1);
-  assert.deepEqual(transport[0].headers, { "content-type": "application/json" });
-  assert.equal(transport[0].body.inputs.authorization, "[REDACTED]");
-  assert.equal(transport[0].body.inputs.api_key, "[REDACTED]");
-  assert.equal(transport[0].body.inputs.activation_code, "[REDACTED]");
-  assert.equal(transport[0].body.inputs.line_user_id, "[REDACTED]");
-  assert.equal(transport[0].body.inputs.signed_url, "[REDACTED]");
-  const storedTraceFixture = JSON.stringify(transport[0]);
+  assert.deepEqual(result, { status: "denied", code: "TRACE_SCHEMA_REQUIRED", attempts: 0, settlement: "cancelled_before_dispatch" });
+  assert.equal(transport.length, 0);
+  const storedTraceFixture = JSON.stringify(transport);
   const logFixture = JSON.stringify(notifications);
-  assertAbsent(
-    [transport, storedTraceFixture, logFixture, result],
-    Object.values(fixtures).filter((value) => value !== fixtures.privateDocument)
-  );
+  assertAbsent([transport, storedTraceFixture, logFixture, result], Object.values(fixtures));
 });
 
 test("the installed LangSmith client sends one redacted HTTP request through a captured offline transport", async () => {
@@ -192,30 +202,18 @@ test("the installed LangSmith client sends one redacted HTTP request through a c
       requests.push({
         url: String(url),
         headers: Object.fromEntries(new Headers(init?.headers).entries()),
-        body: String(init?.body || ""),
+        body: init?.body instanceof Uint8Array
+          ? Buffer.from(init.body).toString("utf8")
+          : String(init?.body || ""),
       });
       return new Response("", { status: 202 });
     },
   });
-  const payload = {
-      id: "11111111-1111-4111-8111-111111111111",
-      trace_id: "11111111-1111-4111-8111-111111111111",
-      name: "captured-offline-test",
-      run_type: "chain",
-      project_name: "captured-offline-test",
-      start_time: 1,
-      end_time: 2,
-      inputs: {
-        authorization: fixtures.bearer,
-        note: [fixtures.langsmith, fixtures.lineUser, fixtures.gemini, fixtures.groq, fixtures.github, fixtures.jwt].join(" "),
-      },
-      outputs: { activation_code: fixtures.activation, signed_url: fixtures.signedUrl, sdk_error: fixtures.awsSignedUrl },
-      extra: { metadata: { api_key: fixtures.apiKey, data_class: "synthetic" } },
-  };
+  const fixed = trustedSynthetic();
   const result = await exportOptionalTrace({
     enabled: true,
     timeoutMs: 1_000,
-    ...trustedSynthetic(payload),
+    ...fixed,
     transport: async ({ body }) => {
       await client.createRun(body);
       return acceptedReceipt();
@@ -225,16 +223,20 @@ test("the installed LangSmith client sends one redacted HTTP request through a c
   assert.deepEqual(result, { status: "exported", code: "TRACE_EXPORTED", attempts: 1, settlement: "completed" });
   assert.equal(requests.length, 1, "LangSmith transport must make exactly one bounded attempt");
   assert.match(requests[0].url, /capture\.invalid\/runs$/);
-  assertAbsent(requests, Object.values(fixtures).filter((value) => value !== fixtures.privateDocument));
+  assertAbsent(requests, Object.values(fixtures));
+  const sent = JSON.parse(requests[0].body);
+  assert.equal(sent.session_name, SYNTHETIC_PROJECT_NAME);
+  assert.equal(sent.extra.metadata.schema, SYNTHETIC_TRACE_SCHEMA);
+  assert.deepEqual(sent.inputs, { fixture_id: "fixed-echo-v1" });
+  assert.equal(Object.hasOwn(sent.outputs, "reply"), false);
 });
 
 test("transport errors and optional notifications expose only fixed classifications", async () => {
   const fixtures = sensitiveFixtures();
   const notifications = [];
-  const payload = { text: "fictional input" };
   const result = await exportOptionalTrace({
     enabled: true,
-    ...trustedSynthetic(payload),
+    ...trustedSynthetic(),
     transport: async () => {
       throw new Error(Object.values(fixtures).join(" "));
     },
@@ -246,11 +248,10 @@ test("transport errors and optional notifications expose only fixed classificati
 });
 
 test("a stalled optional notification cannot delay the bounded export result", async () => {
-  const payload = { text: "fictional input" };
   const completion = await Promise.race([
     exportOptionalTrace({
       enabled: true,
-      ...trustedSynthetic(payload),
+      ...trustedSynthetic(),
       transport: async () => acceptedReceipt(),
       notify: async () => new Promise(() => {}),
     }),
@@ -260,12 +261,11 @@ test("a stalled optional notification cannot delay the bounded export result", a
 });
 
 test("a transport that ignores abort is attempted once and remains uncertain after late completion", async () => {
-  const payload = { text: "fixed synthetic input" };
   let attempts = 0;
   let lateCompletions = 0;
   const result = await exportOptionalTrace({
     enabled: true,
-    ...trustedSynthetic(payload),
+    ...trustedSynthetic(),
     timeoutMs: 5,
     transport: async () => {
       attempts += 1;
@@ -281,11 +281,10 @@ test("a transport that ignores abort is attempted once and remains uncertain aft
 });
 
 test("dispatch is marked immediately before transport and a failed mark makes zero transport calls", async () => {
-  const payload = { text: "fixed synthetic input" };
   const order = [];
   const completed = await exportOptionalTrace({
     enabled: true,
-    ...trustedSynthetic(payload),
+    ...trustedSynthetic(),
     beforeTransport: async () => { order.push("mark"); return { ok: true }; },
     transport: async () => { order.push("transport"); return acceptedReceipt(); },
   });
@@ -295,7 +294,7 @@ test("dispatch is marked immediately before transport and a failed mark makes ze
   order.length = 0;
   const blocked = await exportOptionalTrace({
     enabled: true,
-    ...trustedSynthetic(payload),
+    ...trustedSynthetic(),
     beforeTransport: async () => { order.push("mark"); return { ok: false }; },
     transport: async () => { order.push("transport"); },
   });
@@ -329,6 +328,52 @@ test("private document content is denied before transport instead of being relab
   assertAbsent([transport, notifications, result], [fixtures.privateDocument]);
 });
 
+test("private document text hidden in generic outputs.reply is denied before transport", async () => {
+  const privateText = "confidential customer document paragraph with invoice details";
+  const payload = {
+    inputs: { fixture_id: "fixed-echo-v1" },
+    outputs: { reply: privateText },
+  };
+  let transportCalls = 0;
+
+  assert.equal(issueFixedSyntheticTraceAuthority(payload), null);
+  const result = await exportOptionalTrace({
+    enabled: true,
+    payload,
+    authority: null,
+    transport: async () => { transportCalls += 1; return acceptedReceipt(); },
+  });
+
+  assert.deepEqual(result, {
+    status: "denied",
+    code: "TRACE_SCHEMA_REQUIRED",
+    attempts: 0,
+    settlement: "cancelled_before_dispatch",
+  });
+  assert.equal(transportCalls, 0);
+  assert.equal(JSON.stringify(result).includes(privateText), false);
+});
+
+test("the fixed synthetic builder rejects unknown fields instead of ignoring free-form text", () => {
+  const privateText = "confidential document text must not enter a synthetic trace";
+  const attempted = createFixedSyntheticTracePayload({
+    scenario: "connection-check",
+    runId: "22222222-2222-4222-8222-222222222222",
+    startedAt: 1,
+    endedAt: 2,
+    durationMs: 1,
+    outputs: { reply: privateText },
+  });
+  assert.equal(attempted, null);
+  assert.equal(createFixedSyntheticTracePayload({
+    scenario: "__proto__",
+    runId: "22222222-2222-4222-8222-222222222222",
+    startedAt: 1,
+    endedAt: 2,
+    durationMs: 1,
+  }), null);
+});
+
 test("accessors, custom prototypes and toJSON hooks cannot create an outbound payload", async () => {
   const hidden = sensitiveFixtures().privateDocument;
   const withGetter = { outputs: {} };
@@ -357,10 +402,10 @@ test("accessors, custom prototypes and toJSON hooks cannot create an outbound pa
 });
 
 test("a resolved transport response needs an explicit acceptance receipt", async () => {
-  const payload = { inputs: { text: "fixed synthetic" }, outputs: { reply: "fixed answer" } };
+  const first = trustedSynthetic();
   const noReceipt = await exportOptionalTrace({
     enabled: true,
-    ...trustedSynthetic(payload),
+    ...first,
     transport: async () => ({ ok: false, status: 503 }),
   });
   assert.deepEqual(noReceipt, {
@@ -371,7 +416,7 @@ test("a resolved transport response needs an explicit acceptance receipt", async
   });
   const accepted = await exportOptionalTrace({
     enabled: true,
-    ...trustedSynthetic(payload),
+    ...trustedSynthetic(),
     transport: async () => acceptedReceipt(),
   });
   assert.deepEqual(accepted, {
@@ -383,12 +428,11 @@ test("a resolved transport response needs an explicit acceptance receipt", async
 });
 
 test("a stalled dispatch marker is bounded and never calls transport", async () => {
-  const payload = { text: "fixed synthetic" };
   let transportCalls = 0;
   const outcome = await Promise.race([
     exportOptionalTrace({
       enabled: true,
-      ...trustedSynthetic(payload),
+      ...trustedSynthetic(),
       timeoutMs: 5,
       beforeTransport: async () => new Promise(() => {}),
       transport: async () => { transportCalls += 1; return acceptedReceipt(); },
@@ -405,9 +449,16 @@ test("a stalled dispatch marker is bounded and never calls transport", async () 
 });
 
 test("forged authority, changed payloads, invalid structures, and oversized payloads fail closed", async () => {
+  const fixed = trustedSynthetic();
   assert.deepEqual(
     prepareTraceExport({ outputs: { reply: "private document excerpt" } }, {
       authority: { source: "fixed_internal_cli", dataClass: "synthetic" },
+    }).result,
+    { status: "denied", code: "TRACE_SCHEMA_REQUIRED", attempts: 0, settlement: "cancelled_before_dispatch" }
+  );
+  assert.deepEqual(
+    prepareTraceExport(fixed.payload, {
+      authority: { source: "fixed_internal_cli", schema: SYNTHETIC_TRACE_SCHEMA },
     }).result,
     { status: "denied", code: "TRACE_AUTHORITY_REQUIRED", attempts: 0, settlement: "cancelled_before_dispatch" }
   );
@@ -418,16 +469,16 @@ test("forged authority, changed payloads, invalid structures, and oversized payl
     prepareTraceExport(circular, {}).result,
     { status: "denied", code: "TRACE_PAYLOAD_INVALID", attempts: 0, settlement: "cancelled_before_dispatch" }
   );
-  const changed = { text: "fixed synthetic" };
-  const changedAuthority = issueFixedSyntheticTraceAuthority(changed);
-  changed.text = "mutated after classification";
+  const cloned = JSON.parse(JSON.stringify(fixed.payload));
   assert.deepEqual(
-    prepareTraceExport(changed, { authority: changedAuthority }).result,
-    { status: "denied", code: "TRACE_AUTHORITY_MISMATCH", attempts: 0, settlement: "cancelled_before_dispatch" }
+    prepareTraceExport(cloned, { authority: fixed.authority }).result,
+    { status: "denied", code: "TRACE_SCHEMA_REQUIRED", attempts: 0, settlement: "cancelled_before_dispatch" }
   );
-  const large = { text: "x".repeat(100) };
+  assert.equal(Object.isFrozen(fixed.payload), true);
+  assert.equal(Object.isFrozen(fixed.payload.outputs), true);
+  assert.throws(() => { fixed.payload.outputs.status = "mutated"; }, TypeError);
   assert.deepEqual(
-    prepareTraceExport(large, { authority: issueFixedSyntheticTraceAuthority(large), maxPayloadBytes: 16 }).result,
+    prepareTraceExport(fixed.payload, { authority: fixed.authority, maxPayloadBytes: 16 }).result,
     { status: "denied", code: "TRACE_PAYLOAD_TOO_LARGE", attempts: 0, settlement: "cancelled_before_dispatch" }
   );
 });

@@ -49,3 +49,35 @@ Use an ephemeral container or runner with network denied outside the process;
 do not place production credentials in that job. C10 remains incomplete until
 that environment is tested with the same sentinels and its result is bound to
 the release gate.
+
+## Pull-request workflow staged for hosted proof
+
+`.github/workflows/untrusted-pr.yml` stages that missing hosted proof without
+granting release authority. It runs only for `pull_request`, grants the job token
+`contents: read`, disables checkout credential persistence, and references the
+checkout Action by a full commit SHA. A checker from the trusted base commit
+validates the candidate workflow before candidate code runs.
+
+Dependency installation runs in a disposable container without lifecycle
+scripts and without host secrets. The fixed adversarial test then runs as an
+unprivileged user in a separate read-only container with all capabilities
+dropped, a process/memory/CPU bound, and Docker `--network none`. The repository
+and installed dependency volume are read-only during the probe. The workflow has
+a ten-minute hard timeout and no deployment, artifact-upload, production secret,
+or caller-supplied shell-command path.
+
+`scripts/check-untrusted-pr-workflow.js` pins the complete reviewed workflow
+fingerprint and fails on secret references, write permission, unpinned or
+unreviewed Actions, caller-controlled shell expressions, credential persistence,
+missing timeout, mutable container image, lifecycle scripts, or removal of the
+network-denied probe. Run it locally with `npm run untrusted-pr:check`.
+
+This is staged configuration, not evidence that GitHub executed it. C10 remains
+partial until a real pull-request run shows the hosted runner used the expected
+base workflow, exposed no unnecessary credential, denied outbound access in the
+probe container, and produced the expected adversarial result. Docker
+`--network none` isolates the probe container; it does not prove isolation of
+the dependency-install container, the checkout Action, or the runner host.
+The workflow also cannot approve itself: a pull request can propose edits to
+this file, so a repository rule or human review must require the unchanged,
+default-branch-owned workflow result before it can count as release evidence.

@@ -3,9 +3,16 @@ const assert = require("node:assert/strict");
 const http = require("node:http");
 const crypto = require("node:crypto");
 const XLSX = require("xlsx");
+const {
+  C06_DATABASE_DEGRADED_ID,
+  C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID,
+  getCustomerSafeResponse,
+} = require("../src/lib/customer-safe-responses");
 
 const apiHeaders = { "x-api-key": "local-proof-api", "idempotency-key": "local-proof-request-0001", "content-type": "application/json" };
 const marker = "KNC-PILOT-739261";
+const c06DatabaseDegradedResponse = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
+const c06DatabaseDegradedNoSideEffectResponse = getCustomerSafeResponse(C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID).message;
 
 async function fixture(t, env = {}) {
   Object.assign(process.env, {
@@ -241,6 +248,7 @@ test("Phase 1 document proof with simulated providers (not a live LINE/deploymen
     assert.equal(ctx.failureCode, "database_read_only");
     assert.equal(f.state.modelCalls, 0);
     assert.equal(f.tables.agent_runs.some((run) => run.status === "completed"), false);
+    assert.equal(reply, c06DatabaseDegradedNoSideEffectResponse);
     assert.doesNotMatch(reply, /completed|notified|PRIVATE-DATABASE-DETAIL/i);
   });
 
@@ -257,6 +265,7 @@ test("Phase 1 document proof with simulated providers (not a live LINE/deploymen
     assert.equal(f.tables.agent_runs[0].error, "database_connection_exhausted");
     assert.equal(f.tables.tool_calls[0].status, "error");
     assert.equal(f.tables.tool_calls[0].output.failure_code, "database_connection_exhausted");
+    assert.equal(reply, c06DatabaseDegradedResponse);
     assert.doesNotMatch(reply, /DOC-POOL-TEST|successfully completed|PRIVATE-DATABASE-DETAIL/i);
   });
 

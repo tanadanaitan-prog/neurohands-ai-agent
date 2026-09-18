@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "registerVersion": "2026-09-18.6",
+  "registerVersion": "2026-09-18.9",
   "reviewedOn": "2026-09-18",
   "scope": "local_release_control_evidence",
   "releaseGate": {
@@ -119,6 +119,16 @@
           "path": "src/lib/model-dispatch-lifecycle.js",
           "locator": "optional continuity runtime seam",
           "claim": "The local model lifecycle can invoke the bounded continuity runtime only through an injected, disabled-by-default boundary."
+        },
+        {
+          "path": "test/allowance-continuity-postgres.test.js",
+          "locator": "concurrent claims create one durable alert and later claims are replays",
+          "claim": "The isolated PostgreSQL store creates one atomic alert claim and returns the same durable identity to concurrent or replayed callers."
+        },
+        {
+          "path": "test/allowance-continuity-postgres.test.js",
+          "locator": "uncertain, failed and delivered outcomes are explicit terminal states",
+          "claim": "Delivered, failed and uncertain outcomes are terminal; a late receipt cannot change an uncertain attempt into delivered."
         }
       ],
       "passCriteria": [
@@ -135,7 +145,7 @@
           "then": "The failure is recorded without a false delivery claim or an unauthorized retry loop."
         }
       ],
-      "remainingGap": "The local notification and deduplication boundary is tested but remains inactive; no production durable store, notifier or privately verified founder destination is connected.",
+      "remainingGap": "A private PostgreSQL alert store and server-only adapter are staged and tested locally, but neither is applied or wired into the inactive runtime. No notifier or privately verified founder destination is connected.",
       "manualOrLiveRequirements": [
         "Approve the exact alert wording and destination privately.",
         "Perform one bounded delivery check on the inactive test path after local fault tests pass."
@@ -161,6 +171,16 @@
           "path": "test/allowance-continuity.test.js",
           "locator": "C04: storage failure still denies transport and cannot invent an alert delivery",
           "claim": "A continuity storage failure remains closed and cannot invent either completion or founder delivery."
+        },
+        {
+          "path": "test/allowance-continuity-postgres.test.js",
+          "locator": "hard-limit continuity evidence is durable, idempotent and conflict detecting",
+          "claim": "The isolated PostgreSQL store persists one non-completion record for a hard-limit event and rejects a conflicting fingerprint."
+        },
+        {
+          "path": "test/allowance-continuity-postgres.test.js",
+          "locator": "service role cannot forge a delivered receipt through direct table writes",
+          "claim": "Browser roles and the service role lack direct table access; service code can use only the constrained RPC boundary."
         }
       ],
       "passCriteria": [
@@ -177,7 +197,7 @@
           "then": "The application returns the approved static continuity response, records the reason, alerts the founder once, and never claims the requested work completed."
         }
       ],
-      "remainingGap": "The application boundary is implemented and tested locally but remains inactive; the exact production response, durable adapters, founder destination and private account enforcement are not approved or connected.",
+      "remainingGap": "The application boundary and private PostgreSQL event store are implemented and tested locally but remain inactive and unapplied. The exact production response, founder destination and private account enforcement are not approved or connected.",
       "manualOrLiveRequirements": [
         "Approve the static continuity response before a LINE test.",
         "Confirm privately that no paid fallback or overage path is enabled."
@@ -244,7 +264,12 @@
         {
           "path": "test/pilot-proof.test.js",
           "locator": "connection-pool exhaustion cannot become an empty or invented document success",
-          "claim": "A PGRST003 document read records a fixed failure, returns the static safe response and cannot produce a completed run."
+          "claim": "A PGRST003 document read records a fixed failure, returns the versioned C06 safe response and cannot produce a completed run."
+        },
+        {
+          "path": "test/customer-safe-responses.test.js",
+          "locator": "C06 customer safe response is versioned, digest-pinned, approval-pending, and loaded by the application",
+          "claim": "The exact customer text is loaded from a versioned manifest, text or version drift fails validation, and founder approval fields remain pending and blank."
         },
         {
           "path": "test/webhook-inbox.test.js",
@@ -266,8 +291,9 @@
           "then": "The application does not substitute an empty or invented result and returns the approved safe response with a bounded failure classification."
         }
       ],
-      "remainingGap": "Deterministic application behavior is covered locally, but the customer-facing safe response is hardcoded and has no versioned founder approval evidence. Private live Supabase limits and provider-side exhaustion behavior also remain unverified.",
+      "remainingGap": "The customer-facing database degradation text is versioned and digest-pinned locally, but founder approval remains pending. Private live Supabase limits and provider-side exhaustion behavior also remain unverified.",
       "manualOrLiveRequirements": [
+        "Founder must review and approve the exact response version and commit before release acceptance.",
         "After deterministic fault injection passes, confirm applicable Supabase limits and exhaustion behavior privately.",
         "Use an isolated branch or disposable project for any provider-behavior check."
       ]
@@ -292,6 +318,11 @@
           "path": "test/optional-trace-export.test.js",
           "locator": "a transport that ignores abort is attempted once and remains uncertain after late completion",
           "claim": "A non-cooperative trace transport is attempted once and remains explicitly uncertain rather than being retried or claimed complete."
+        },
+        {
+          "path": "test/server-optional-trace-integration.test.js",
+          "locator": "customer and document sentinels never reach the hook or outbound capture",
+          "claim": "The server schedules an injected optional trace only after its mandatory run audit succeeds and exposes only run ID, status and fixed schema to the hook."
         }
       ],
       "passCriteria": [
@@ -308,7 +339,7 @@
           "then": "The action remains blocked even if optional tracing is available."
         }
       ],
-      "remainingGap": "The optional export boundary is verified locally but is not wired into a real customer workflow; the private LangSmith allowance, retention and account settings remain unverified.",
+      "remainingGap": "A disabled-by-default server seam is verified locally, but no approved operational trace runtime or live transport is configured. Private LangSmith allowance, retention and account settings remain unverified.",
       "manualOrLiveRequirements": [
         "Privately verify trace allowance, retention and overage settings before any real export.",
         "Keep customer content out of the bounded synthetic trial."
@@ -322,18 +353,18 @@
       "evidence": [
         {
           "path": "test/optional-trace-export.test.js",
-          "locator": "the actual outbound transport receives only the bounded redacted trace",
-          "claim": "The export boundary redacts credential, signed-link, activation, identity and private-data sentinels before its captured outbound transport."
+          "locator": "caller-provided free-form trace data cannot receive authority or reach transport",
+          "claim": "Credential, signed-link, activation, identity and arbitrary free-form caller payloads cannot receive fixed-synthetic authority and make zero transport calls."
         },
         {
           "path": "test/optional-trace-export.test.js",
           "locator": "the installed LangSmith client sends one redacted HTTP request through a captured offline transport",
-          "claim": "The installed LangSmith client receives only a locally captured redacted request and performs exactly one offline transport attempt."
+          "claim": "The installed LangSmith client receives only a fixed fixture identifier, bounded numeric metrics and a structured status through one locally captured offline transport attempt; no prompt or reply field is present."
         },
         {
           "path": "test/optional-trace-export.test.js",
-          "locator": "private document content is denied before transport instead of being relabelled",
-          "claim": "Recognized private-document fields and unsafe JavaScript structures are denied before transport rather than being relabelled as synthetic or redacted evidence."
+          "locator": "private document text hidden in generic outputs.reply is denied before transport",
+          "claim": "Private text in a generic reply field, recognized private-document fields, unsafe structures, unknown fields, forged authorities and cloned payloads are denied before transport."
         }
       ],
       "passCriteria": [
@@ -350,7 +381,7 @@
           "then": "Export is denied rather than relabeling or partially exposing the content."
         }
       ],
-      "remainingGap": "The local exporter rejects recognized private-document fields and unsafe JavaScript structures, but it does not semantically classify arbitrary private text placed in a generic field. No real customer path or private-data export is approved, connected or release-accepted.",
+      "remainingGap": "The local boundary now permits only provenance-owned fixed synthetic traces and denies arbitrary free-form inputs, outputs, unknown fields, forged authorities and cloned payloads. The exact sentinel-bearing outbound-redaction criterion and founder-approved real trial remain incomplete; no customer/private export is approved or connected.",
       "manualOrLiveRequirements": [
         "Approve the trace data classes and redaction policy before any real export.",
         "Inspect one captured synthetic trace payload before enabling the bounded trial."
@@ -376,6 +407,16 @@
           "path": "test/deployment-approval.test.js",
           "locator": "a replayed durable claim cannot execute deployment a second time",
           "claim": "A consumed approval cannot be replayed for a second deployment."
+        },
+        {
+          "path": "test/deployment-approval-postgres.test.js",
+          "locator": "deployment approvals are exact, atomic, one-use and unavailable to browser roles",
+          "claim": "An isolated PostgreSQL migration atomically claims one exact approval; wrong, expired, concurrent and browser attempts remain closed."
+        },
+        {
+          "path": "test/deployment-approval-postgres.test.js",
+          "locator": "the application service role can claim but cannot create or rewrite founder approval",
+          "claim": "The application service role has no direct table privilege to create or rewrite founder approval and can only invoke the exact-claim function."
         }
       ],
       "passCriteria": [
@@ -392,7 +433,7 @@
           "then": "The request is denied until a new exact-version approval is recorded."
         }
       ],
-      "remainingGap": "The exact-commit approval boundary is implemented locally, but its expected Supabase RPC/table, founder approval UI and GitHub/Railway deployment adapters are not implemented or connected.",
+      "remainingGap": "The exact-commit boundary and its private atomic PostgreSQL claim are implemented locally. A founder approval UI or reviewed private procedure, production audit adapter, GitHub/Railway deployment adapters, and verified account permissions are not implemented or connected.",
       "manualOrLiveRequirements": [
         "Privately verify repository and deployment permissions for the release identity.",
         "Require founder review of the exact commit before a controlled inactive-path release."
@@ -418,6 +459,16 @@
           "path": "docs/UNTRUSTED_EXECUTION_BOUNDARY.md",
           "locator": "What this does not prove",
           "claim": "The evidence explicitly records that the local VM and Node permission model are not an operating-system or outbound-network isolation boundary."
+        },
+        {
+          "path": "test/untrusted-pr-workflow.test.js",
+          "locator": "C10 workflow is the exact reviewed read-only pull-request policy",
+          "claim": "A static checker pins the staged pull-request workflow and rejects secret references, write permissions, dynamic commands, mutable dependencies and removal of the network-denied probe."
+        },
+        {
+          "path": ".github/workflows/untrusted-pr.yml",
+          "locator": "Fixed adversarial probe",
+          "claim": "The staged job grants read-only repository access and runs the adversarial probe in a bounded, read-only, unprivileged container with outbound networking disabled."
         }
       ],
       "passCriteria": [
@@ -434,7 +485,7 @@
           "then": "The test fails visibly before any untrusted command is accepted for release."
         }
       ],
-      "remainingGap": "The fixed local probe has application-layer evidence only. The actual untrusted pull-request environment is not an ephemeral OS-isolated runner with outbound network denied, and Node reports osNetworkIsolated=false.",
+      "remainingGap": "The hosted workflow is staged but has not run. Its own file is changeable by a pull request unless repository rules or review require the unchanged default-branch workflow, and Docker isolation does not prove runner-host isolation or dependency-install network denial.",
       "manualOrLiveRequirements": [
         "Review hosted workflow permissions and secret availability before enabling pull-request automation.",
         "Keep production credentials out of all untrusted test jobs."

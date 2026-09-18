@@ -10,7 +10,35 @@ const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_PAYLOAD_DEPTH = 32;
 const MAX_PAYLOAD_NODES = 4096;
 const RECEIPT_ID = /^[A-Za-z0-9_.:@-]{1,160}$/;
+const TRACE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SYNTHETIC_TRACE_SCHEMA = "neurohands-fixed-synthetic-trace-v1";
+const SYNTHETIC_PROJECT_NAME = "neurohands-local-test";
+const SYNTHETIC_OPTION_KEYS = new Set([
+  "scenario", "runId", "startedAt", "endedAt", "durationMs", "modelCalls",
+  "inputTokens", "outputTokens", "totalTokens", "toolVerified",
+]);
+const SYNTHETIC_SCENARIOS = Object.freeze({
+  "connection-check": Object.freeze({
+    name: "neurohands-synthetic-connection-check",
+    fixtureId: "fixed-echo-v1",
+    tags: Object.freeze(["synthetic", "no-llm", "local-lab"]),
+    toolName: null,
+  }),
+  "local-model-check": Object.freeze({
+    name: "neurohands-local-model-check",
+    fixtureId: "fictional-notebook-total-v1",
+    tags: Object.freeze(["synthetic", "local-llm", "local-lab"]),
+    toolName: null,
+  }),
+  "aria-tool-check": Object.freeze({
+    name: "neurohands-local-aria-tool-check",
+    fixtureId: "fictional-order-status-v1",
+    tags: Object.freeze(["synthetic", "local-llm", "local-lab"]),
+    toolName: "get_order_status",
+  }),
+});
 const authorities = new WeakMap();
+const fixedSyntheticTraces = new WeakMap();
 
 function fixedResult(status, code, attempts = 0, settlement = "cancelled_before_dispatch") {
   return Object.freeze({ status, code, attempts, settlement });
@@ -75,17 +103,99 @@ function payloadDigest(payload) {
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
-function issueFixedSyntheticTraceAuthority(payload) {
-  let digest;
+function safeNonnegativeInteger(value) {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+function deepFreeze(value) {
+  if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
+function createFixedSyntheticTracePayload(candidate = {}) {
+  let options;
   try {
-    const plain = clonePlainTraceData(payload);
-    if (!plain || typeof plain !== "object" || Array.isArray(plain) || hasPrivateDocumentContent(plain)) return null;
-    digest = payloadDigest(plain);
+    options = clonePlainTraceData(candidate);
   } catch {
     return null;
   }
-  const authority = Object.freeze({ source: "fixed_internal_cli" });
-  authorities.set(authority, Object.freeze({ dataClass: "synthetic", digest }));
+  if (!options || typeof options !== "object" || Array.isArray(options) ||
+      Object.keys(options).some((key) => !SYNTHETIC_OPTION_KEYS.has(key))) return null;
+  const {
+    scenario,
+    runId,
+    startedAt,
+    endedAt,
+    durationMs,
+    modelCalls = 0,
+    inputTokens = 0,
+    outputTokens = 0,
+    totalTokens = 0,
+    toolVerified = false,
+  } = options;
+  const spec = typeof scenario === "string" && Object.hasOwn(SYNTHETIC_SCENARIOS, scenario)
+    ? SYNTHETIC_SCENARIOS[scenario]
+    : null;
+  const numericValues = [startedAt, endedAt, durationMs, modelCalls, inputTokens, outputTokens, totalTokens];
+  if (!spec || typeof runId !== "string" || !TRACE_ID.test(runId) ||
+      !numericValues.every(safeNonnegativeInteger) || endedAt < startedAt ||
+      totalTokens !== inputTokens + outputTokens ||
+      toolVerified !== (spec.toolName !== null)) return null;
+
+  const output = {
+    status: "completed",
+    duration_ms: durationMs,
+    model_calls: modelCalls,
+    usage: {
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      total_tokens: totalTokens,
+    },
+  };
+  if (spec.toolName) output.tool_check = { name: spec.toolName, ok: true };
+  const payload = deepFreeze({
+    id: runId,
+    trace_id: runId,
+    name: spec.name,
+    run_type: "chain",
+    project_name: SYNTHETIC_PROJECT_NAME,
+    start_time: startedAt,
+    end_time: endedAt,
+    inputs: { fixture_id: spec.fixtureId },
+    outputs: output,
+    tags: [...spec.tags],
+    extra: {
+      metadata: {
+        purpose: "fixed-synthetic-connection-check",
+        schema: SYNTHETIC_TRACE_SCHEMA,
+        data_class: "synthetic",
+        contains_customer_data: false,
+        contains_private_document: false,
+      },
+    },
+  });
+  fixedSyntheticTraces.set(payload, Object.freeze({ digest: payloadDigest(payload) }));
+  return payload;
+}
+
+function issueFixedSyntheticTraceAuthority(payload) {
+  const provenance = payload && typeof payload === "object" ? fixedSyntheticTraces.get(payload) : null;
+  if (!provenance) return null;
+  try {
+    const plain = clonePlainTraceData(payload);
+    if (!plain || typeof plain !== "object" || Array.isArray(plain) || hasPrivateDocumentContent(plain)) return null;
+    if (payloadDigest(plain) !== provenance.digest) return null;
+  } catch {
+    return null;
+  }
+  const authority = Object.freeze({ source: "fixed_internal_cli", schema: SYNTHETIC_TRACE_SCHEMA });
+  authorities.set(authority, Object.freeze({
+    dataClass: "synthetic",
+    digest: provenance.digest,
+    payload,
+    schema: SYNTHETIC_TRACE_SCHEMA,
+  }));
   return authority;
 }
 
@@ -105,11 +215,15 @@ function prepareTraceExport(payload, {
     if (containsPrivateDocument === true || hasPrivateDocumentContent(plain)) {
       return { ok: false, result: fixedResult("denied", "PRIVATE_DOCUMENT_EXPORT_DENIED") };
     }
+    const provenance = fixedSyntheticTraces.get(payload);
+    if (!provenance) {
+      return { ok: false, result: fixedResult("denied", "TRACE_SCHEMA_REQUIRED") };
+    }
     const trusted = authority && typeof authority === "object" ? authorities.get(authority) : null;
-    if (!trusted || trusted.dataClass !== "synthetic") {
+    if (!trusted || trusted.dataClass !== "synthetic" || trusted.schema !== SYNTHETIC_TRACE_SCHEMA) {
       return { ok: false, result: fixedResult("denied", "TRACE_AUTHORITY_REQUIRED") };
     }
-    if (payloadDigest(plain) !== trusted.digest) {
+    if (trusted.payload !== payload || provenance.digest !== trusted.digest || payloadDigest(plain) !== trusted.digest) {
       return { ok: false, result: fixedResult("denied", "TRACE_AUTHORITY_MISMATCH") };
     }
     redacted = clonePlainTraceData(redactTracePayload(plain));
@@ -272,6 +386,9 @@ async function finalizeAuditedWorkflow({
 module.exports = {
   DEFAULT_TIMEOUT_MS,
   MAX_PAYLOAD_BYTES,
+  SYNTHETIC_PROJECT_NAME,
+  SYNTHETIC_TRACE_SCHEMA,
+  createFixedSyntheticTracePayload,
   exportOptionalTrace,
   finalizeAuditedWorkflow,
   hasPrivateDocumentContent,
