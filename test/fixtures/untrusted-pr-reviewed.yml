@@ -1,0 +1,102 @@
+name: Untrusted pull request isolation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-adversarial-probe:
+    name: Fixed adversarial probe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the trusted base guard
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted-guard
+          persist-credentials: false
+          fetch-depth: 1
+          submodules: false
+          lfs: false
+
+      - name: Check out the pull request candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: candidate
+          persist-credentials: false
+          fetch-depth: 1
+          submodules: false
+          lfs: false
+
+      - name: Verify the candidate workflow with the trusted base guard
+        working-directory: trusted-guard
+        run: node scripts/check-untrusted-pr-workflow.js ../candidate/.github/workflows/untrusted-pr.yml
+
+      - name: Install without scripts, then run the fixed probe without a network
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          readonly c10_image='node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553'
+          readonly c10_volume='neurohands-c10-dependencies'
+          cleanup_c10_volume() {
+            docker volume rm --force "$c10_volume" >/dev/null 2>&1 || true
+          }
+          trap cleanup_c10_volume EXIT
+          docker pull "$c10_image"
+          docker volume create "$c10_volume" >/dev/null
+          docker run --rm \
+            --network bridge \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --memory 512m \
+            --cpus 1 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m \
+            --env HOME=/tmp \
+            --env npm_config_cache=/tmp/npm-cache \
+            --mount type=bind,source="$PWD",target=/workspace,readonly \
+            --mount type=volume,source="$c10_volume",target=/workspace/node_modules \
+            --workdir /workspace \
+            "$c10_image" \
+            npm ci --ignore-scripts --no-audit --no-fund
+          docker run --rm \
+            --network none \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --memory 512m \
+            --cpus 1 \
+            --user 65532:65532 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m,uid=65532,gid=65532,mode=1777 \
+            --env HOME=/tmp \
+            --env CI=true \
+            --env NODE_ENV=test \
+            --mount type=bind,source="$PWD",target=/workspace,readonly \
+            --mount type=volume,source="$c10_volume",target=/workspace/node_modules,readonly \
+            --workdir /workspace \
+            "$c10_image" \
+            node --input-type=commonjs -e 'fetch("http://169.254.169.254/latest/meta-data", { signal: AbortSignal.timeout(750) }).then(() => { throw new Error("outbound network unexpectedly available"); }, () => process.stdout.write("OS_NETWORK_DENIED\\n"))'
+          docker run --rm \
+            --network none \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --memory 512m \
+            --cpus 1 \
+            --user 65532:65532 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m,uid=65532,gid=65532,mode=1777 \
+            --env HOME=/tmp \
+            --env CI=true \
+            --env NODE_ENV=test \
+            --mount type=bind,source="$PWD",target=/workspace,readonly \
+            --mount type=volume,source="$c10_volume",target=/workspace/node_modules,readonly \
+            --workdir /workspace \
+            "$c10_image" \
+            node --test test/untrusted-execution-boundary.test.js
