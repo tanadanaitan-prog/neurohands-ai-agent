@@ -55,6 +55,52 @@ const MACHINE_PROBES = Object.freeze({
       ]),
     }),
   ]),
+  C11: Object.freeze([
+    Object.freeze({
+      id: "C11-TEST-PROVIDER-COMPATIBILITY",
+      kind: "node-test",
+      files: Object.freeze(["test/provider-contracts.test.js"]),
+      minimumPassingTests: 6,
+      expectedTestNames: Object.freeze([
+        "the pinned provider and SDK compatibility pack passes offline",
+        "the production request encoders produce the registered Gemini and OpenAI-compatible contracts",
+        "an intentional provider API contract change exits nonzero and names the blocked interface",
+        "a removed installed SDK method blocks compatibility before dispatch",
+        "declared or locked SDK version drift blocks compatibility",
+        "the CLI emits one safe result and makes no production call",
+      ]),
+    }),
+    Object.freeze({
+      id: "C11-CHECK-INSTALLED-CONTRACTS",
+      kind: "json-script",
+      file: "scripts/check-provider-contracts.js",
+      assertions: Object.freeze([
+        Object.freeze({ field: "schemaValid", equals: true }),
+        Object.freeze({ field: "compatibilityValid", equals: true }),
+        Object.freeze({ field: "checkedRequestCount", equals: 2 }),
+        Object.freeze({ field: "productionCalls", equals: 0 }),
+      ]),
+    }),
+  ]),
+  C12: Object.freeze([
+    Object.freeze({
+      id: "C12-TEST-ISOLATED-BACKUP-RESTORE",
+      kind: "node-test",
+      files: Object.freeze(["test/isolated-backup-restore.test.js"]),
+      minimumPassingTests: 9,
+      expectedTestNames: Object.freeze([
+        "C12 restores scoped records, audit evidence and original private objects into clean isolated destinations",
+        "a shared LINE actor cannot carry another client's structured audit evidence into the backup",
+        "an object path outside the exact client-code prefix is rejected before object access",
+        "exact rows and objects restore, permissions hold, and the authorized app answer comes from the original",
+        "a missing source object fails visibly before a backup can be claimed",
+        "a tampered backup fails validation before either destination is touched",
+        "a destination that alters object bytes fails before database restoration",
+        "a post-restore record mismatch cleans both destinations and permits a retry",
+        "a post-restore object mismatch cleans both destinations and permits a retry",
+      ]),
+    }),
+  ]),
 });
 
 function plainObject(value) {
@@ -395,9 +441,15 @@ function checkReleaseControls({ filePath = RELEASE_CONTROLS_PATH, allowIncomplet
         unverifiedControls: [...EXPECTED_IDS],
         controls: {},
       };
-  const gateSatisfied = validation.valid && validation.gateSatisfied && machineEvidence.gateSatisfied;
+  const statusEvidenceErrors = validation.valid
+    ? register.controls
+        .filter((control) => control.status === "pass" && machineEvidence.controls?.[control.id]?.verified !== true)
+        .map((control) => `${control.id} is marked pass without a passing deterministic machine probe`)
+    : [];
+  const evidenceAligned = statusEvidenceErrors.length === 0;
+  const gateSatisfied = validation.valid && evidenceAligned && validation.gateSatisfied && machineEvidence.gateSatisfied;
   return {
-    ok: validation.valid && (gateSatisfied || allowIncomplete),
+    ok: validation.valid && evidenceAligned && (gateSatisfied || allowIncomplete),
     schemaValid: validation.valid,
     releaseGate: gateSatisfied ? "pass" : "fail",
     releaseAccepted: register.releaseGate?.releaseAccepted === true,
@@ -405,7 +457,7 @@ function checkReleaseControls({ filePath = RELEASE_CONTROLS_PATH, allowIncomplet
     registerVersion: register.registerVersion || null,
     counts: validation.summary,
     machineEvidence,
-    errors: validation.errors,
+    errors: [...validation.errors, ...statusEvidenceErrors],
   };
 }
 

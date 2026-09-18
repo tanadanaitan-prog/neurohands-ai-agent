@@ -18,6 +18,18 @@ const { createProductionAdmission } = require("./lib/production-admission");
 const { dispatchAdmittedModel } = require("./lib/model-dispatch-lifecycle");
 const { createModelAdmissionContextIssuer } = require("./lib/model-admission-context");
 const { createAgentApiIdempotency, validIdempotencyKey } = require("./lib/api-agent-idempotency");
+const {
+  DATABASE_FAILURES,
+  readDatabaseFailure,
+  databaseOperationError,
+  databaseFailureCode,
+} = require("./lib/database-failures");
+const {
+  buildGeminiRequest,
+  buildOpenAICompatibleRequest,
+  geminiParts,
+  usableFallbackMessage,
+} = require("./lib/provider-contracts");
 
 const {
   LINE_CHANNEL_SECRET,
@@ -313,47 +325,16 @@ async function requestModelJson(provider, url, headers, body, model, usable = ()
   return null;
 }
 
-function validToolArguments(args) {
-  return args !== null && typeof args === "object" && !Array.isArray(args);
-}
-
-function usableFallbackMessage(data, allowTools) {
-  const message = data?.choices?.[0]?.message;
-  if (!message || (message.content != null && typeof message.content !== "string")) return false;
-  if (message.tool_calls != null && !Array.isArray(message.tool_calls)) return false;
-  const calls = message.tool_calls || [];
-  if (calls.length) {
-    if (!allowTools) return false;
-    return calls.every((call) => {
-      if (!call || typeof call.id !== "string" || !call.id.trim() ||
-          typeof call.function?.name !== "string" || !call.function.name.trim() ||
-          typeof call.function.arguments !== "string") return false;
-      try { return validToolArguments(JSON.parse(call.function.arguments)); }
-      catch { return false; }
-    });
-  }
-  return typeof message.content === "string" && Boolean(message.content.trim());
-}
-
-function geminiParts(data) {
-  const parts = data?.candidates?.[0]?.content?.parts;
-  if (!Array.isArray(parts) || !parts.length) return null;
-  if (parts.some((part) => !part || typeof part !== "object" ||
-      (part.text !== undefined && typeof part.text !== "string") ||
-      (part.functionCall !== undefined && (typeof part.functionCall?.name !== "string" ||
-        !part.functionCall.name.trim() || (part.functionCall.args !== undefined && !validToolArguments(part.functionCall.args)))))) return null;
-  return parts;
-}
-
 async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.tools?.length), context = {}) {
   const base = fallbackBase();
   if (!base) return null;
   const models = (cachedFallbackModel ? [cachedFallbackModel] : [])
     .concat(fallbackModels().filter((m) => m !== cachedFallbackModel));
   for (const model of models) {
-    const data = await requestModelJson("Fallback LLM", `${base}/chat/completions`,
+    const request = buildOpenAICompatibleRequest({ baseUrl: base, model, body: bodyExtra });
+    const data = await requestModelJson("Fallback LLM", request.url,
       { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` },
-      { model, ...bodyExtra }, model, (data) => usableFallbackMessage(data, allowToolCalls), context);
+      request.body, model, (data) => usableFallbackMessage(data, allowToolCalls), context);
     if (usableFallbackMessage(data, allowToolCalls)) {
       cachedFallbackModel = model;
       return data;
@@ -382,23 +363,43 @@ async function db(path, options = {}) {
   };
   if (method === "POST" && !headers.Prefer) headers.Prefer = "return=representation";
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    method,
-    headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    signal: AbortSignal.timeout(15000),
-  });
+  const signal = AbortSignal.timeout(15000);
+  let res;
+  try {
+    res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal,
+    });
+  } catch (error) {
+    const failure = error?.name === "TimeoutError" || error?.name === "AbortError"
+      ? DATABASE_FAILURES.TIMEOUT
+      : DATABASE_FAILURES.UNAVAILABLE;
+    console.error("Supabase request failed", method, path.split("?")[0], failure);
+    throw databaseOperationError(failure);
+  }
   if (!res.ok) {
     // Response bodies and query strings can contain customer data or activation codes.
-    console.error("Supabase request failed", method, path.split("?")[0], res.status);
-    throw new Error("Database operation failed");
+    const failure = await readDatabaseFailure(res, { signal });
+    console.error("Supabase request failed", method, path.split("?")[0], res.status, failure);
+    throw databaseOperationError(failure);
   }
   if (res.status === 204) {
     if (method === "POST") throw new Error("Database write was not confirmed");
     return [];
   }
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : [];
+  let data;
+  try {
+    const text = await res.text();
+    data = text ? JSON.parse(text) : [];
+  } catch (error) {
+    const failure = error?.name === "TimeoutError" || error?.name === "AbortError"
+      ? DATABASE_FAILURES.TIMEOUT
+      : DATABASE_FAILURES.REQUEST_FAILED;
+    console.error("Supabase response failed", method, path.split("?")[0], failure);
+    throw databaseOperationError(failure);
+  }
   if (method === "POST" && !path.startsWith("rpc/") && (!Array.isArray(data) || !data.length)) throw new Error("Database write was not confirmed");
   return data;
 }
@@ -698,7 +699,15 @@ async function executeToolWithLog(ctx, runId, toolName, args) {
       output = await TOOL_HANDLERS[toolName](ctx, args || {});
       if (output?.error) status = "error";
     }
-    catch { output = { error: "Tool could not complete. No successful result is available." }; status = "error"; }
+    catch (error) {
+      const failure = databaseFailureCode(error);
+      if (failure) ctx.failureCode = failure;
+      output = {
+        error: "Tool could not complete. No successful result is available.",
+        ...(failure ? { failure_code: failure } : {}),
+      };
+      status = "error";
+    }
   }
 
   const logged = await db("tool_calls", { method: "POST", body: { run_id: runId, agent_code: ctx.agentCode || null, tool_name: toolName, input: args || {}, output, allowed, status } });
@@ -741,13 +750,16 @@ async function askAI(systemContext, userMessage, admissionContext = {}) {
     authority: admissionContext.authority || null,
   };
   if (geminiConfigured()) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-    const data = await requestModelJson("Gemini", url,
-      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, {
-      system_instruction: { parts: [{ text: systemContext }] },
+    const request = buildGeminiRequest({
+      model: GEMINI_MODEL,
+      systemInstruction: systemContext,
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-    }, GEMINI_MODEL, (data) => {
+    });
+    const data = await requestModelJson("Gemini", request.url,
+      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, {
+        ...request.body,
+      }, GEMINI_MODEL, (data) => {
       const parts = geminiParts(data);
       return parts && !parts.some((part) => part.functionCall) && parts.some((part) => part.text?.trim());
     }, context);
@@ -814,24 +826,22 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
 } = {}) {
   if (!geminiConfigured()) return { text: null, iterations: 0, apiFailed: true };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const contents = history.map((message) => ({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] }));
   contents.push({ role: "user", parts: [{ text: userMessage }] });
   let iteration = 0;
   const maxIterations = 5;
 
   while (iteration < maxIterations) {
-    const body = {
-      system_instruction: { parts: [{ text: systemContext }] },
+    const request = buildGeminiRequest({
+      model: GEMINI_MODEL,
+      systemInstruction: systemContext,
       contents,
       generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
-    };
-    // These are JSON Schemas, including additionalProperties. Gemini's legacy
-    // `parameters` Schema does not accept the complete JSON Schema vocabulary.
-    if (tools.length) body.tools = [{ functionDeclarations: tools.map(({ parameters, ...declaration }) =>
-      ({ ...declaration, parametersJsonSchema: parameters })) }];
+      tools,
+    });
+    const body = request.body;
 
-    const data = await requestModelJson("Gemini", url,
+    const data = await requestModelJson("Gemini", request.url,
       { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL, (data) => {
         const parts = geminiParts(data);
         return parts && parts.some((part) => part.functionCall || part.text?.trim());
@@ -951,11 +961,15 @@ async function runAgent(ctx, userText, agent) {
       if (!result.text || result.exhausted) throw new Error("No complete model answer was returned");
       const finalText = ctx.toolFailed ? (toolExecutions > 0 ? partialWorkReply : "I could not verify the requested information because a tool did not succeed. Please try again or contact the team.") : outputGuardrail(result.text);
       ctx.runStatus = ctx.toolFailed ? "error" : "completed";
-      await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, ctx.toolFailed ? "One or more tool calls did not succeed" : null, finalizeRunMetrics(metrics));
+      const runFailure = ctx.toolFailed
+        ? (databaseFailureCode({ code: ctx.failureCode }) || "tool_execution_failed")
+        : null;
+      await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, runFailure, finalizeRunMetrics(metrics));
       return finalText;
     });
   } catch (err) {
     ctx.runStatus = "error";
+    ctx.failureCode = databaseFailureCode(err) || ctx.failureCode || null;
     console.error("Agent run failed");
     try { await completeAgentRun(runId, "error", null, 0, "Execution or evidence persistence failed", finalizeRunMetrics(metrics)); }
     catch { console.error("Could not persist agent failure"); }
@@ -1051,7 +1065,11 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
         body: { delivered_at: new Date().toISOString() } });
       if (!delivered?.[0]?.id) throw new Error("Operator delivery evidence could not be saved");
     }
-    if (ctx.runStatus === "error") throw new Error("Agent execution failed; response delivery was recorded");
+    if (ctx.runStatus === "error") {
+      const error = new Error("Agent execution failed; response delivery was recorded");
+      if (databaseFailureCode({ code: ctx.failureCode })) error.code = ctx.failureCode;
+      throw error;
+    }
   } catch (error) {
     // An undelivered operator answer must not be replayed as successful conversation history.
     if (ctx.answeredBy === "jarvis" && ctx.runId && ctx.runStatus === "completed") {

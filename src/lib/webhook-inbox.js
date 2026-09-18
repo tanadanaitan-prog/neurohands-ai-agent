@@ -1,10 +1,13 @@
 const crypto = require('node:crypto');
 const { AsyncLocalStorage } = require('node:async_hooks');
+const { databaseFailureCode } = require('./database-failures');
 const eventContext = new AsyncLocalStorage();
 const currentWebhookEventId = () => eventContext.getStore()?.eventId || null;
 
 // Classify failures without exposing URLs, keys, message contents or provider bodies.
 function failureCode(error) {
+  const databaseFailure = databaseFailureCode(error);
+  if (databaseFailure) return databaseFailure;
   if (error?.name === 'TimeoutError') return 'request_timeout';
   if (error?.name === 'AbortError') return 'request_aborted';
   const line = /^LINE (reply|push|menu link) rejected \(([1-5][0-9]{2})\)$/.exec(error?.message || '');

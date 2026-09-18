@@ -24,7 +24,7 @@ async function fixture(t, env = {}) {
     client_agent_bindings: [], clients: [], settings: [], client_documents: [], tool_calls: [], agent_runs: [], agent_memory: [], jarvis_audit_log: [], messages: [], staff_activations: [], jarvis_notes: [],
     agent_registry: [{ id: 1, agent_code: "AGT-001", callsign: "Aria", department: "sales", agent_name: "KNC agent", active: true, customer_facing: true, allowed_tools: ["read_document"], domains: ["sales"], responsibilities: ["Read authorized documents"], objective: "Answer from evidence" }],
   };
-  const state = { tables, objects: new Map(), apiRequests: new Map(), requests: [], faults: new Set(), documentCode: null, modelCalls: 0, lineStatus: 429, lineMessages: [] };
+  const state = { tables, objects: new Map(), apiRequests: new Map(), requests: [], faults: new Set(), databaseFailures: new Map(), documentCode: null, modelCalls: 0, lineStatus: 429, lineMessages: [] };
   const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
   t.mock.method(globalThis, "fetch", async (address, options = {}) => {
     const url = new URL(String(address)), method = options.method || "GET";
@@ -99,6 +99,8 @@ async function fixture(t, env = {}) {
       note.status='executing'; return json([note]);
     }
     assert.ok(Object.hasOwn(tables, name), `Unexpected table ${name}`);
+    const databaseFailure = state.databaseFailures.get(`${method}:${name}`);
+    if (databaseFailure) return json({ code: databaseFailure.code, message: "PRIVATE-DATABASE-DETAIL" }, databaseFailure.status);
     if (state.faults.has(`${method}:${name}`)) return json({ error: "Injected failure" }, 503);
     const matches = (row) => [...url.searchParams].every(([key, value]) => {
       if (["select", "order", "limit"].includes(key)) return true;
@@ -228,6 +230,35 @@ test("Phase 1 document proof with simulated providers (not a live LINE/deploymen
       if (target === "POST:tool_calls") assert.equal(f.state.modelCalls, 1, "Do not continue the model loop without persisted evidence");
     });
   }
+
+  await t.test("read-only database writes fail closed with a fixed classification and no model work", async (t) => {
+    const f = await fixture(t);
+    await f.activate();
+    f.state.databaseFailures.set("POST:agent_runs", { code: "25006", status: 503 });
+    const ctx = { lineUserId: "local-knc-user", clientAccountId: 1, department: "sales", allowedTools: [] };
+    const reply = await f.gateway.runAgent(ctx, "Read my document", f.tables.agent_registry[0]);
+    assert.equal(ctx.runStatus, "error");
+    assert.equal(ctx.failureCode, "database_read_only");
+    assert.equal(f.state.modelCalls, 0);
+    assert.equal(f.tables.agent_runs.some((run) => run.status === "completed"), false);
+    assert.doesNotMatch(reply, /completed|notified|PRIVATE-DATABASE-DETAIL/i);
+  });
+
+  await t.test("connection-pool exhaustion cannot become an empty or invented document success", async (t) => {
+    const f = await fixture(t);
+    await f.activate();
+    f.state.documentCode = "DOC-POOL-TEST";
+    f.state.databaseFailures.set("GET:client_documents", { code: "PGRST003", status: 504 });
+    const ctx = { lineUserId: "local-knc-user", clientAccountId: 1, department: "sales", allowedTools: [] };
+    const reply = await f.gateway.runAgent(ctx, "Read my document", f.tables.agent_registry[0]);
+    assert.equal(ctx.runStatus, "error");
+    assert.equal(ctx.failureCode, "database_connection_exhausted");
+    assert.equal(f.tables.agent_runs[0].status, "error");
+    assert.equal(f.tables.agent_runs[0].error, "database_connection_exhausted");
+    assert.equal(f.tables.tool_calls[0].status, "error");
+    assert.equal(f.tables.tool_calls[0].output.failure_code, "database_connection_exhausted");
+    assert.doesNotMatch(reply, /DOC-POOL-TEST|successfully completed|PRIVATE-DATABASE-DETAIL/i);
+  });
 
   for (const target of ["POST:client_documents", "storage", "PATCH:client_documents"]) {
     await t.test(`${target} failure does not claim a confirmed upload`, async (t) => {

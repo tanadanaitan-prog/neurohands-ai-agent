@@ -25,11 +25,11 @@ test("current release-control pack is valid, incomplete, and release gated", () 
   assert.equal(validation.gateSatisfied, false);
   assert.deepEqual(register.controls.map((control) => control.id), EXPECTED_IDS);
   assert.deepEqual(validation.summary, {
-    pass: 2,
-    partial: 10,
+    pass: 4,
+    partial: 8,
     missing: 0,
-    incomplete: 10,
-    partialOrMissing: 10,
+    incomplete: 8,
+    partialOrMissing: 8,
   });
   assert.equal(register.releaseGate.releaseAccepted, false);
   assert.equal(register.controls.every((control) => control.releaseAccepted === false), true);
@@ -39,10 +39,16 @@ test("current release-control pack is valid, incomplete, and release gated", () 
   assert.equal(strict.schemaValid, true);
   assert.equal(strict.ok, false);
   assert.equal(strict.releaseGate, "fail");
-  assert.equal(strict.counts.partialOrMissing, 10);
-  assert.deepEqual(strict.machineEvidence.verifiedControls, ["C01", "C02"]);
-  assert.equal(strict.machineEvidence.verifiedControlCount, 2);
-  assert.equal(strict.machineEvidence.unverifiedControlCount, 10);
+  assert.equal(strict.counts.partialOrMissing, 8);
+  assert.deepEqual(strict.machineEvidence.verifiedControls, ["C01", "C02", "C11", "C12"]);
+  assert.equal(strict.machineEvidence.verifiedControlCount, 4);
+  assert.equal(strict.machineEvidence.unverifiedControlCount, 8);
+  assert.equal(strict.machineEvidence.controls.C11.probes[0].passingTests, 6);
+  assert.equal(strict.machineEvidence.controls.C11.probes[0].requiredPassingTests, 6);
+  assert.equal(strict.machineEvidence.controls.C11.probes[0].expectedTestCount, 6);
+  assert.equal(strict.machineEvidence.controls.C12.probes[0].passingTests, 9);
+  assert.equal(strict.machineEvidence.controls.C12.probes[0].requiredPassingTests, 9);
+  assert.equal(strict.machineEvidence.controls.C12.probes[0].expectedTestCount, 9);
 
   const audit = checkReleaseControls({ allowIncomplete: true });
   assert.equal(audit.schemaValid, true);
@@ -77,10 +83,16 @@ test("editing every status and acceptance field cannot bypass machine-bound rele
     assert.equal(strict.schemaValid, true);
     assert.equal(strict.releaseAccepted, true);
     assert.equal(strict.machineEvidence.gateSatisfied, false);
-    assert.deepEqual(strict.machineEvidence.verifiedControls, ["C01", "C02"]);
-    assert.equal(strict.machineEvidence.unverifiedControlCount, 10);
+    assert.deepEqual(strict.machineEvidence.verifiedControls, ["C01", "C02", "C11", "C12"]);
+    assert.equal(strict.machineEvidence.unverifiedControlCount, 8);
     assert.equal(strict.releaseGate, "fail");
     assert.equal(strict.ok, false);
+    assert.match(strict.errors.join("\n"), /C03 is marked pass without a passing deterministic machine probe/);
+
+    const audit = checkReleaseControls({ filePath, allowIncomplete: true });
+    assert.equal(audit.schemaValid, true);
+    assert.equal(audit.ok, false, "allow-incomplete cannot excuse an unsupported pass label");
+    assert.match(audit.errors.join("\n"), /marked pass without a passing deterministic machine probe/);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -129,9 +141,9 @@ test("CLI fails normally and succeeds only for explicit incomplete-pack inspecti
   const strictResult = JSON.parse(strict.stdout);
   assert.equal(strictResult.schemaValid, true);
   assert.equal(strictResult.releaseGate, "fail");
-  assert.equal(strictResult.counts.pass, 2);
-  assert.equal(strictResult.counts.partialOrMissing, 10);
-  assert.deepEqual(strictResult.machineEvidence.verifiedControls, ["C01", "C02"]);
+  assert.equal(strictResult.counts.pass, 4);
+  assert.equal(strictResult.counts.partialOrMissing, 8);
+  assert.deepEqual(strictResult.machineEvidence.verifiedControls, ["C01", "C02", "C11", "C12"]);
   assert.equal(strictResult.machineEvidence.gateSatisfied, false);
 
   const audit = spawnSync(process.execPath, [script, "--allow-incomplete"], { encoding: "utf8" });

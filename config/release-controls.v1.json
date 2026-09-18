@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.0.0",
-  "registerVersion": "2026-09-18.1",
+  "registerVersion": "2026-09-18.6",
   "reviewedOn": "2026-09-18",
   "scope": "local_release_control_evidence",
   "releaseGate": {
     "releaseAccepted": false,
-    "reason": "Only two of twelve controls have exact local pass evidence. No control is accepted for release or verified against private account settings."
+    "reason": "Four of twelve controls have exact local pass evidence. No control is accepted for release or verified against private account settings."
   },
   "expectedSummary": {
-    "pass": 2,
-    "partial": 10,
+    "pass": 4,
+    "partial": 8,
     "missing": 0,
-    "incomplete": 10,
+    "incomplete": 8,
     "releaseAccepted": false
   },
   "controls": [
@@ -106,14 +106,19 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "test/admission-control.test.js",
-          "locator": "an alert remains distinct from a hard limit",
-          "claim": "The controller returns ALLOWED_WITH_ALERT without treating an alert as a hard stop."
+          "path": "test/allowance-continuity.test.js",
+          "locator": "C03: successful accepted work sends one idempotent threshold alert with required evidence",
+          "claim": "A verified settlement can claim and deliver exactly one bounded threshold alert containing the verified allowance evidence without representing the alert as a spending stop."
         },
         {
-          "path": "docs/SOFTWARE_PASSPORTS.md",
-          "locator": "safe degraded reply and founder alert",
-          "claim": "The repository records that the founder-alert handler is not connected."
+          "path": "test/allowance-continuity.test.js",
+          "locator": "C03: failed founder delivery is recorded once without a delivery claim or retry loop",
+          "claim": "A failed founder delivery is recorded once and cannot become a false delivered receipt or automatic retry loop."
+        },
+        {
+          "path": "src/lib/model-dispatch-lifecycle.js",
+          "locator": "optional continuity runtime seam",
+          "claim": "The local model lifecycle can invoke the bounded continuity runtime only through an injected, disabled-by-default boundary."
         }
       ],
       "passCriteria": [
@@ -130,7 +135,7 @@
           "then": "The failure is recorded without a false delivery claim or an unauthorized retry loop."
         }
       ],
-      "remainingGap": "Only the admission decision code exists; no founder notification or deduplication path is connected or tested.",
+      "remainingGap": "The local notification and deduplication boundary is tested but remains inactive; no production durable store, notifier or privately verified founder destination is connected.",
       "manualOrLiveRequirements": [
         "Approve the exact alert wording and destination privately.",
         "Perform one bounded delivery check on the inactive test path after local fault tests pass."
@@ -143,19 +148,19 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "test/admission-control.test.js",
-          "locator": "hard-limit frontline enters continuity mode",
-          "claim": "The controller returns CONTINUITY_HARD_LIMIT for verified exhaustion."
+          "path": "test/allowance-continuity.test.js",
+          "locator": "C04: optional exhausted work stops before transport without fallback or provider change",
+          "claim": "Verified exhaustion denies optional work before any model transport, paid fallback or provider substitution."
         },
         {
-          "path": "test/production-admission.test.js",
-          "locator": "an unavailable durable store degrades frontline and operator without permitting dispatch",
-          "claim": "An unavailable durable store cannot authorize an external dispatch."
+          "path": "test/allowance-continuity.test.js",
+          "locator": "C04: exhausted Frontline records a static response, alerts once and never dispatches",
+          "claim": "The local boundary records non-completion, exposes only the configured static continuity response, alerts once and makes zero model calls."
         },
         {
-          "path": "docs/SOFTWARE_PASSPORTS.md",
-          "locator": "production caller must implement",
-          "claim": "The approved degraded response and alert are recorded as unfinished."
+          "path": "test/allowance-continuity.test.js",
+          "locator": "C04: storage failure still denies transport and cannot invent an alert delivery",
+          "claim": "A continuity storage failure remains closed and cannot invent either completion or founder delivery."
         }
       ],
       "passCriteria": [
@@ -172,7 +177,7 @@
           "then": "The application returns the approved static continuity response, records the reason, alerts the founder once, and never claims the requested work completed."
         }
       ],
-      "remainingGap": "The application does not execute or verify the continuity response and founder-alert behavior.",
+      "remainingGap": "The application boundary is implemented and tested locally but remains inactive; the exact production response, durable adapters, founder destination and private account enforcement are not approved or connected.",
       "manualOrLiveRequirements": [
         "Approve the static continuity response before a LINE test.",
         "Confirm privately that no paid fallback or overage path is enabled."
@@ -227,14 +232,24 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "test/pilot-proof.test.js",
-          "locator": "failure never produces a completed run or a notification claim",
-          "claim": "Generic database failures do not become completed agent runs or notification claims."
+          "path": "test/database-failures.test.js",
+          "locator": "database failures use bounded fixed classifications",
+          "claim": "Read-only, connection exhaustion, timeout, unavailable and generic failures map to fixed bounded codes without exposing provider response text."
         },
         {
-          "path": "test/gateway.test.js",
-          "locator": "webhook acknowledgment waits for a durable receipt and rejects failed persistence",
-          "claim": "LINE intake is not acknowledged when durable persistence fails."
+          "path": "test/pilot-proof.test.js",
+          "locator": "read-only database writes fail closed with a fixed classification and no model work",
+          "claim": "A read-only write rejection cannot create a run, dispatch a model or claim completion."
+        },
+        {
+          "path": "test/pilot-proof.test.js",
+          "locator": "connection-pool exhaustion cannot become an empty or invented document success",
+          "claim": "A PGRST003 document read records a fixed failure, returns the static safe response and cannot produce a completed run."
+        },
+        {
+          "path": "test/webhook-inbox.test.js",
+          "locator": "timeouts and LINE delivery failures retain useful diagnostics without raw error details",
+          "claim": "The durable webhook inbox preserves fixed database_read_only and database_connection_exhausted codes without raw database details."
         }
       ],
       "passCriteria": [
@@ -251,7 +266,7 @@
           "then": "The application does not substitute an empty or invented result and returns the approved safe response with a bounded failure classification."
         }
       ],
-      "remainingGap": "Generic HTTP failures are covered, but read-only and connection-exhaustion conditions are not represented and tested distinctly.",
+      "remainingGap": "Deterministic application behavior is covered locally, but the customer-facing safe response is hardcoded and has no versioned founder approval evidence. Private live Supabase limits and provider-side exhaustion behavior also remain unverified.",
       "manualOrLiveRequirements": [
         "After deterministic fault injection passes, confirm applicable Supabase limits and exhaustion behavior privately.",
         "Use an isolated branch or disposable project for any provider-behavior check."
@@ -264,14 +279,19 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "scripts/langgraph-lab.mjs",
-          "locator": "automatic tracing is disabled",
-          "claim": "Automatic tracing is forced off and export requires an explicit synthetic command."
+          "path": "test/optional-trace-export.test.js",
+          "locator": "disabled, rejected, and timed-out optional exports preserve the customer result and mandatory audit",
+          "claim": "Disabled, rejected and bounded timeout outcomes leave the safe customer result and mandatory audit unchanged without retrying."
         },
         {
-          "path": "test/langsmith-admission.test.js",
-          "locator": "explicit LangSmith trace stops before upload while private allowance is unresolved",
-          "claim": "An optional trace command stops before upload when account capacity is unresolved."
+          "path": "test/optional-trace-export.test.js",
+          "locator": "mandatory audit failure blocks a consequential action and skips optional tracing",
+          "claim": "A consequential action remains blocked when its mandatory Neurohands audit cannot be preserved, regardless of optional tracing."
+        },
+        {
+          "path": "test/optional-trace-export.test.js",
+          "locator": "a transport that ignores abort is attempted once and remains uncertain after late completion",
+          "claim": "A non-cooperative trace transport is attempted once and remains explicitly uncertain rather than being retried or claimed complete."
         }
       ],
       "passCriteria": [
@@ -288,7 +308,7 @@
           "then": "The action remains blocked even if optional tracing is available."
         }
       ],
-      "remainingGap": "No test injects an unreachable tracing client while a complete customer workflow runs.",
+      "remainingGap": "The optional export boundary is verified locally but is not wired into a real customer workflow; the private LangSmith allowance, retention and account settings remain unverified.",
       "manualOrLiveRequirements": [
         "Privately verify trace allowance, retention and overage settings before any real export.",
         "Keep customer content out of the bounded synthetic trial."
@@ -301,19 +321,19 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "src/lib/admission-control.js",
-          "locator": "redactTracePayload",
-          "claim": "A deterministic redaction function exists for credential fields, signed URLs, activation codes and LINE identifiers."
+          "path": "test/optional-trace-export.test.js",
+          "locator": "the actual outbound transport receives only the bounded redacted trace",
+          "claim": "The export boundary redacts credential, signed-link, activation, identity and private-data sentinels before its captured outbound transport."
         },
         {
-          "path": "test/admission-control.test.js",
-          "locator": "trace redaction removes credentials, signed URLs, activation codes, and LINE identifiers",
-          "claim": "The standalone redactor removes fixed sensitive sentinels."
+          "path": "test/optional-trace-export.test.js",
+          "locator": "the installed LangSmith client sends one redacted HTTP request through a captured offline transport",
+          "claim": "The installed LangSmith client receives only a locally captured redacted request and performs exactly one offline transport attempt."
         },
         {
-          "path": "scripts/langgraph-lab.mjs",
-          "locator": "runTraceExport",
-          "claim": "The current exporter uses fixed synthetic input but does not invoke the standalone redactor."
+          "path": "test/optional-trace-export.test.js",
+          "locator": "private document content is denied before transport instead of being relabelled",
+          "claim": "Recognized private-document fields and unsafe JavaScript structures are denied before transport rather than being relabelled as synthetic or redacted evidence."
         }
       ],
       "passCriteria": [
@@ -330,7 +350,7 @@
           "then": "Export is denied rather than relabeling or partially exposing the content."
         }
       ],
-      "remainingGap": "The tested redactor is not connected to the actual LangSmith export boundary.",
+      "remainingGap": "The local exporter rejects recognized private-document fields and unsafe JavaScript structures, but it does not semantically classify arbitrary private text placed in a generic field. No real customer path or private-data export is approved, connected or release-accepted.",
       "manualOrLiveRequirements": [
         "Approve the trace data classes and redaction policy before any real export.",
         "Inspect one captured synthetic trace payload before enabling the bounded trial."
@@ -343,14 +363,19 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "test/admission-control.test.js",
-          "locator": "irreversible work requires founder approval, idempotency, and recovery evidence",
-          "claim": "The generic controller denies irreversible work without all three required facts."
+          "path": "test/deployment-approval.test.js",
+          "locator": "an exact durable founder claim is audited before one exact commit is deployed",
+          "claim": "A founder-approved, exact 40-hex commit snapshot is durably claimed and audited before one injected deployment adapter call."
         },
         {
-          "path": "config/software-passports.v1.json",
-          "locator": "codex.permissions.selfDeployAllowed",
-          "claim": "The Codex passport declares that self-deployment is not allowed."
+          "path": "test/deployment-approval.test.js",
+          "locator": "missing, wrong, expired, used, conflicting and uncertain approvals make zero deployment calls",
+          "claim": "Missing, changed, expired, consumed, conflicting and uncertain approval outcomes remain closed with zero adapter calls."
+        },
+        {
+          "path": "test/deployment-approval.test.js",
+          "locator": "a replayed durable claim cannot execute deployment a second time",
+          "claim": "A consumed approval cannot be replayed for a second deployment."
         }
       ],
       "passCriteria": [
@@ -367,7 +392,7 @@
           "then": "The request is denied until a new exact-version approval is recorded."
         }
       ],
-      "remainingGap": "A declaration and generic controller test are not enforced GitHub and Railway access controls.",
+      "remainingGap": "The exact-commit approval boundary is implemented locally, but its expected Supabase RPC/table, founder approval UI and GitHub/Railway deployment adapters are not implemented or connected.",
       "manualOrLiveRequirements": [
         "Privately verify repository and deployment permissions for the release identity.",
         "Require founder review of the exact commit before a controlled inactive-path release."
@@ -380,14 +405,19 @@
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "test/software-passports.test.js",
-          "locator": "secret scanning covers provider keys, JWTs, and URL credentials",
-          "claim": "Credential-like values are rejected from the tracked Software Passport register."
+          "path": "test/untrusted-execution-boundary.test.js",
+          "locator": "C10 local evidence: the fixed probe receives no secrets, customer data, real transport or tools",
+          "claim": "A fixed adversarial child receives an allowlisted environment, no application tools or transport, and cannot read its synthetic secret file, write artifacts or start child processes."
         },
         {
-          "path": "src/lib/software-passports.js",
-          "locator": "scanForSecrets",
-          "claim": "The deterministic register scanner recognizes fixed credential and signed-link patterns."
+          "path": "test/untrusted-execution-boundary.test.js",
+          "locator": "C10-PC2: a requested credential is rejected before any child command starts",
+          "claim": "Any requested child environment value, including a credential sentinel, is rejected before the adversarial child can start."
+        },
+        {
+          "path": "docs/UNTRUSTED_EXECUTION_BOUNDARY.md",
+          "locator": "What this does not prove",
+          "claim": "The evidence explicitly records that the local VM and Node permission model are not an operating-system or outbound-network isolation boundary."
         }
       ],
       "passCriteria": [
@@ -404,7 +434,7 @@
           "then": "The test fails visibly before any untrusted command is accepted for release."
         }
       ],
-      "remainingGap": "Static secret scanning does not prove that an untrusted execution environment cannot access runtime credentials.",
+      "remainingGap": "The fixed local probe has application-layer evidence only. The actual untrusted pull-request environment is not an ephemeral OS-isolated runner with outbound network denied, and Node reports osNetworkIsolated=false.",
       "manualOrLiveRequirements": [
         "Review hosted workflow permissions and secret availability before enabling pull-request automation.",
         "Keep production credentials out of all untrusted test jobs."
@@ -413,23 +443,28 @@
     {
       "id": "C11",
       "name": "Provider API or SDK changes",
-      "status": "partial",
+      "status": "pass",
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "package.json",
-          "locator": "pinned dependency versions and check, test, and build commands",
-          "claim": "The repository pins material JavaScript dependencies and has deterministic verification commands."
+          "path": "config/provider-contracts.v1.json",
+          "locator": "pinned provider and SDK contract register",
+          "claim": "The supported Gemini, OpenAI-compatible and installed SDK interfaces are explicit and version pinned."
         },
         {
-          "path": "test/gateway.test.js",
-          "locator": "gateway regression checks",
-          "claim": "Mocked gateway contracts reject several malformed service responses."
+          "path": "scripts/check-provider-contracts.js",
+          "locator": "offline provider and installed SDK compatibility check",
+          "claim": "The checker verifies exact package locks and required installed interfaces without a production transport call."
         },
         {
-          "path": "test/provider-failures.test.js",
-          "locator": "generic, malformed and unknown responses do not claim billing or authentication failures",
-          "claim": "Provider failure parsing does not invent a recognized account state from an unknown response."
+          "path": "test/provider-contracts.test.js",
+          "locator": "an intentional provider API contract change exits nonzero and names the blocked interface",
+          "claim": "An unsupported API version or removed SDK method makes the compatibility pack fail safely before dispatch."
+        },
+        {
+          "path": "src/lib/provider-contracts.js",
+          "locator": "server-owned provider response validators",
+          "claim": "The production server and compatibility fixtures use the same strict request encoders and response validators for Gemini and OpenAI-compatible providers."
         }
       ],
       "passCriteria": [
@@ -446,7 +481,7 @@
           "then": "It exits nonzero, names the affected service and interface safely, and blocks release before production dispatch."
         }
       ],
-      "remainingGap": "Malformed runtime responses are tested, but an intentional SDK or API contract change is not a release-gating test.",
+      "remainingGap": "The offline release gate is complete. Provider deprecation notices and any bounded staging check remain human release evidence and are not inferred from local compatibility.",
       "manualOrLiveRequirements": [
         "Review provider deprecation notices before a release that changes an integration.",
         "Use a bounded staging check only after local contract fixtures pass."
@@ -455,23 +490,28 @@
     {
       "id": "C12",
       "name": "Backup restore",
-      "status": "partial",
+      "status": "pass",
       "releaseAccepted": false,
       "evidence": [
         {
-          "path": "config/software-passports.v1.json",
-          "locator": "supabase.recoveryChange.databaseRestoreTested and storageRestoreTested",
-          "claim": "The register records database restoration as tested and original-object restoration as untested."
+          "path": "test/isolated-backup-restore.test.js",
+          "locator": "C12 restores scoped records, audit evidence and original private objects into clean isolated destinations",
+          "claim": "One fictional tenant's exact records, structured tenant-bound audit rows and original object are manifested by identity, exact client path, byte length and SHA-256, then restored into clean isolated database and object destinations."
         },
         {
-          "path": "test/gateway.test.js",
-          "locator": "restored document parser handles CSV and the updated Excel dependency",
-          "claim": "Document parsing works on fixed local fixtures but is not a full-system restoration test."
+          "path": "test/isolated-backup-restore.test.js",
+          "locator": "a missing source object fails visibly before a backup can be claimed",
+          "claim": "A missing original, tampered bundle or destination-altered object fails visibly before a verified restoration can be claimed."
         },
         {
-          "path": "test/phase1-db.test.js",
-          "locator": "Phase 1 recovery and activation transaction in isolated PostgreSQL",
-          "claim": "Recovered database behavior and browser restrictions are exercised in isolated PostgreSQL."
+          "path": "test/isolated-backup-restore.test.js",
+          "locator": "exact rows and objects restore, permissions hold, and the authorized app answer comes from the original",
+          "claim": "Browser roles remain denied, cross-client access stops before object reading, and the authorized restored original produces the verified 400.00 THB answer with a new audit record."
+        },
+        {
+          "path": "test/isolated-backup-restore.test.js",
+          "locator": "a post-restore record mismatch cleans both destinations and permits a retry",
+          "claim": "A post-restore mismatch cleans and verifies both isolated destinations before a retry can succeed."
         }
       ],
       "passCriteria": [
@@ -488,10 +528,10 @@
           "then": "Authorized access succeeds, cross-client access fails, and the application produces the verified answer from the restored original."
         }
       ],
-      "remainingGap": "No single test restores database records and original Storage objects, rechecks permissions, and executes the application workflow together.",
+      "remainingGap": "The complete proof is isolated and fictional. It does not prove a production/full-project export, actual Supabase Storage adapter, private export security or a human-operated disaster-recovery exercise.",
       "manualOrLiveRequirements": [
-        "Define the private export location and retention policy without committing customer data.",
-        "After the isolated proof passes, schedule a human-owned recovery exercise for the approved test environment."
+        "Define the private export location, encryption, access and retention policy without committing customer data.",
+        "Implement and review actual Supabase database and Storage export adapters before a human-owned recovery exercise in an approved test environment."
       ]
     }
   ]

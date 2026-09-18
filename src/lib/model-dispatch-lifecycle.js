@@ -65,6 +65,43 @@ function transitionResult(value, fallbackCode) {
   });
 }
 
+function publicAlert(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const states = new Set([
+    "disabled", "not_required", "invalid_alert_context", "invalid_allowance_evidence",
+    "claim_failed", "already_delivered", "prior_failure", "in_progress", "uncertain",
+    "idempotency_conflict", "delivery_failed", "delivery_unconfirmed",
+    "failure_recording_failed", "delivery_recording_uncertain", "continuity_record_unconfirmed",
+    "claim_timeout", "delivery_timeout", "scheduled", "delivered",
+  ]);
+  return Object.freeze({
+    state: states.has(value.state) ? value.state : "invalid_alert_result",
+    delivered: value.delivered === true,
+    attempted: value.attempted === true,
+    newlyDelivered: value.newlyDelivered === true,
+    failureRecorded: value.failureRecorded === true,
+  });
+}
+
+function publicContinuity(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return Object.freeze({
+    handled: value.handled === true,
+    completed: false,
+    ...(typeof value.response === "string" && value.response.trim()
+      ? { response: value.response.slice(0, 4900) }
+      : {}),
+    reasonRecorded: value.reasonRecorded === true,
+    ...(value.alert ? { alert: publicAlert(value.alert) } : {}),
+  });
+}
+
+async function invokeControl(runtime, method, input) {
+  if (!runtime || runtime.enabled !== true || typeof runtime[method] !== "function") return null;
+  try { return await runtime[method](input); }
+  catch { return null; }
+}
+
 async function safelySettle(lease, outcome) {
   try {
     return transitionResult(await lease.settle({ outcome }), "INVALID_SETTLEMENT_RESULT");
@@ -73,7 +110,10 @@ async function safelySettle(lease, outcome) {
   }
 }
 
-function lifecycleResult({ ok, code, phase, decision, outcome = null, dispatch = null, settlement = null, value }) {
+function lifecycleResult({
+  ok, code, phase, decision, outcome = null, dispatch = null, settlement = null,
+  value, alert = null, continuity = null,
+}) {
   return Object.freeze({
     ok,
     code,
@@ -82,6 +122,8 @@ function lifecycleResult({ ok, code, phase, decision, outcome = null, dispatch =
     outcome,
     dispatch,
     settlement,
+    ...(alert ? { alert: publicAlert(alert) } : {}),
+    ...(continuity ? { continuity: publicContinuity(continuity) } : {}),
     ...(ok === true ? { value } : {}),
   });
 }
@@ -127,6 +169,8 @@ async function dispatchAdmittedModel({
   runId = null,
   requestFingerprint,
   execute,
+  continuityRuntime = null,
+  continuityContext = null,
 } = {}) {
   if (!isCallable(admission, "acquire")) throw new TypeError("A production admission gate is required");
   if (typeof execute !== "function") throw new TypeError("A model transport function is required");
@@ -147,11 +191,20 @@ async function dispatchAdmittedModel({
   }
 
   if (!lease || lease.allowed !== true) {
+    const decision = publicDecision(lease);
+    const continuity = decision.code === "CONTINUITY_HARD_LIMIT"
+      ? await invokeControl(continuityRuntime, "handleHardLimit", {
+          ...(continuityContext && typeof continuityContext === "object" ? continuityContext : {}),
+          decision,
+          actionKey,
+        })
+      : null;
     return lifecycleResult({
       ok: false,
-      code: typeof lease?.code === "string" ? lease.code : "ADMISSION_DENIED",
+      code: decision.code,
       phase: "admission",
       decision: lease,
+      continuity,
     });
   }
 
@@ -207,6 +260,19 @@ async function dispatchAdmittedModel({
       : "failed_after_dispatch";
   const settlement = await safelySettle(lease, settlementOutcome);
   const completed = outcome.public.type === "completed" && settlement.ok === true;
+  let alert = null;
+  if (completed && lease.code === "ALLOWED_WITH_ALERT" && continuityRuntime?.enabled === true &&
+      typeof continuityRuntime.afterCompleted === "function") {
+    alert = Object.freeze({ state: "scheduled" });
+    // Founder delivery is optional follow-up work. It must never hold an
+    // already-settled customer result; the runtime owns its bounded adapters,
+    // durable claim and reconciliation state.
+    void invokeControl(continuityRuntime, "afterCompleted", {
+      ...(continuityContext && typeof continuityContext === "object" ? continuityContext : {}),
+      decision: publicDecision(lease),
+      actionKey,
+    });
+  }
   return lifecycleResult({
     ok: completed,
     code: settlement.ok !== true
@@ -221,6 +287,7 @@ async function dispatchAdmittedModel({
     outcome: outcome.public,
     dispatch,
     settlement,
+    alert,
     ...(completed ? { value: outcome.value } : {}),
   });
 }

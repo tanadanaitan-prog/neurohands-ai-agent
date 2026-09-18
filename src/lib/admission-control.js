@@ -318,8 +318,8 @@ async function admitPassportAction(action, options = {}) {
 }
 
 function redactTracePayload(value) {
-  const sensitiveKey = /(?:api[_-]?key|authorization|password|secret|token|signed[_-]?url|activation[_-]?code|line[_-]?(?:id|user))/i;
-  const sensitiveValue = /(?:\blsv2_[A-Za-z0-9_-]+|\bsk-[A-Za-z0-9_-]+|\bsb_secret_[A-Za-z0-9_-]+|Bearer\s+\S+|https?:\/\/\S+[?&](?:t|token|signature|key)=\S+)/gi;
+  const sensitiveKey = /(?:^|[_-])(?:api[_-]?key|authorization|password|secret|credential|private[_-]?key|signed[_-]?url|activation[_-]?code|line[_-]?(?:id|user(?:[_-]?id)?)|(?:access|refresh|id|session)[_-]?token)(?=$|[_-])|^(?:token|bearer)$/i;
+  const sensitiveValue = /(?:\bBearer\s+[A-Za-z0-9._~+/=-]{12,}|\blsv2_[A-Za-z0-9_-]{12,}|\bsk-[A-Za-z0-9_-]{16,}|\bsb_secret_[A-Za-z0-9_-]{12,}|\bAIza[A-Za-z0-9_-]{20,}|\bgsk_[A-Za-z0-9]{16,}|\bghp_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]{20,}|\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}|\bNH-[A-Za-z0-9_-]{6,}|\b[UCR][0-9a-f]{32}\b|https?:\/\/\S+[?&](?:t|token|signature|key|X-Amz-(?:Signature|Credential|Security-Token))=\S+)/gi;
   if (Array.isArray(value)) return value.map(redactTracePayload);
   if (value && typeof value === "object") {
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, sensitiveKey.test(key) ? "[REDACTED]" : redactTracePayload(child)]));

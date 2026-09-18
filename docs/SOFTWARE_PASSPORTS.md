@@ -102,9 +102,12 @@ end-user request cannot supply those facts. Reservation amounts come from the
 versioned passport operation, and each decision records the register version,
 service, and passport digest.
 
-The controller returns a continuity decision only. A production caller must
-implement and verify the safe degraded reply and founder alert; those handlers
-are not connected in this milestone.
+The controller returns a continuity decision. The model lifecycle now has an
+optional local runtime boundary that can record a fixed continuity reply and
+send one idempotent founder alert through injected durable adapters. It does
+not activate itself: approval evidence bound to the exact reply, the private
+founder destination, durable store, and delivery adapter remain required before
+the server can enable it.
 
 An uncertain failure after dispatch is not refunded automatically. It stays in
 reconciliation state, because the external service may already have consumed
@@ -132,6 +135,11 @@ the request or completed the action.
   fingerprint, lane and run identity through a complete reserve, dispatch and
   settlement lifecycle. Replayed dispatches never call a provider again;
   unverified settlement never exposes a model answer.
+- The local alert/continuity boundary sends threshold alerts only after a
+  verified settlement. A hard-limit decision records non-completion, exposes
+  only the configured static reply, and performs no model transport. Failed or
+  uncertain founder delivery is never retried automatically or reported as
+  delivered.
 - `SOFTWARE_ADMISSION_ENABLED=false` is the only supported deployed setting for
   this milestone. In this mode the model seam preserves existing behavior and
   does not load passports, reserve capacity, resolve authority, or write an

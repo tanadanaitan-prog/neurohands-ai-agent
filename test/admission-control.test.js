@@ -377,6 +377,7 @@ test("trace redaction removes credentials, signed URLs, activation codes, and LI
       line_user_id: "U-private",
       safe: "fictional order 42",
       text: "Use sk-private-example-value-123456789 only in this test",
+      usage: { input_tokens: 12, output_tokens: 4, total_tokens: 16 },
     },
   });
   assert.equal(redacted.authorization, "[REDACTED]");
@@ -386,4 +387,5 @@ test("trace redaction removes credentials, signed URLs, activation codes, and LI
   assert.equal(redacted.nested.line_user_id, "[REDACTED]");
   assert.equal(redacted.nested.safe, "fictional order 42");
   assert.doesNotMatch(redacted.nested.text, /sk-private/);
+  assert.deepEqual(redacted.nested.usage, { input_tokens: 12, output_tokens: 4, total_tokens: 16 });
 });

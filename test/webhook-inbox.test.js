@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { PGlite } = require('@electric-sql/pglite');
 const { createWebhookInbox, currentWebhookEventId } = require('../src/lib/webhook-inbox');
+const { databaseOperationError, DATABASE_FAILURES } = require('../src/lib/database-failures');
 
 test('encrypted LINE inbox and recovery in isolated PostgreSQL', async (t) => {
   const pg = new PGlite();
@@ -97,6 +98,8 @@ test('encrypted LINE inbox and recovery in isolated PostgreSQL', async (t) => {
       ['diagnostic-timeout',new DOMException('secret-bearing URL and customer text','TimeoutError'),'request_timeout'],
       ['diagnostic-line',new Error('LINE reply rejected (401)'),'line_reply_401'],
       ['diagnostic-network',new TypeError('fetch failed',{cause:{code:'ECONNRESET',message:'private connection details'}}),'econnreset'],
+      ['diagnostic-db-read-only',databaseOperationError(DATABASE_FAILURES.READ_ONLY),'database_read_only'],
+      ['diagnostic-db-pool',databaseOperationError(DATABASE_FAILURES.CONNECTION_EXHAUSTED),'database_connection_exhausted'],
     ]) {
       const logs=[];
       const w=worker({logger:{error:(...args)=>logs.push(args)},handleEvent:async()=>{throw error;}});

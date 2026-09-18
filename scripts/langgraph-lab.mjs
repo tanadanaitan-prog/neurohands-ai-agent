@@ -5,9 +5,11 @@ import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import admissionControl from "../src/lib/admission-control.js";
+import optionalTraceTools from "../src/lib/optional-trace-export.js";
 import passportTools from "../src/lib/software-passports.js";
 
-const { admitPassportAction, createInMemoryCapacityStore } = admissionControl;
+const { admitPassportAction, createInMemoryCapacityStore, redactTracePayload } = admissionControl;
+const { exportOptionalTrace, issueFixedSyntheticTraceAuthority } = optionalTraceTools;
 const { loadPassportRegister } = passportTools;
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -112,47 +114,107 @@ async function trace(useModel = false, useAgent = false) {
     process.exitCode = 1;
     return;
   }
-  const dispatched = await gate.markDispatched();
-  if (!dispatched.ok) {
-    console.error("LangSmith trace blocked because its capacity reservation could not be marked dispatched.");
-    process.exitCode = 1;
-    return;
-  }
+  const dispatchState = { marked: false };
   try {
-    await runTraceExport(useModel, useAgent);
-    await gate.settle({ outcome: process.exitCode ? "transport_uncertain" : "completed" });
+    const outcome = await runTraceExport(useModel, useAgent, {
+      beforeTransport: async () => {
+        const marked = await gate.markDispatched();
+        dispatchState.marked = marked.ok === true;
+        return marked;
+      },
+    });
+    await gate.settle({ outcome: outcome.settlement });
+    if (!outcome.ok) process.exitCode = 1;
   } catch (error) {
-    await gate.settle({ outcome: "transport_uncertain" });
+    await gate.settle({ outcome: dispatchState.marked ? "transport_uncertain" : "cancelled_before_dispatch" });
     throw error;
   }
 }
 
-async function runTraceExport(useModel = false, useAgent = false) {
+function classifyLangSmithError(error) {
+  const status = Number(error?.status ?? error?.statusCode);
+  const definite = Number.isInteger(status) && status >= 400 && status < 500 && ![408, 409, 425, 429].includes(status);
+  const safe = new Error("LangSmith export failed");
+  safe.traceOutcome = definite ? "failed_after_dispatch" : "transport_uncertain";
+  return safe;
+}
+
+async function runTraceExport(useModel = false, useAgent = false, { beforeTransport } = {}) {
   const { Client } = await import("langsmith");
-  const { LangChainTracer } = await import("@langchain/core/tracers/tracer_langchain");
   const prepared = useModel
     ? await prepareChat()
     : await import("../src/agent/graph.mjs");
   const settings = prepared.settings;
   const graph = useAgent ? (await import("../src/agent/team.mjs")).ariaGraph : prepared.graph;
   const projectName = process.env.LANGSMITH_PROJECT || "neurohands-local-test";
-  const client = new Client({ timeout_ms: 15000, tracingSamplingRate: 1 });
-  const tracer = new LangChainTracer({ client, projectName });
+  const client = new Client({
+    timeout_ms: 5_000,
+    callerOptions: { maxRetries: 0, maxConcurrency: 1 },
+    autoBatchTracing: false,
+    omitTracedRuntimeInfo: true,
+    tracingSamplingRate: 1,
+    // Defense in depth: the explicit boundary below redacts the complete run,
+    // and the SDK masks each final input/output/metadata section again before I/O.
+    anonymizer: redactTracePayload,
+  });
   const runId = randomUUID();
+  const startedAt = Date.now();
   const start = performance.now();
-  const result = await graph.invoke(useAgent ? agentInput : useModel ? chatInput : input, {
-    callbacks: [tracer],
-    runId,
+  const graphInput = useAgent ? agentInput : useModel ? chatInput : input;
+  // Finish the workflow without a tracing callback. Optional observability can
+  // therefore fail without changing or delaying the graph's answer.
+  const result = await graph.invoke(graphInput, {
     runName: useAgent ? "neurohands-local-aria-tool-check" : useModel ? "neurohands-local-model-check" : "neurohands-synthetic-connection-check",
-    tags: ["synthetic", useModel ? "local-llm" : "no-llm", "local-lab"],
-    metadata: { purpose: "connection-check", contains_customer_data: false },
   });
   const durationMs = performance.now() - start;
   if (useAgent && (result.metrics?.stoppedReason !== "completed" || !result.toolAudit?.some((item) => item.name === "get_order_status" && item.ok))) {
     throw new Error("The local agent tool test did not complete successfully.");
   }
   if (!useModel) assert.equal(result.messages.at(-1).content, expected);
-  await client.awaitPendingTraceBatches();
+  const reply = result.messages.at(-1);
+  const runName = useAgent ? "neurohands-local-aria-tool-check" : useModel ? "neurohands-local-model-check" : "neurohands-synthetic-connection-check";
+  const tracePayload = {
+    id: runId,
+    trace_id: runId,
+    name: runName,
+    run_type: "chain",
+    project_name: projectName,
+    start_time: startedAt,
+    end_time: Date.now(),
+    inputs: graphInput,
+    outputs: {
+      reply: reply?.content,
+      usage: reply?.usage_metadata || null,
+      toolAudit: useAgent ? result.toolAudit : undefined,
+    },
+    tags: ["synthetic", useModel ? "local-llm" : "no-llm", "local-lab"],
+    extra: { metadata: { purpose: "connection-check", data_class: "synthetic", contains_customer_data: false, contains_private_document: false } },
+  };
+  const authority = issueFixedSyntheticTraceAuthority(tracePayload);
+  if (!authority) {
+    console.error("The fixed synthetic trace did not receive trusted export authority. Optional export stopped before transport.");
+    return { ok: false, settlement: "cancelled_before_dispatch" };
+  }
+  const exportResult = await exportOptionalTrace({
+    enabled: true,
+    authority,
+    containsPrivateDocument: false,
+    timeoutMs: 6_000,
+    payload: tracePayload,
+    beforeTransport,
+    transport: async ({ body }) => {
+      try {
+        await client.createRun(body);
+        return { accepted: true, receiptId: runId };
+      } catch (error) {
+        throw classifyLangSmithError(error);
+      }
+    },
+  });
+  if (exportResult.status !== "exported") {
+    console.error(`The local graph worked, but optional LangSmith export stopped safely: ${exportResult.code}. No customer result was changed.`);
+    return { ok: false, settlement: exportResult.settlement };
+  }
 
   // A local answer is not proof of upload. Read this exact trace back.
   let saved;
@@ -174,8 +236,7 @@ async function runTraceExport(useModel = false, useAgent = false) {
   }
   if (!saved || saved.error) {
     console.error("The local graph worked, but its completed LangSmith trace was not verified. Check key expiry, workspace and endpoint in .env.langgraph.");
-    process.exitCode = 1;
-    return;
+    return { ok: false, settlement: "failed_after_dispatch" };
   }
   console.log(JSON.stringify({
     ...(useModel ? chatReport(result, durationMs, settings.model) : { status: "passed", reply: expected, modelCalls: 0 }),
@@ -185,6 +246,7 @@ async function runTraceExport(useModel = false, useAgent = false) {
     runId,
     inputType: "fixed synthetic message",
   }, null, 2));
+  return { ok: true, settlement: "completed" };
 }
 
 async function studio() {
