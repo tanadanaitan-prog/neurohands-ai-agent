@@ -39,7 +39,7 @@ test("local model settings reject remote hosts, credentials and cloud tags", () 
   for (const model of ["qwen3:cloud", "gpt-oss:120b-cloud", "qwen3\nsecret"]) {
     assert.throws(() => getLocalChatConfig({ LAB_OLLAMA_MODEL: model }), /installed local model/);
   }
-  assert.deepEqual(getLocalChatConfig({}), { baseUrl: "http://127.0.0.1:11434", model: "qwen3:1.7b" });
+  assert.deepEqual(getLocalChatConfig({}), { baseUrl: "http://127.0.0.1:11434", model: "qwen3.5:4b" });
 });
 
 test("Studio raw text blocks are accepted across turns and preserve message IDs", async () => {

@@ -1,15 +1,15 @@
 # Neurohands local model chat and LangGraph test
 
-**Agent tools are now available in separate graphs.** Follow [the local agent guide](LOCAL_AGENT_LAB.md) for Concierge, Aria, Jarvis and the benchmark. This document describes the original `neurohands_chat` comparison baseline and its installation. The prepared laptop now uses a dedicated Ollama endpoint on port `11435`; preserve that value in your private file.
+**Agent tools are now available in separate graphs.** Follow [the local agent guide](LOCAL_AGENT_LAB.md) for Concierge, Aria, Jarvis and the benchmark. This document describes the `neurohands_chat` comparison baseline and its installation. The prepared laptop now uses the locally installed Ollama desktop runtime on port `11434`.
 
-This lab lets you test one AI model on your computer through LangSmith Studio. The model is `qwen3:1.7b`, run by Ollama. It can answer questions from its training and the recent messages included in your test conversation. It has no internet search, business tools, customer documents, or connection to the LINE Official Account.
+This lab lets you test one AI model on your computer through LangSmith Studio. The configured primary model is `qwen3.5:4b`, run by Ollama. It can answer questions from its training and the recent messages included in your test conversation. It has no internet search, business tools, customer documents, or connection to the LINE Official Account.
 
 ```text
 You type in Studio
         ↓
 LangGraph on your laptop
         ↓
-Ollama runs qwen3:1.7b on your laptop
+Ollama runs qwen3.5:4b on your laptop
         ↓
 The reply appears in Studio
 
@@ -44,7 +44,7 @@ npm ci
 Ollama and the downloaded model are separate local software, stored outside this repository. Copying the GitHub repository does not copy the model. If Ollama has not already been prepared on another computer, install it from [Ollama](https://ollama.com/download) and download the model using:
 
 ```powershell
-ollama pull qwen3:1.7b
+ollama pull qwen3.5:4b
 ```
 
 Downloading the model requires internet access and disk space. Running it uses your computer's memory and processing power. This local model route makes no paid model API request.
@@ -67,7 +67,7 @@ LANGSMITH_PROJECT=neurohands-local-test
 LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 LANGSMITH_WORKSPACE_ID=
 LANGSMITH_TRACING=false
-LAB_OLLAMA_MODEL=qwen3:1.7b
+LAB_OLLAMA_MODEL=qwen3.5:4b
 LAB_OLLAMA_BASE_URL=http://127.0.0.1:11434
 LAB_OLLAMA_EXE=
 ```
@@ -137,9 +137,26 @@ Studio may show an API-key or tracing/server compatibility warning in this lab. 
 
 Use `npm run lab:trace` to check the monitoring connection without a model, or `npm run lab:chat:trace` to check the synthetic model recording. These commands verify saved records separately from Studio's built-in viewer.
 
-If trace verification fails, check the key, its expiry, region and workspace ID. If chat fails but the echo works, check that Ollama is running locally and that `qwen3:1.7b` is downloaded. If Studio is disconnected, check that the `lab:studio` terminal is still running, then reopen the local Studio link.
+If trace verification fails, check the key, its expiry, region and workspace ID. If chat fails but the echo works, check that Ollama is running locally and that `qwen3.5:4b` is downloaded. If Studio is disconnected, check that the `lab:studio` terminal is still running, then reopen the local Studio link.
 
-## Verified local model chat: 16 September 2026
+## Current primary-model smoke test: 18 September 2026
+
+The private local configuration now selects `qwen3.5:4b` on the Ollama desktop
+runtime at `127.0.0.1:11434`. The bounded `npm run lab:chat` path disables
+thinking output, permits one model call, limits generation to 256 tokens, and
+does not upload the run to LangSmith.
+
+The fixed fictional arithmetic prompt returned the correct **120 baht** answer
+in 10,947 ms. Ollama reported 144 input tokens, 21 output tokens and 165 total
+tokens. The exact model digest and reservation are stored in
+`artifacts/benchmarks/2026-09-18-qwen35-smoke.json`.
+
+`llama3.2:3b` and `qwen3-embedding:0.6b` are installed, but installation alone
+does not establish checker quality, retrieval quality, workflow integration or
+production readiness. They remain disconnected candidates until separately
+tested against an accepted baseline.
+
+## Previous verified local-model baseline: 16 September 2026
 
 The model was installed and tested on this Windows laptop (AMD Ryzen 7 5825U, 15.4 GiB usable RAM). The official Ollama 0.34.1 runtime runs on loopback with cloud features disabled. Its CPU-capable files were extracted from the official Windows archive, verified against archive CRC values, and its executable has a valid Ollama Inc. signature. Unneeded CUDA libraries were excluded. Runtime files and model weights are outside the repository.
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "registerVersion": "2026-09-18.1",
+  "registerVersion": "2026-09-18.2",
   "reviewedOn": "2026-09-18",
   "policy": {
     "objective": "Reliable company answers, correct role routing, and verified LINE workflows at the lowest justified cost.",
@@ -744,7 +744,24 @@
         "evidenceStatus": "not_applicable"
       },
       "capacity": {
-        "installedModel": "qwen3:1.7b",
+        "installedModel": "qwen3.5:4b",
+        "installedModels": [
+          {
+            "name": "qwen3.5:4b",
+            "intendedRole": "primary_local_test",
+            "verification": "behavior_tested"
+          },
+          {
+            "name": "llama3.2:3b",
+            "intendedRole": "candidate_independent_checker",
+            "verification": "installed_only"
+          },
+          {
+            "name": "qwen3-embedding:0.6b",
+            "intendedRole": "candidate_document_embedding",
+            "verification": "installed_only"
+          }
+        ],
         "measuredConcurrency": 1,
         "evidenceStatus": "behavior_tested"
       },
@@ -826,6 +843,16 @@
           "source": {
             "type": "repository",
             "value": "docs/NAMED_AGENT_WORKFLOW.md"
+          },
+          "checkedOn": "2026-09-18"
+        },
+        {
+          "id": "ollama.qwen35-smoke.2026-09-18",
+          "status": "behavior_tested",
+          "claim": "The configured qwen3.5:4b model completed one bounded local LangGraph arithmetic smoke test with provider-reported usage.",
+          "source": {
+            "type": "repository",
+            "value": "artifacts/benchmarks/2026-09-18-qwen35-smoke.json"
           },
           "checkedOn": "2026-09-18"
         }

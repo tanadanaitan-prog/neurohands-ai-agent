@@ -1,7 +1,8 @@
 # Neurohands connection matrix
 
 Production connection evidence was observed on 16 September 2026. The storage
-plan and staged-upload notes were updated on 17 September 2026. A connection
+plan and staged-upload notes were updated on 17 September 2026. The local
+Ollama boundary was rechecked on 18 September 2026. A connection
 means the named boundary has current evidence; it does not automatically give
 every agent permission to use that service.
 
@@ -12,7 +13,7 @@ every agent permission to use that service.
 | Railway -> Gemini -> LINE | Six post-repair runs returned usable Gemini HTTP 200 responses and completed their LINE webhook handlers | Connected; answer quality not yet accepted | Production agent runtime only |
 | Railway -> Supabase | `/ready` passes with required runtime configuration; the connected project is healthy and its private `neurohands-docs` bucket was inspected | Connected | Server-side scoped business tools; service credentials never enter prompts |
 | LangSmith Studio -> local LangGraph | `http://127.0.0.1:2024/info` and `/ok` return HTTP 200 | Connected while this laptop and Studio are running | Local synthetic lab only |
-| Local LangGraph -> Ollama | Dedicated Ollama `0.34.1` responds on `127.0.0.1:11435`; the Qwen model was used in the recorded benchmark | Connected while this laptop is running | Local synthetic lab only |
+| Local LangGraph -> Ollama | Ollama `0.34.2` responds on `127.0.0.1:11434`; `qwen3.5:4b` returned the correct fixed arithmetic answer through the bounded LangGraph path with 165 reported tokens | Connected while this laptop is running | Local synthetic lab only; Llama checking and embeddings are not yet connected |
 | Local lab -> LangSmith trace storage | One fixed synthetic Aria trace was uploaded and read back successfully | Connected for explicit synthetic traces | Ordinary chats and bulk benchmarks remain untraced |
 | Local named teams -> production LINE | No authenticated bridge or production deployment exists | Not connected | Must pass local permission, duplicate-action and workflow tests first |
 | Ollama -> production fallback | Railway cannot reach the laptop's loopback address | Not connected | Gemini currently carries production requests |

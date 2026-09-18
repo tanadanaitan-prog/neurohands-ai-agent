@@ -29,7 +29,7 @@ export function getLocalChatConfig(env = process.env) {
       || base.username || base.password || base.search || base.hash || base.pathname !== "/") {
     throw new Error("This lab only accepts a loopback Ollama URL without credentials, a path, or query parameters.");
   }
-  const model = env.LAB_OLLAMA_MODEL || "qwen3:1.7b";
+  const model = env.LAB_OLLAMA_MODEL || "qwen3.5:4b";
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,100}$/.test(model) || /cloud/i.test(model)) {
     throw new Error("LAB_OLLAMA_MODEL must name an installed local model; cloud models are disabled in this lab.");
   }

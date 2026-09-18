@@ -73,7 +73,7 @@ That command sends only its built-in fictional order test and checks the complet
 
 ## Connection and state details
 
-The prepared laptop uses `http://127.0.0.1:11435` for its dedicated lab model. The separately installed Ollama desktop app uses port `11434` and may have a different model folder. Preserve the working `LAB_OLLAMA_BASE_URL` and `LAB_OLLAMA_EXE` values in the private `.env.langgraph` file. A fresh machine using the normal Ollama installation can use port `11434` after downloading its model there.
+The prepared laptop now uses the Ollama desktop app at `http://127.0.0.1:11434`. Its private `.env.langgraph` file selects `qwen3.5:4b` as the primary local test model. Preserve the working `LAB_OLLAMA_BASE_URL` and `LAB_OLLAMA_EXE` values. A different machine must install Ollama and download the configured model separately.
 
 `LAB_STATE_SIGNING_KEY` is a private local-state key, already generated in the prepared environment. It lets server workers verify their own tool and memory state. It is not an LLM API key. Losing or replacing it means old agent threads with signed tool/state data must be restarted. The original plain-chat threads are unaffected.
 

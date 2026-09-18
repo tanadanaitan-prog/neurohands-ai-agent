@@ -247,8 +247,8 @@ npm run lab:team:model
 `lab:team:check` runs the deterministic fixture self-check, and
 `lab:team:conformance` records the deterministic plumbing and safety evidence.
 `lab:team:model:check` checks the real-model command inputs without calling the
-model; `lab:team:model` runs the local Ollama samples and requires
-`qwen3:1.7b`.
+model; `lab:team:model` runs the local Ollama samples with the model selected in
+the private `.env.langgraph` file.
 Deterministic success is not evidence of model quality, and the real-model
 command does not connect to production services.
 

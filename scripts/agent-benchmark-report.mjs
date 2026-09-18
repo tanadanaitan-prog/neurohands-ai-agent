@@ -56,7 +56,7 @@ The equipped system completed more of the required tasks, but it is **not ready 
 
 The full raw files also contain first-text-token timing, input/output tokens, model calls and sampled CPU measurements. CPU samples cover the interval between samples inside each task, not every millisecond of the task. RAM aggregates local Ollama and model-runner processes and excludes Windows, Studio, the browser and other applications. It is a sampled maximum, not an exact peak or per-agent reservation. Hardware and electricity are not free.
 
-Both conditions used Qwen \`qwen3:1.7b\`, Q4_K_M, model digest \`${equipped.model.digest}\`, Ollama ${equipped.ollamaVersion}, temperature 0.2, seed 42, 4,096 context tokens and 256 generated tokens per model call. Equipped tasks allow up to four model calls. The machine was ${equipped.machine.cpu}, ${equipped.machine.ramGiB} GiB RAM, ${equipped.machine.logicalCores} logical CPU cores. Runs were sequential, baseline first, equipped second, then equipped again after the runtime repairs. No shuffled-order or load-capacity study was performed.
+Both conditions used \`${equipped.model.name}\`, ${equipped.model.details?.quantization_level || "quantization unreported"}, model digest \`${equipped.model.digest}\`, Ollama ${equipped.ollamaVersion}, temperature 0.2, seed 42, 4,096 context tokens and 256 generated tokens per model call. Equipped tasks allow up to four model calls. The machine was ${equipped.machine.cpu}, ${equipped.machine.ramGiB} GiB RAM, ${equipped.machine.logicalCores} logical CPU cores. Runs were sequential, baseline first, equipped second, then equipped again after the runtime repairs. No shuffled-order or load-capacity study was performed.
 
 ## What now works
 
