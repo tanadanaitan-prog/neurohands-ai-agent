@@ -22,6 +22,9 @@ function loadGateway(overrides = {}) {
     FALLBACK_BASE_URL: "https://example.invalid/v1",
     FALLBACK_MODEL: "test-model",
     FALLBACK_MODELS: "",
+    RESUMABLE_UPLOAD_ENABLED: "false",
+    UPLOAD_MAX_BYTES: "50000000",
+    SOFTWARE_ADMISSION_ENABLED: "false",
     ...overrides,
   });
   delete require.cache[require.resolve("../src/server")];
@@ -112,18 +115,21 @@ test("gateway regression checks (all external services mocked)", async (t) => {
     const missing=await serve(t,loadGateway({WEBHOOK_ENCRYPTION_KEY:''}).app);
     assert.equal((await missing('/ready')).status,503);
     const request=await serve(t,loadGateway({FOUNDER_LINE_ID:'local-founder'}).app);
-    let publicBucket=false,missingSchema=false;
+    let publicBucket=false,missingWebhookSchema=false,missingApiLedger=false;
     t.mock.method(globalThis,'fetch',async(address)=>{
       const url=new URL(String(address));
       assert.equal(url.hostname,'example.invalid');
       if(url.pathname.startsWith('/storage/'))return new Response(JSON.stringify({public:publicBucket}));
-      if(url.pathname.endsWith('/line_webhook_events'))return new Response(missingSchema?'{}':'[]',{status:missingSchema?404:200});
+      if(url.pathname.endsWith('/line_webhook_events'))return new Response(missingWebhookSchema?'{}':'[]',{status:missingWebhookSchema?404:200});
+      if(url.pathname.endsWith('/agent_api_requests'))return new Response(missingApiLedger?'{}':'[]',{status:missingApiLedger?404:200});
       return new Response('[{"id":1}]');
     });
     assert.equal((await request('/ready')).status,200);
     publicBucket=true;
     assert.equal((await request('/ready')).status,503);
-    publicBucket=false;missingSchema=true;
+    publicBucket=false;missingWebhookSchema=true;
+    assert.equal((await request('/ready')).status,503);
+    missingWebhookSchema=false;missingApiLedger=true;
     assert.equal((await request('/ready')).status,503);
     const version=JSON.parse((await request('/version')).text);
     assert.equal(version.version,'3.10.0');
@@ -162,11 +168,38 @@ test("gateway regression checks (all external services mocked)", async (t) => {
     }
   });
 
+  await t.test("resumable readiness requires the private bucket to match the application ceiling", async (t) => {
+    let bucketLimit = 50000000;
+    t.mock.method(globalThis, "fetch", async (address) => {
+      const url = new URL(String(address));
+      assert.equal(url.hostname, "example.invalid", "Readiness must not call an AI provider");
+      if (url.pathname.startsWith("/storage/")) return new Response(JSON.stringify({ public: false, file_size_limit: bucketLimit }));
+      return new Response('[{"id":1}]');
+    });
+    const request = await serve(t, loadGateway({
+      FOUNDER_LINE_ID: "local-founder",
+      RESUMABLE_UPLOAD_ENABLED: "true",
+      UPLOAD_MAX_BYTES: "50000000",
+    }).app);
+
+    const exact = await request("/ready");
+    assert.equal(exact.status, 200);
+    assert.equal(JSON.parse(exact.text).large_upload.bucket_limit_matches, true);
+
+    bucketLimit = 50000001;
+    const larger = await request("/ready");
+    assert.equal(larger.status, 503, "A larger bucket would allow a modified browser to exceed the app ceiling");
+    assert.equal(JSON.parse(larger.text).large_upload.bucket_limit_matches, false);
+  });
+
   await t.test("upload links reject tampering, expiration and malformed claims", async (t) => {
     const gateway = loadGateway();
     const request = await serve(t, gateway.app);
     const token = gateway.makeUploadToken(42, "sales", "test-user");
-    assert.equal((await request(`/upload?t=${token}`)).status, 200);
+    const page = await request(`/upload?t=${token}`);
+    assert.equal(page.status, 200);
+    assert.match(page.text, /max 10 MiB/);
+    assert.doesNotMatch(page.text, /files above 10 MiB are stored/);
     assert.equal((await request(`/upload?t=${token}tampered`)).status, 403);
     assert.equal(gateway.checkUploadToken(token + ".extra"), null);
     const sign = (payload) => Buffer.from(payload).toString("base64url") + "." + crypto.createHmac("sha256", "test-line-secret").update(payload).digest("hex");

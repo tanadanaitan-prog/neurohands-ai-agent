@@ -1,0 +1,16 @@
+{
+  "project": "neurohands-local-test",
+  "runId": "8448b31d-7e9a-4474-9d92-a9ba3c14c5c2",
+  "verifiedBy": "Completed remote run readback",
+  "model": "qwen3:1.7b",
+  "durationMs": 4195,
+  "modelCalls": 2,
+  "inputTokens": 1763,
+  "outputTokens": 63,
+  "totalTokens": 1826,
+  "tool": "get_order_status",
+  "fixture": "DEMO-ORDER-001",
+  "inputType": "Fixed synthetic prompt",
+  "modelApiCost": 0,
+  "bulkBenchmarkUploaded": false
+}

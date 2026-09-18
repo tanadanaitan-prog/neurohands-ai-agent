@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "real-named-workflow-review-20260917",
+  "reviewedAt": "2026-09-17",
+  "reviewType": "technical_lead_manual_review",
+  "scope": "One local synthetic Ollama run per topology. This review does not rank the topologies because their objectives and duties differ.",
+  "model": "qwen3:1.7b via loopback Ollama",
+  "productionServicesUsed": false,
+  "externalConnectorsUsed": false,
+  "samplesPerTopology": 1,
+  "semanticScore": null,
+  "scoreReason": "A single development example per topology is insufficient for a defensible capability score or reliability rate.",
+  "sourceArtifacts": [
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-individual.json",
+      "sha256": "2ea8a901beb93d6a44881139d418b482f9c4cd70ec404e8569f86184d020cad8",
+      "includedInCurrentReview": true
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-pair-attempt1.json",
+      "sha256": "8e41428b94b7e4615debe03b45c3fc044c00b0f8bf7a315e9dccc83455e7e604",
+      "includedInCurrentReview": false,
+      "reason": "Preserved as incident evidence. A runtime audit-persistence defect omitted one attempted tool call; attempt 2 followed the regression-tested repair."
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-pair-attempt2.json",
+      "sha256": "7eb8a37c5f7adf67d7612fb52372e91520d5cffded1ffb38da97f25c16c1e138",
+      "includedInCurrentReview": true
+    },
+    {
+      "path": "artifacts/benchmarks/2026-09-17-real-named-full-department.json",
+      "sha256": "b5538d4660eea9de05c90417fa30f798d8213bbbbb4dd63f7242621e444bdc8e",
+      "includedInCurrentReview": true
+    }
+  ],
+  "results": [
+    {
+      "topology": "individual",
+      "scenarioStatus": "completed",
+      "businessCorrectness": "pass_for_this_example",
+      "review": "Suri used the calculator and correctly returned 2,600 THB for 18 times 125 plus 350. The answer clearly remained draft-only.",
+      "wallMs": 15614,
+      "providerTokens": 1885,
+      "successfulToolCalls": 1,
+      "failedToolCalls": 0,
+      "storedBytes": 2598,
+      "recordCount": 3,
+      "approximatePeakModelRamMiB": 1935.6,
+      "sampledModelCpuSeconds": 95.156,
+      "structuralChecks": "11/11 pass"
+    },
+    {
+      "topology": "pair",
+      "scenarioStatus": "failed",
+      "businessCorrectness": "partial",
+      "review": "Suri correctly produced 2,040 THB and the document-backed four-working-day lead time. Quinn repeated the two valid tools but the model returned an empty final response, so QA failed and the workflow did not claim completion.",
+      "wallMs": 17758,
+      "providerTokens": 6651,
+      "successfulToolCalls": 4,
+      "failedToolCalls": 0,
+      "storedBytes": 6803,
+      "recordCount": 7,
+      "approximatePeakModelRamMiB": 2188.3,
+      "sampledModelCpuSeconds": 139.234,
+      "structuralChecks": "11/11 pass"
+    },
+    {
+      "topology": "full_department",
+      "scenarioStatus": "failed",
+      "businessCorrectness": "fail",
+      "review": "Suri completed three valid tool calls, then supplied a calculation expression as an order number to get_order_status. The tool rejected the unverified identifier, Suri failed without an answer, and the remaining four roles were blocked from using unconfirmed evidence.",
+      "wallMs": 14605,
+      "providerTokens": 4514,
+      "successfulToolCalls": 3,
+      "failedToolCalls": 1,
+      "storedBytes": 7989,
+      "recordCount": 11,
+      "approximatePeakModelRamMiB": 2313.3,
+      "sampledModelCpuSeconds": 112.984,
+      "structuralChecks": "11/11 pass"
+    }
+  ],
+  "conclusions": [
+    "The local runtime enforces scope, tool permissions, evidence storage, terminal states and dependency blocking in these examples.",
+    "The small local model completed the basic individual example but was not reliable enough for the pair QA or five-role workflow.",
+    "A structural pass does not mean the business objective passed; semantic outcome and runtime safety are recorded separately.",
+    "No production LINE deployment, customer-data access, external connector action or automatic model failover was tested here.",
+    "The next effectiveness test needs repeated held-out objectives with the same duties, tools, budget and grading criteria before comparing models or team sizes."
+  ]
+}

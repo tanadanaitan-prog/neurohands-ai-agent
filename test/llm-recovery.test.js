@@ -13,7 +13,7 @@ function loadGateway(t, overrides = {}) {
     FALLBACK_API_KEY: PRIVATE_MARKER, FALLBACK_PROVIDER: "groq",
     FALLBACK_BASE_URL: "https://fallback.invalid", FALLBACK_MODELS: "first,second", FALLBACK_MODEL: "",
     SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture",
-    ENABLE_STUDIO: "false", ...overrides,
+    ENABLE_STUDIO: "false", SOFTWARE_ADMISSION_ENABLED: "false", ...overrides,
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
   for (const [key, value] of Object.entries(values)) {
@@ -54,6 +54,17 @@ const primaryFailures = {
   empty_answer: () => geminiAnswer("   "),
   http_error: () => json({ error: PRIVATE_MARKER }, 429),
 };
+
+test("an incompletely configured production admission seam blocks model dispatch before fetch", async (t) => {
+  const { gateway } = loadGateway(t, { SOFTWARE_ADMISSION_ENABLED: "true" });
+  let fetches = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    fetches += 1;
+    return geminiAnswer("must not be reached");
+  });
+  assert.equal(await gateway.askAI("Policy", "Question"), null);
+  assert.equal(fetches, 0);
+});
 
 for (const [status, code] of [[401, "invalid_api_key"], [429, "credit_balance_exhausted"], [429, "project_spend_limit_exceeded"]]) {
   test(`account-wide ${code} stops model cascade and later requests until restart`, async (t) => {
@@ -168,7 +179,8 @@ test("LLM recovery uses mocked providers only", async (t) => {
   });
 
   for (const [reason, fail] of Object.entries(primaryFailures)) {
-    await t.test(`plain Gemini ${reason} falls through to fallback without exposing private data`, async (t) => {
+    const uncertain = ["timeout", "transport"].includes(reason);
+    await t.test(`plain Gemini ${reason} ${uncertain ? "stops before fallback" : "falls through to fallback"} without exposing private data`, async (t) => {
       const { gateway, logs } = loadGateway(t);
       if (reason === "timeout") shortTimeout(t);
       const hosts = [];
@@ -187,15 +199,23 @@ test("LLM recovery uses mocked providers only", async (t) => {
         ]);
         return answer();
       });
-      assert.equal(await gateway.askAI(PRIVATE_MARKER, "Business question"), "Recovered answer");
-      assert.deepEqual(hosts, ["generativelanguage.googleapis.com", "fallback.invalid"]);
+      if (uncertain) {
+        await assert.rejects(gateway.askAI(PRIVATE_MARKER, "Business question"), {
+          code: reason === "timeout" ? "MODEL_TIMEOUT" : "MODEL_TRANSPORT_ERROR",
+        });
+        assert.deepEqual(hosts, ["generativelanguage.googleapis.com"]);
+      } else {
+        assert.equal(await gateway.askAI(PRIVATE_MARKER, "Business question"), "Recovered answer");
+        assert.deepEqual(hosts, ["generativelanguage.googleapis.com", "fallback.invalid"]);
+      }
       assert.equal(logs.some((line) => line.includes(PRIVATE_MARKER)), false);
       assert.ok(logs.some((line) => line.startsWith("Gemini request failed")));
     });
   }
 
   for (const [reason, fail] of Object.entries(primaryFailures)) {
-    await t.test(`Gemini tool loop ${reason} returns a fallback signal`, async (t) => {
+    const uncertain = ["timeout", "transport"].includes(reason);
+    await t.test(`Gemini tool loop ${reason} ${uncertain ? "stops the logical request" : "returns a fallback signal"}`, async (t) => {
       const { gateway, logs } = loadGateway(t);
       if (reason === "timeout") shortTimeout(t);
       t.mock.method(globalThis, "fetch", async (url, options) => {
@@ -204,15 +224,22 @@ test("LLM recovery uses mocked providers only", async (t) => {
         assert.equal(options.headers["x-goog-api-key"], PRIVATE_MARKER);
         return fail(url, options);
       });
-      const result = await gateway.askGeminiWithTools(PRIVATE_MARKER, "Question", [schema], { allowedTools: [schema.name] }, 1);
-      assert.equal(result.apiFailed, true);
-      assert.equal(result.text, null);
+      if (uncertain) {
+        await assert.rejects(
+          gateway.askGeminiWithTools(PRIVATE_MARKER, "Question", [schema], { allowedTools: [schema.name] }, 1),
+          { code: reason === "timeout" ? "MODEL_TIMEOUT" : "MODEL_TRANSPORT_ERROR" }
+        );
+      } else {
+        const result = await gateway.askGeminiWithTools(PRIVATE_MARKER, "Question", [schema], { allowedTools: [schema.name] }, 1);
+        assert.equal(result.apiFailed, true);
+        assert.equal(result.text, null);
+      }
       assert.equal(logs.some((line) => line.includes(PRIVATE_MARKER)), false);
     });
   }
 
-  await t.test("fallback skips failed, malformed and empty answers; only usable models become cached", async (t) => {
-    const { gateway, logs } = loadGateway(t, { GEMINI_API_KEY: "", FALLBACK_MODELS: "transport,json,empty,good" });
+  await t.test("fallback skips known malformed answers, caches a usable model and stops on uncertain transport", async (t) => {
+    const { gateway, logs } = loadGateway(t, { GEMINI_API_KEY: "", FALLBACK_MODELS: "json,empty,good" });
     const models = [];
     let secondRequest = false;
     t.mock.method(globalThis, "fetch", async (url, options) => {
@@ -223,16 +250,15 @@ test("LLM recovery uses mocked providers only", async (t) => {
         if (model === "good") throw new TypeError(PRIVATE_MARKER);
         return answer("Replacement model");
       }
-      if (model === "transport") throw new TypeError(PRIVATE_MARKER);
       if (model === "json") return new Response(PRIVATE_MARKER);
       if (model === "empty") return answer(" ");
       return answer();
     });
     assert.equal(await gateway.askAI("Policy", "Question"), "Recovered answer");
-    assert.deepEqual(models, ["transport", "json", "empty", "good"]);
+    assert.deepEqual(models, ["json", "empty", "good"]);
     secondRequest = true;
-    assert.equal(await gateway.askAI("Policy", "Question"), "Replacement model");
-    assert.deepEqual(models.slice(4), ["good", "transport"]);
+    await assert.rejects(gateway.askAI("Policy", "Question"), { code: "MODEL_TRANSPORT_ERROR" });
+    assert.deepEqual(models.slice(3), ["good"]);
     assert.equal(logs.some((line) => line.includes(PRIVATE_MARKER)), false);
   });
 
@@ -282,7 +308,7 @@ test("LLM recovery uses mocked providers only", async (t) => {
     assert.equal(ctx.toolFailed, true);
   });
 
-  await t.test("Aria completes through fallback after Gemini transport failure", async (t) => {
+  await t.test("Aria stops before fallback after uncertain Gemini transport", async (t) => {
     const { gateway } = loadGateway(t);
     const modelHosts = [];
     let completed;
@@ -306,10 +332,10 @@ test("LLM recovery uses mocked providers only", async (t) => {
     });
     const ctx = { lineUserId: "fixture-client", clientAccountId: 1, department: "sales" };
     const agent = { agent_code: "AGT-001", allowed_tools: [], domains: [], responsibilities: [] };
-    assert.equal(await gateway.runAgent(ctx, "Business question", agent), "Recovered answer");
-    assert.deepEqual(modelHosts, ["generativelanguage.googleapis.com", "fallback.invalid"]);
-    assert.equal(completed.status, "completed");
-    assert.equal(ctx.runStatus, "completed");
+    assert.equal(await gateway.runAgent(ctx, "Business question", agent), "Sorry, I could not complete that request. Please try again or contact the team.");
+    assert.deepEqual(modelHosts, ["generativelanguage.googleapis.com"]);
+    assert.equal(completed.status, "error");
+    assert.equal(ctx.runStatus, "error");
   });
 
   for (const failure of ["primary outage", "later tool rejection"]) {
@@ -405,15 +431,14 @@ test("LLM recovery uses mocked providers only", async (t) => {
     assert.equal(modelCalls, 1);
   });
 
-  await t.test("all failed models return no answer instead of escaping into the LINE handler", async (t) => {
+  await t.test("uncertain transport stops each logical request before any model cascade", async (t) => {
     const { gateway } = loadGateway(t);
     let requests = 0;
     t.mock.method(globalThis, "fetch", async () => { requests++; throw new TypeError(PRIVATE_MARKER); });
-    assert.equal(await gateway.askAI("Policy", "Question"), null);
-    assert.equal(requests, 3);
-    const failed = await gateway.askGeminiWithTools("Policy", "Question", [], {}, 1);
-    assert.equal(failed.apiFailed, true);
-    assert.equal(failed.text, null);
+    await assert.rejects(gateway.askAI("Policy", "Question"), { code: "MODEL_TRANSPORT_ERROR" });
+    assert.equal(requests, 1);
+    await assert.rejects(gateway.askGeminiWithTools("Policy", "Question", [], {}, 1), { code: "MODEL_TRANSPORT_ERROR" });
+    assert.equal(requests, 2);
   });
 
   await t.test("model measurements contain numeric provider usage and elapsed time, never response content", async (t) => {

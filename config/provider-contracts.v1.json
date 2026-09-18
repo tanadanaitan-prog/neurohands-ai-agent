@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "registerVersion": "2026-09-18.1",
+  "providers": {
+    "gemini": {
+      "apiVersion": "v1beta",
+      "operation": "generateContent",
+      "responsePath": "candidates[0].content.parts",
+      "toolSchemaField": "parametersJsonSchema"
+    },
+    "openaiCompatible": {
+      "path": "chat/completions",
+      "responsePath": "choices[0].message",
+      "toolArgumentsEncoding": "json_string"
+    }
+  },
+  "packages": {
+    "@langchain/core": "1.2.11",
+    "@langchain/langgraph": "1.4.15",
+    "@langchain/langgraph-cli": "1.4.6",
+    "@langchain/ollama": "1.3.0",
+    "@supabase/supabase-js": "2.115.0",
+    "langsmith": "0.10.4"
+  }
+}

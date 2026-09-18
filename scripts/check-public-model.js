@@ -150,7 +150,37 @@ async function checkPublicModel({
 }
 
 if (require.main === module) {
-  checkPublicModel().then((result) => {
+  (async () => {
+    const keyPresent = typeof process.env.THIRD_API_KEY === "string" && process.env.THIRD_API_KEY.trim().length > 0;
+    if (keyPresent) {
+      const { admitPassportAction, createInMemoryCapacityStore } = require("../src/lib/admission-control");
+      const { loadPassportRegister } = require("../src/lib/software-passports");
+      const register = loadPassportRegister();
+      const gate = await admitPassportAction({
+        serviceId: "openrouter_public_test",
+        actionKey: `public-model-probe-${new Date().toISOString().slice(0, 10)}`,
+        operation: "run_public_synthetic_probe",
+        workflow: "public_model_probe",
+        workload: "experiment",
+      }, {
+        register,
+        capacityStore: createInMemoryCapacityStore(),
+        trustedContext: {
+          trustSource: "fixed_internal_cli", actor: "founder", dataClass: "synthetic",
+          workload: "experiment", workflow: "public_model_probe", goalRelevant: true,
+        },
+      });
+      if (!gate.allowed) return { verified: false, status: "admission_blocked", admissionCode: gate.code, requests: 0 };
+      const dispatched = await gate.markDispatched();
+      if (!dispatched.ok) return {
+        verified: false, status: "admission_blocked", admissionCode: "RESERVATION_DISPATCH_FAILED", requests: 0,
+      };
+      const result = await checkPublicModel();
+      await gate.settle({ outcome: result.verified ? "completed" : "transport_uncertain" });
+      return result;
+    }
+    return checkPublicModel();
+  })().then((result) => {
     process.stdout.write(`${JSON.stringify(result)}\n`);
     process.exitCode = result.verified ? 0 : 1;
   }).catch(() => {

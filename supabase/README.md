@@ -12,6 +12,33 @@ Project `darxiaearohhnxiwhcbs` (`Neurohands - AI Agent`) belongs to the verified
 - `nh_activate_client` atomically redeems a hash of a random activation code. A live transaction checked activation, replay and the one-use limit, then rolled back; no self-test clients, bindings or codes remain. Anonymous/authenticated browser roles cannot execute that function or claim Jarvis approvals.
 - Private Storage bucket `neurohands-docs` has `public=false`, a 10,485,760-byte limit, and allowed MIME types for XLSX, XLS, CSV, TXT, DOCX, PDF and binary uploads. The gateway validates extensions and reports unsupported/partial extraction honestly. No original Storage objects existed before setup.
 
+## Staged and unapplied
+
+Migration `20260917103000_resumable_upload_metadata.sql` is present locally but
+has not been applied. When applied, it would raise only the database metadata
+constraint to an exact 50,000,000-byte ceiling for the feature-gated TUS path.
+This matches the documented Free-plan per-file maximum, but it would not change
+the live 10 MiB bucket or production portal. Keep the production feature
+disabled while quota controls, abandoned-upload cleanup, bucket configuration
+and controlled live acceptance remain incomplete.
+
+Migration `20260917174745_durable_allowance_admission.sql` is also present
+locally and has not been applied. It stages service-role-only allowance pools,
+atomic multi-pool action-and-verification reservations, lifecycle transitions,
+expiry reconciliation and an append-only audit. Reservations retain the exact
+allowance epoch; old-period refunds cannot alter a refreshed pool, and expired
+verified snapshots deny new reservations. Leases cannot cross a known reset,
+dispatch rechecks current epoch and expiry, and an epoch cannot refresh while
+dispatched work is unresolved. Snapshot creation/refresh is intentionally left
+to a private database-owner procedure after personal account verification; the
+runtime service role cannot write snapshots. It can inspect ledger evidence but
+has no direct insert/update/delete permission; narrowly granted,
+fixed-search-path transition RPCs own mutations. Isolated PGlite tests verify
+these boundaries and browser-role denial. This is not a live
+multi-connection Supabase load test. Do not include it in a blanket migration
+push; first review and test it on an isolated Supabase branch or disposable
+project, then bind it to an exact accepted passport revision.
+
 ## Jarvis operator runs — 9 September 2026
 
 The reviewed `jarvis_operator_runs` migration is applied to project `darxiaearohhnxiwhcbs`. Supabase assigned version **`20260909155146`**. The file was initially generated locally with the CLI as `20260909153735_jarvis_operator_runs.sql`, then renamed to **`20260909155146_jarvis_operator_runs.sql`** to match the recorded remote version. Its SQL content was unchanged by the rename. Apply this migration once; do not use a blanket push that includes the unapplied workspace migration.
@@ -50,3 +77,10 @@ The earlier `agent_workspace_foundation` migration is separate, unapplied Phase 
 The server key bypasses RLS. Keep it in Railway, never in browser code. Public browser login requires a separate publishable key and the Phase 2 access rules.
 
 References: [Supabase API keys](https://supabase.com/docs/guides/api/api-keys), [private buckets](https://supabase.com/docs/guides/storage/buckets/fundamentals), [database functions](https://supabase.com/docs/guides/database/functions).
+
+The staged `agent_api_request_idempotency` migration adds a private,
+service-role-only exactly-once ledger for `POST /api/agent/run`. Apply it before
+deploying the matching server change. The ledger stores request and identity
+hashes rather than raw messages or LINE user IDs, atomically serializes claims,
+and replays only confirmed completed responses. Expired, failed and uncertain
+executions require review and are never automatically rerun.
