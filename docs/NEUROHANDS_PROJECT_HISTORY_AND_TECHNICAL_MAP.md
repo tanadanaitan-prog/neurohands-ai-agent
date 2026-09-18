@@ -133,7 +133,7 @@ There is **no tracked TypeScript or Python application runtime**. Any ignored te
 
 | Platform | Responsibility | Connection status | What is proven | What is not proven |
 | --- | --- | --- | --- | --- |
-| GitHub | Source history, branches, pull requests, CI | Connected | Repository history contains 104 commits from 7–18 September; production and development branches are distinguishable. | Current private plan/Actions allowance and the latest remote workflow outcome were not reverified. |
+| GitHub | Source history, branches, pull requests, CI | Connected | The audited pre-archive history contained 104 commits from 7–18 September; production and development branches are distinguishable. The archive and its later evidence updates add further commits. | Current private plan/Actions allowance and the latest remote workflow outcome were not reverified. |
 | Railway | Hosts the production Node/Express service | Connected in last dated evidence | Builds, `/ready`, `/version`, webhook handling, and the Gemini delivery path were observed in dated releases. | Current live state was not refreshed on 18 September; new local branch work is not deployed. |
 | LINE OA | User-facing channel | Connected to Railway | Founder `help` replied; signed webhook traffic and completed handlers were observed. | Full real Aria document conversation and repeat reliability are incomplete. |
 | LINE Developers | Messaging API channel, webhook, channel credentials, rich menus | Configured in production path | Webhook signature verification and reply/push code are tested. | Current console toggle, exact webhook URL, and rich-menu assignments were not freshly checked. |
