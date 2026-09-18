@@ -50,6 +50,7 @@ function createApprovedOptionalTraceRuntime({
     timeoutMs: boundedTimeout(timeoutMs),
     onOutcome: typeof onOutcome === "function" ? onOutcome : null,
     scheduledReceipts: new WeakSet(),
+    state: "ready",
   });
   return runtime;
 }
@@ -94,10 +95,15 @@ function dispatchOnce(config, handle) {
   void Promise.race([attempt, timeout]).then((result) => {
     clearTimeout(timer);
     if (result.status !== "exported") controller.abort();
+    // A failed or indeterminate optional transport is unavailable until a new
+    // approved runtime is installed. This caps ignored-abort work at one
+    // attempt instead of allowing diagnostics to consume frontline resources.
+    config.state = result.status === "exported" ? "ready" : "suspended";
     safeOutcome(config, result);
   }).catch(() => {
     clearTimeout(timer);
     controller.abort();
+    config.state = "suspended";
   });
 }
 
@@ -109,7 +115,14 @@ function scheduleOptionalTraceAfterAudit({ runtime = null, auditReceipt = null }
     : null;
   if (!audit) return fixedResult("skipped", "TRACE_SKIPPED_AUDIT_UNCONFIRMED");
   if (config.scheduledReceipts.has(auditReceipt)) return fixedResult("skipped", "TRACE_ALREADY_SCHEDULED");
+  if (config.state === "suspended") return fixedResult("skipped", "TRACE_RUNTIME_SUSPENDED");
+  if (config.state === "in_flight") {
+    const busy = fixedResult("skipped", "TRACE_RUNTIME_BUSY");
+    safeOutcome(config, busy);
+    return busy;
+  }
   config.scheduledReceipts.add(auditReceipt);
+  config.state = "in_flight";
 
   const handle = Object.freeze({ schema: OPTIONAL_TRACE_HANDLE_SCHEMA });
   approvedHandles.set(handle, Object.freeze({
@@ -117,7 +130,14 @@ function scheduleOptionalTraceAfterAudit({ runtime = null, auditReceipt = null }
     run_id: audit.runId,
     status: audit.status,
   }));
-  setImmediate(() => dispatchOnce(config, handle));
+  try {
+    setImmediate(() => dispatchOnce(config, handle));
+  } catch {
+    config.state = "suspended";
+    const failed = fixedResult("skipped", "TRACE_RUNTIME_SUSPENDED");
+    safeOutcome(config, failed);
+    return failed;
+  }
   return fixedResult("scheduled", "TRACE_EXPORT_SCHEDULED", 0, "scheduled_after_audit");
 }
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "registerVersion": "2026-09-18.9",
+  "registerVersion": "2026-09-18.10",
   "reviewedOn": "2026-09-18",
   "scope": "local_release_control_evidence",
   "releaseGate": {
@@ -223,6 +223,11 @@
           "path": "config/software-passports.v1.json",
           "locator": "railway.recoveryChange.restartTested",
           "claim": "The Railway passport records that a Railway restart has not been tested."
+        },
+        {
+          "path": "test/c05-railway-wake-probe.test.js",
+          "locator": "C05 staging probe tolerates one read-only wake response and pins readiness to the reviewed revision",
+          "claim": "The bounded inactive-service probe retries one transient wake response, requires the exact reviewed commit and records that customer, LINE, RAM and CPU evidence remain untested."
         }
       ],
       "passCriteria": [
@@ -239,7 +244,7 @@
           "then": "Readiness and version identify the reviewed revision and the customer receives the approved response without a false delivery claim."
         }
       ],
-      "remainingGap": "Local durable recovery is tested; Railway wake, cold-start latency, first-response behavior, and loaded resource use are not.",
+      "remainingGap": "Local durable recovery and a read-only inactive-service probe are tested. The probe has not been run against Railway, so cold-start latency, first-response behavior, customer delivery, RAM and CPU remain unverified.",
       "manualOrLiveRequirements": [
         "Run one controlled wake and restart on an inactive Railway test service within verified allowance.",
         "Record the exact deployment revision, first response, readiness result, latency, RAM and CPU evidence."
@@ -323,6 +328,11 @@
           "path": "test/server-optional-trace-integration.test.js",
           "locator": "customer and document sentinels never reach the hook or outbound capture",
           "claim": "The server schedules an injected optional trace only after its mandatory run audit succeeds and exposes only run ID, status and fixed schema to the hook."
+        },
+        {
+          "path": "test/optional-trace-runtime-circuit.test.js",
+          "locator": "a timed-out optional transport suspends later exports without retrying",
+          "claim": "Only one optional export can be active; timeout or uncertain completion suspends that approved runtime and later requests make zero trace dispatches."
         }
       ],
       "passCriteria": [
@@ -339,7 +349,7 @@
           "then": "The action remains blocked even if optional tracing is available."
         }
       ],
-      "remainingGap": "A disabled-by-default server seam is verified locally, but no approved operational trace runtime or live transport is configured. Private LangSmith allowance, retention and account settings remain unverified.",
+      "remainingGap": "A disabled-by-default server seam and bounded circuit breaker are verified locally, but no approved operational trace runtime or live transport is configured. Private LangSmith allowance, retention and account settings remain unverified.",
       "manualOrLiveRequirements": [
         "Privately verify trace allowance, retention and overage settings before any real export.",
         "Keep customer content out of the bounded synthetic trial."
@@ -365,6 +375,16 @@
           "path": "test/optional-trace-export.test.js",
           "locator": "private document text hidden in generic outputs.reply is denied before transport",
           "claim": "Private text in a generic reply field, recognized private-document fields, unsafe structures, unknown fields, forged authorities and cloned payloads are denied before transport."
+        },
+        {
+          "path": "test/trace-sensitive-boundary.test.js",
+          "locator": "C08: a candidate containing every prohibited sentinel is denied before transport and leaks nowhere",
+          "claim": "A combined credential, signed URL, activation code, LINE user ID and private-document candidate is denied before transport; fixed notifications and results contain none of the sentinels."
+        },
+        {
+          "path": "test/trace-sensitive-boundary.test.js",
+          "locator": "C08: the actual fixed-synthetic exporter emits only the allowlisted schema",
+          "claim": "A captured successful local export contains only the fixed synthetic schema, fixture identifier and bounded metrics."
         }
       ],
       "passCriteria": [
@@ -381,7 +401,7 @@
           "then": "Export is denied rather than relabeling or partially exposing the content."
         }
       ],
-      "remainingGap": "The local boundary now permits only provenance-owned fixed synthetic traces and denies arbitrary free-form inputs, outputs, unknown fields, forged authorities and cloned payloads. The exact sentinel-bearing outbound-redaction criterion and founder-approved real trial remain incomplete; no customer/private export is approved or connected.",
+      "remainingGap": "The local boundary denies a combined sentinel-bearing candidate before transport and emits only provenance-owned fixed synthetic traces through a captured transport. Founder approval and the bounded real synthetic trial remain incomplete; no customer/private export is approved or connected.",
       "manualOrLiveRequirements": [
         "Approve the trace data classes and redaction policy before any real export.",
         "Inspect one captured synthetic trace payload before enabling the bounded trial."
