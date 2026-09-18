@@ -93,7 +93,7 @@ test("discarded responses and failed fallback attempts remain in measured sums a
   assert.equal(JSON.stringify(metrics).includes(PRIVATE), false);
 });
 
-test("failed runs retain transport and malformed-body attempts with unknown rather than zero usage", async (t) => {
+test("failed runs retain uncertain transport with unknown usage and do not start fallback", async (t) => {
   const state = gatewayFixture(t, { FALLBACK_MODELS: "first" });
   state.model = (url) => {
     if (url.hostname === "generativelanguage.googleapis.com") throw new DOMException(PRIVATE, "TimeoutError");
@@ -103,8 +103,8 @@ test("failed runs retain transport and malformed-body attempts with unknown rath
   const run = state.runs[0];
   assert.equal(run.status, "error");
   assert.equal(run.llm_metrics.finalized, true);
-  assert.deepEqual(run.llm_metrics.attempts.map((attempt) => attempt.status), ["timeout", "invalid_json"]);
-  assert.deepEqual(run.llm_metrics.totals.total_tokens, { observed: null, unknown_attempts: 2, complete: null });
+  assert.deepEqual(run.llm_metrics.attempts.map((attempt) => attempt.status), ["timeout"]);
+  assert.deepEqual(run.llm_metrics.totals.total_tokens, { observed: null, unknown_attempts: 1, complete: null });
 });
 
 test("each tool-loop round contributes tokens even when the requested tool is blocked", async (t) => {

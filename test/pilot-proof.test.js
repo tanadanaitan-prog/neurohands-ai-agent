@@ -4,7 +4,7 @@ const http = require("node:http");
 const crypto = require("node:crypto");
 const XLSX = require("xlsx");
 
-const apiHeaders = { "x-api-key": "local-proof-api", "content-type": "application/json" };
+const apiHeaders = { "x-api-key": "local-proof-api", "idempotency-key": "local-proof-request-0001", "content-type": "application/json" };
 const marker = "KNC-PILOT-739261";
 
 async function fixture(t, env = {}) {
@@ -24,7 +24,7 @@ async function fixture(t, env = {}) {
     client_agent_bindings: [], clients: [], settings: [], client_documents: [], tool_calls: [], agent_runs: [], agent_memory: [], jarvis_audit_log: [], messages: [], staff_activations: [], jarvis_notes: [],
     agent_registry: [{ id: 1, agent_code: "AGT-001", callsign: "Aria", department: "sales", agent_name: "KNC agent", active: true, customer_facing: true, allowed_tools: ["read_document"], domains: ["sales"], responsibilities: ["Read authorized documents"], objective: "Answer from evidence" }],
   };
-  const state = { tables, objects: new Map(), requests: [], faults: new Set(), documentCode: null, modelCalls: 0, lineStatus: 429, lineMessages: [] };
+  const state = { tables, objects: new Map(), apiRequests: new Map(), requests: [], faults: new Set(), documentCode: null, modelCalls: 0, lineStatus: 429, lineMessages: [] };
   const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
   t.mock.method(globalThis, "fetch", async (address, options = {}) => {
     const url = new URL(String(address)), method = options.method || "GET";
@@ -55,6 +55,33 @@ async function fixture(t, env = {}) {
       return json({ Key: url.pathname });
     }
     const name = url.pathname.replace("/rest/v1/", "");
+    if (name === "rpc/nh_claim_agent_api_request") {
+      const input = JSON.parse(options.body);
+      const key = input.p_idempotency_key_hash;
+      let row = state.apiRequests.get(key);
+      if (!row) {
+        row = { decision: "acquired", execution_id: crypto.randomUUID(), requested_at: "2026-09-18T03:00:00.000Z",
+          state: "in_progress", response_status: null, response_body: null, run_id: null,
+          client_account_id: input.p_client_account_id, request_digest: input.p_request_digest };
+        state.apiRequests.set(key, row);
+        return json([row]);
+      }
+      if (row.client_account_id !== input.p_client_account_id || row.request_digest !== input.p_request_digest) {
+        return json([{ ...row, decision: "conflict", response_status: null, response_body: null }]);
+      }
+      return json([{ ...row, decision: row.state === "completed" ? "completed" : row.state }]);
+    }
+    if (name === "rpc/nh_finish_agent_api_request") {
+      const input = JSON.parse(options.body);
+      const key = input.p_idempotency_key_hash;
+      const row = state.apiRequests.get(key);
+      assert.ok(row);
+      if (row.state === "in_progress") Object.assign(row, { state: input.p_state,
+        response_status: input.p_state === "completed" ? input.p_response_status : null,
+        response_body: input.p_state === "completed" ? input.p_response_body : null,
+        run_id: input.p_run_id });
+      return json([{ ...row, decision: row.state }]);
+    }
     if (name === "rpc/nh_activate_client") {
       const {p_line_user_id:user,p_code_hash:hash} = JSON.parse(options.body);
       assert.equal(method,"POST");

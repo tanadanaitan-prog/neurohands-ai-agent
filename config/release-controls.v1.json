@@ -1,0 +1,498 @@
+{
+  "schemaVersion": "1.0.0",
+  "registerVersion": "2026-09-18.1",
+  "reviewedOn": "2026-09-18",
+  "scope": "local_release_control_evidence",
+  "releaseGate": {
+    "releaseAccepted": false,
+    "reason": "Only two of twelve controls have exact local pass evidence. No control is accepted for release or verified against private account settings."
+  },
+  "expectedSummary": {
+    "pass": 2,
+    "partial": 10,
+    "missing": 0,
+    "incomplete": 10,
+    "releaseAccepted": false
+  },
+  "controls": [
+    {
+      "id": "C01",
+      "name": "Unknown plan or credit balance",
+      "status": "pass",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/admission-control.test.js",
+          "locator": "unknown allowance blocks a new billable experiment and explicitly degrades frontline",
+          "claim": "A new billable experiment is denied with unresolved allowance and no capacity debit."
+        },
+        {
+          "path": "test/langsmith-admission.test.js",
+          "locator": "explicit LangSmith trace stops before upload while private allowance is unresolved",
+          "claim": "An explicit optional export stops before the external request when the private allowance is unresolved."
+        },
+        {
+          "path": "scripts/check-software-passports.js",
+          "locator": "unresolvedAllowanceCount",
+          "claim": "Unresolved account allowances remain visible and are not converted to a zero or guessed balance."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C01-PC1",
+          "given": "A potentially billable experiment has allowance status unknown.",
+          "when": "The action is submitted to admission with an external transport spy.",
+          "then": "Admission returns ALLOWANCE_UNKNOWN, reserves zero units, and the transport spy records zero calls."
+        },
+        {
+          "id": "C01-PC2",
+          "given": "The private account balance has not been verified.",
+          "when": "The release-control and Software Passport registers are checked.",
+          "then": "The balance remains null or absent and the unresolved state is reported."
+        }
+      ],
+      "remainingGap": "The production admission switch is disabled and no exact production workflow is founder-accepted.",
+      "manualOrLiveRequirements": [
+        "Privately verify the applicable account allowance without placing credentials or personal account data in this register.",
+        "Bind any future workflow acceptance to the exact register revision and release commit."
+      ]
+    },
+    {
+      "id": "C02",
+      "name": "Two agents request the last available budget simultaneously",
+      "status": "pass",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/admission-control.test.js",
+          "locator": "two simultaneous requests cannot both consume the final shared allowance",
+          "claim": "Exactly one local caller obtains the final complete action and verification bundle."
+        },
+        {
+          "path": "test/durable-allowance-admission.test.js",
+          "locator": "concurrent callers cannot both spend the final action-plus-verification budget",
+          "claim": "The staged PostgreSQL transaction locks and reserves the shared bundle atomically."
+        },
+        {
+          "path": "docs/SOFTWARE_PASSPORTS.md",
+          "locator": "PGlite rather than concurrent live Supabase connections",
+          "claim": "The current evidence explicitly limits its concurrency claim to local development."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C02-PC1",
+          "given": "One shared pool contains exactly one complete action-plus-verification bundle.",
+          "when": "Two independent callers with different idempotency keys reserve the bundle concurrently.",
+          "then": "Exactly one reservation commits, one caller is denied for insufficient capacity, and remaining capacity is zero rather than negative."
+        },
+        {
+          "id": "C02-PC2",
+          "given": "A reservation transaction cannot write its required audit record.",
+          "when": "The atomic reservation is attempted.",
+          "then": "The reservation and every pool debit roll back together."
+        }
+      ],
+      "remainingGap": "PGlite does not prove real multi-connection Supabase contention and the staged migration is not applied to a disposable Supabase project.",
+      "manualOrLiveRequirements": [
+        "Run the same race through independent connections on an isolated PostgreSQL or disposable Supabase environment.",
+        "Review the exact migration before any production application."
+      ]
+    },
+    {
+      "id": "C03",
+      "name": "Alert threshold reached",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/admission-control.test.js",
+          "locator": "an alert remains distinct from a hard limit",
+          "claim": "The controller returns ALLOWED_WITH_ALERT without treating an alert as a hard stop."
+        },
+        {
+          "path": "docs/SOFTWARE_PASSPORTS.md",
+          "locator": "safe degraded reply and founder alert",
+          "claim": "The repository records that the founder-alert handler is not connected."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C03-PC1",
+          "given": "A verified allowance crosses its configured alert threshold but is not exhausted.",
+          "when": "An accepted workflow reserves and executes one action.",
+          "then": "The action may proceed and exactly one idempotent founder alert reports the pool, verified remaining amount, reset evidence, and that spending has not been stopped."
+        },
+        {
+          "id": "C03-PC2",
+          "given": "Founder alert delivery fails.",
+          "when": "The alert is attempted.",
+          "then": "The failure is recorded without a false delivery claim or an unauthorized retry loop."
+        }
+      ],
+      "remainingGap": "Only the admission decision code exists; no founder notification or deduplication path is connected or tested.",
+      "manualOrLiveRequirements": [
+        "Approve the exact alert wording and destination privately.",
+        "Perform one bounded delivery check on the inactive test path after local fault tests pass."
+      ]
+    },
+    {
+      "id": "C04",
+      "name": "Hard limit reached",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/admission-control.test.js",
+          "locator": "hard-limit frontline enters continuity mode",
+          "claim": "The controller returns CONTINUITY_HARD_LIMIT for verified exhaustion."
+        },
+        {
+          "path": "test/production-admission.test.js",
+          "locator": "an unavailable durable store degrades frontline and operator without permitting dispatch",
+          "claim": "An unavailable durable store cannot authorize an external dispatch."
+        },
+        {
+          "path": "docs/SOFTWARE_PASSPORTS.md",
+          "locator": "production caller must implement",
+          "claim": "The approved degraded response and alert are recorded as unfinished."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C04-PC1",
+          "given": "The shared allowance is verified exhausted.",
+          "when": "Optional or experimental work is requested.",
+          "then": "The work is denied before transport with no paid fallback, provider change, upgrade, or network request."
+        },
+        {
+          "id": "C04-PC2",
+          "given": "The same exhaustion affects an accepted Frontline workflow.",
+          "when": "The customer request reaches the application.",
+          "then": "The application returns the approved static continuity response, records the reason, alerts the founder once, and never claims the requested work completed."
+        }
+      ],
+      "remainingGap": "The application does not execute or verify the continuity response and founder-alert behavior.",
+      "manualOrLiveRequirements": [
+        "Approve the static continuity response before a LINE test.",
+        "Confirm privately that no paid fallback or overage path is enabled."
+      ]
+    },
+    {
+      "id": "C05",
+      "name": "Railway wake or restart",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/webhook-inbox.test.js",
+          "locator": "persist before work; duplicate intake preserves first payload and processing occurs once after restart",
+          "claim": "A locally restarted worker processes a persisted LINE event once."
+        },
+        {
+          "path": "test/webhook-inbox.test.js",
+          "locator": "lost completion receipt cannot trigger a duplicate side effect after lease expiry",
+          "claim": "A lost completion receipt cannot cause blind duplicate execution."
+        },
+        {
+          "path": "config/software-passports.v1.json",
+          "locator": "railway.recoveryChange.restartTested",
+          "claim": "The Railway passport records that a Railway restart has not been tested."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C05-PC1",
+          "given": "A durable event exists before claim, during processing, or after external dispatch.",
+          "when": "The application process restarts at each fault point.",
+          "then": "No event or business side effect executes twice, and uncertain completion remains reconciliation-required."
+        },
+        {
+          "id": "C05-PC2",
+          "given": "The inactive Railway test service is sleeping or restarted.",
+          "when": "A controlled request wakes it.",
+          "then": "Readiness and version identify the reviewed revision and the customer receives the approved response without a false delivery claim."
+        }
+      ],
+      "remainingGap": "Local durable recovery is tested; Railway wake, cold-start latency, first-response behavior, and loaded resource use are not.",
+      "manualOrLiveRequirements": [
+        "Run one controlled wake and restart on an inactive Railway test service within verified allowance.",
+        "Record the exact deployment revision, first response, readiness result, latency, RAM and CPU evidence."
+      ]
+    },
+    {
+      "id": "C06",
+      "name": "Supabase read-only or connection exhaustion",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/pilot-proof.test.js",
+          "locator": "failure never produces a completed run or a notification claim",
+          "claim": "Generic database failures do not become completed agent runs or notification claims."
+        },
+        {
+          "path": "test/gateway.test.js",
+          "locator": "webhook acknowledgment waits for a durable receipt and rejects failed persistence",
+          "claim": "LINE intake is not acknowledged when durable persistence fails."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C06-PC1",
+          "given": "Supabase rejects a write with a read-only database failure.",
+          "when": "An agent workflow attempts the write.",
+          "then": "The workflow remains failed or blocked, no row is invented, and no completion or delivery is claimed."
+        },
+        {
+          "id": "C06-PC2",
+          "given": "Supabase reports connection exhaustion or times out before a confirmed read.",
+          "when": "The workflow requests business data.",
+          "then": "The application does not substitute an empty or invented result and returns the approved safe response with a bounded failure classification."
+        }
+      ],
+      "remainingGap": "Generic HTTP failures are covered, but read-only and connection-exhaustion conditions are not represented and tested distinctly.",
+      "manualOrLiveRequirements": [
+        "After deterministic fault injection passes, confirm applicable Supabase limits and exhaustion behavior privately.",
+        "Use an isolated branch or disposable project for any provider-behavior check."
+      ]
+    },
+    {
+      "id": "C07",
+      "name": "LangSmith disabled or unreachable",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "scripts/langgraph-lab.mjs",
+          "locator": "automatic tracing is disabled",
+          "claim": "Automatic tracing is forced off and export requires an explicit synthetic command."
+        },
+        {
+          "path": "test/langsmith-admission.test.js",
+          "locator": "explicit LangSmith trace stops before upload while private allowance is unresolved",
+          "claim": "An optional trace command stops before upload when account capacity is unresolved."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C07-PC1",
+          "given": "Optional LangSmith export is disabled, times out, or rejects the request.",
+          "when": "A safe customer workflow otherwise completes.",
+          "then": "The customer result and mandatory Neurohands audit are unchanged, optional export stops, and no unbounded retry occurs."
+        },
+        {
+          "id": "C07-PC2",
+          "given": "A consequential action cannot preserve its mandatory Neurohands audit.",
+          "when": "The action requests dispatch.",
+          "then": "The action remains blocked even if optional tracing is available."
+        }
+      ],
+      "remainingGap": "No test injects an unreachable tracing client while a complete customer workflow runs.",
+      "manualOrLiveRequirements": [
+        "Privately verify trace allowance, retention and overage settings before any real export.",
+        "Keep customer content out of the bounded synthetic trial."
+      ]
+    },
+    {
+      "id": "C08",
+      "name": "Sensitive information in trace input",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "src/lib/admission-control.js",
+          "locator": "redactTracePayload",
+          "claim": "A deterministic redaction function exists for credential fields, signed URLs, activation codes and LINE identifiers."
+        },
+        {
+          "path": "test/admission-control.test.js",
+          "locator": "trace redaction removes credentials, signed URLs, activation codes, and LINE identifiers",
+          "claim": "The standalone redactor removes fixed sensitive sentinels."
+        },
+        {
+          "path": "scripts/langgraph-lab.mjs",
+          "locator": "runTraceExport",
+          "claim": "The current exporter uses fixed synthetic input but does not invoke the standalone redactor."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C08-PC1",
+          "given": "A trace candidate contains unique credential, signed-link, activation-code, user-identifier and private-document sentinels.",
+          "when": "The actual exporter prepares and sends the trace through a captured local transport.",
+          "then": "No prohibited sentinel appears in the outbound body, headers, metadata, logs, errors or stored trace fixture."
+        },
+        {
+          "id": "C08-PC2",
+          "given": "Private document text cannot be safely reduced to approved evidence.",
+          "when": "Trace export is requested.",
+          "then": "Export is denied rather than relabeling or partially exposing the content."
+        }
+      ],
+      "remainingGap": "The tested redactor is not connected to the actual LangSmith export boundary.",
+      "manualOrLiveRequirements": [
+        "Approve the trace data classes and redaction policy before any real export.",
+        "Inspect one captured synthetic trace payload before enabling the bounded trial."
+      ]
+    },
+    {
+      "id": "C09",
+      "name": "Codex proposes deployment without approval",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/admission-control.test.js",
+          "locator": "irreversible work requires founder approval, idempotency, and recovery evidence",
+          "claim": "The generic controller denies irreversible work without all three required facts."
+        },
+        {
+          "path": "config/software-passports.v1.json",
+          "locator": "codex.permissions.selfDeployAllowed",
+          "claim": "The Codex passport declares that self-deployment is not allowed."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C09-PC1",
+          "given": "An engineering or Codex principal lacks founder approval bound to an exact commit.",
+          "when": "It requests merge or deployment.",
+          "then": "The external merge and deployment adapters record zero calls and the denial is audited."
+        },
+        {
+          "id": "C09-PC2",
+          "given": "Founder approval names one exact commit.",
+          "when": "The commit changes or a second deployment is requested with the consumed approval.",
+          "then": "The request is denied until a new exact-version approval is recorded."
+        }
+      ],
+      "remainingGap": "A declaration and generic controller test are not enforced GitHub and Railway access controls.",
+      "manualOrLiveRequirements": [
+        "Privately verify repository and deployment permissions for the release identity.",
+        "Require founder review of the exact commit before a controlled inactive-path release."
+      ]
+    },
+    {
+      "id": "C10",
+      "name": "Untrusted code attempts to read a secret",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "test/software-passports.test.js",
+          "locator": "secret scanning covers provider keys, JWTs, and URL credentials",
+          "claim": "Credential-like values are rejected from the tracked Software Passport register."
+        },
+        {
+          "path": "src/lib/software-passports.js",
+          "locator": "scanForSecrets",
+          "claim": "The deterministic register scanner recognizes fixed credential and signed-link patterns."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C10-PC1",
+          "given": "An intentionally malicious untrusted test attempts to enumerate environment variables, secret files and network metadata.",
+          "when": "It runs in the same isolation intended for untrusted pull-request code.",
+          "then": "No production credential is present, file and network access are denied, and no secret sentinel reaches output or artifacts."
+        },
+        {
+          "id": "C10-PC2",
+          "given": "An unnecessary production credential is injected into the untrusted test environment.",
+          "when": "The release-control test runs.",
+          "then": "The test fails visibly before any untrusted command is accepted for release."
+        }
+      ],
+      "remainingGap": "Static secret scanning does not prove that an untrusted execution environment cannot access runtime credentials.",
+      "manualOrLiveRequirements": [
+        "Review hosted workflow permissions and secret availability before enabling pull-request automation.",
+        "Keep production credentials out of all untrusted test jobs."
+      ]
+    },
+    {
+      "id": "C11",
+      "name": "Provider API or SDK changes",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "package.json",
+          "locator": "pinned dependency versions and check, test, and build commands",
+          "claim": "The repository pins material JavaScript dependencies and has deterministic verification commands."
+        },
+        {
+          "path": "test/gateway.test.js",
+          "locator": "gateway regression checks",
+          "claim": "Mocked gateway contracts reject several malformed service responses."
+        },
+        {
+          "path": "test/provider-failures.test.js",
+          "locator": "generic, malformed and unknown responses do not claim billing or authentication failures",
+          "claim": "Provider failure parsing does not invent a recognized account state from an unknown response."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C11-PC1",
+          "given": "The supported pinned SDK and API fixtures are installed.",
+          "when": "The compatibility pack runs.",
+          "then": "Every required method, schema and response contract passes without contacting production."
+        },
+        {
+          "id": "C11-PC2",
+          "given": "A required method is removed or a provider schema or version becomes unsupported.",
+          "when": "The same compatibility pack runs.",
+          "then": "It exits nonzero, names the affected service and interface safely, and blocks release before production dispatch."
+        }
+      ],
+      "remainingGap": "Malformed runtime responses are tested, but an intentional SDK or API contract change is not a release-gating test.",
+      "manualOrLiveRequirements": [
+        "Review provider deprecation notices before a release that changes an integration.",
+        "Use a bounded staging check only after local contract fixtures pass."
+      ]
+    },
+    {
+      "id": "C12",
+      "name": "Backup restore",
+      "status": "partial",
+      "releaseAccepted": false,
+      "evidence": [
+        {
+          "path": "config/software-passports.v1.json",
+          "locator": "supabase.recoveryChange.databaseRestoreTested and storageRestoreTested",
+          "claim": "The register records database restoration as tested and original-object restoration as untested."
+        },
+        {
+          "path": "test/gateway.test.js",
+          "locator": "restored document parser handles CSV and the updated Excel dependency",
+          "claim": "Document parsing works on fixed local fixtures but is not a full-system restoration test."
+        },
+        {
+          "path": "test/phase1-db.test.js",
+          "locator": "Phase 1 recovery and activation transaction in isolated PostgreSQL",
+          "claim": "Recovered database behavior and browser restrictions are exercised in isolated PostgreSQL."
+        }
+      ],
+      "passCriteria": [
+        {
+          "id": "C12-PC1",
+          "given": "An isolated source contains scoped records, audit evidence and original private objects with recorded hashes.",
+          "when": "Records and objects are exported and restored into clean isolated destinations.",
+          "then": "Row identities, object paths, byte lengths and hashes match, and missing or tampered objects fail visibly."
+        },
+        {
+          "id": "C12-PC2",
+          "given": "The isolated restore completed.",
+          "when": "Permission, tenant-isolation and application workflow checks run against the restored state.",
+          "then": "Authorized access succeeds, cross-client access fails, and the application produces the verified answer from the restored original."
+        }
+      ],
+      "remainingGap": "No single test restores database records and original Storage objects, rechecks permissions, and executes the application workflow together.",
+      "manualOrLiveRequirements": [
+        "Define the private export location and retention policy without committing customer data.",
+        "After the isolated proof passes, schedule a human-owned recovery exercise for the approved test environment."
+      ]
+    }
+  ]
+}

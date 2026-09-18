@@ -77,3 +77,10 @@ The earlier `agent_workspace_foundation` migration is separate, unapplied Phase 
 The server key bypasses RLS. Keep it in Railway, never in browser code. Public browser login requires a separate publishable key and the Phase 2 access rules.
 
 References: [Supabase API keys](https://supabase.com/docs/guides/api/api-keys), [private buckets](https://supabase.com/docs/guides/storage/buckets/fundamentals), [database functions](https://supabase.com/docs/guides/database/functions).
+
+The staged `agent_api_request_idempotency` migration adds a private,
+service-role-only exactly-once ledger for `POST /api/agent/run`. Apply it before
+deploying the matching server change. The ledger stores request and identity
+hashes rather than raw messages or LINE user IDs, atomically serializes claims,
+and replays only confirmed completed responses. Expired, failed and uncertain
+executions require review and are never automatically rerun.

@@ -122,8 +122,10 @@ function createSupabaseCapacityStore({ rpc } = {}) {
         return { ok: false, code: "INVALID_SETTLEMENT_OUTCOME", state: null };
       }
       const idempotent = result?.code === "IDEMPOTENT_REPLAY";
+      const reconciliationRecorded = outcome === "transport_uncertain" &&
+        result?.code === "TRANSPORT_UNCERTAIN" && result?.state === "reconciliation_required";
       return {
-        ok: result?.allowed === true || idempotent,
+        ok: result?.allowed === true || idempotent || reconciliationRecorded,
         idempotent,
         code: result?.code || "SETTLEMENT_REJECTED",
         state: result?.state || null,

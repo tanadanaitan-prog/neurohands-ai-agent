@@ -4,6 +4,7 @@ const { admitPassportAction } = require("./admission-control");
 const { loadPassportRegister } = require("./software-passports");
 
 const ACTION_KEY = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,191}$/;
+const REQUEST_FINGERPRINT = /^[a-f0-9]{64}$/;
 
 function deepFreeze(value) {
   if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
@@ -22,6 +23,11 @@ const ACTION_CATALOG = deepFreeze({
     dataClass: "customer_private", workload: "operator", workflow: "jarvis_operator",
     scopeFields: ["principalId", "resource"],
   },
+  "model.gemini.concierge": {
+    serviceId: "gemini", operation: "generate_agent_response", actor: "runtime",
+    dataClass: "public", workload: "frontline", workflow: "public_concierge",
+    scopeFields: ["principalId", "resource"],
+  },
   "model.openai.frontline": {
     serviceId: "openai_api", operation: "generate_agent_response", actor: "runtime",
     dataClass: "customer_private", workload: "frontline", workflow: "line_agent_response",
@@ -30,6 +36,11 @@ const ACTION_CATALOG = deepFreeze({
   "model.openai.operator": {
     serviceId: "openai_api", operation: "generate_agent_response", actor: "founder",
     dataClass: "customer_private", workload: "operator", workflow: "jarvis_operator",
+    scopeFields: ["principalId", "resource"],
+  },
+  "model.openai.concierge": {
+    serviceId: "openai_api", operation: "generate_agent_response", actor: "runtime",
+    dataClass: "public", workload: "frontline", workflow: "public_concierge",
     scopeFields: ["principalId", "resource"],
   },
   "data.supabase.read.frontline": {
@@ -148,6 +159,7 @@ function createProductionAdmission({
       actionKey,
       authority,
       runId = null,
+      requestFingerprint,
     } = {}) {
       if (!Object.hasOwn(ACTION_CATALOG, actionId)) {
         return deny("POLICY_ACTION_UNKNOWN", { actionId: typeof actionId === "string" ? actionId : null });
@@ -178,6 +190,9 @@ function createProductionAdmission({
       if (runId !== null && !["string", "number"].includes(typeof runId)) {
         return deny("TRUSTED_RUN_ID_REQUIRED", { actionId, actionKey });
       }
+      if (typeof requestFingerprint !== "string" || !REQUEST_FINGERPRINT.test(requestFingerprint)) {
+        return deny("REQUEST_FINGERPRINT_REQUIRED", { actionId, actionKey });
+      }
       try {
         if (await capacityStore.checkReady() !== true) {
           const continuity = policy.workload === "frontline" || policy.workload === "operator";
@@ -195,7 +210,11 @@ function createProductionAdmission({
           continuity ? { mode: "continuity", reasonCode: "DURABLE_CAPACITY_STORE_UNAVAILABLE" } : {}
         );
       }
-      const subject = { scope, ...(runId === null ? {} : { runId: String(runId).slice(0, 128) }) };
+      const subject = {
+        scope,
+        requestFingerprint,
+        ...(runId === null ? {} : { runId: String(runId).slice(0, 128) }),
+      };
       return admitPassportAction({
         serviceId: policy.serviceId,
         actionKey,

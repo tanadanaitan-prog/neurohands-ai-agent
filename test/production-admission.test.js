@@ -23,6 +23,7 @@ const runtimeScope = Object.freeze({
   department: "sales",
   resource: "agent-response",
 });
+const requestFingerprint = "a".repeat(64);
 
 function dependencies(overrides = {}) {
   const audits = [];
@@ -105,11 +106,15 @@ test("closed policy, server resolver and tenant scope control an admitted action
   assert.equal((await gate.acquire("model.gemini.frontline", {
     actionKey: "contains spaces", authority: "trusted-runtime",
   })).code, "STABLE_ACTION_KEY_REQUIRED");
+  assert.equal((await gate.acquire("model.gemini.frontline", {
+    actionKey: "run-1.gemini.missing-fingerprint", authority: "trusted-runtime", runId: 1,
+  })).code, "REQUEST_FINGERPRINT_REQUIRED");
 
   const lease = await gate.acquire("model.gemini.frontline", {
     actionKey: "run-1.gemini.1",
     authority: "trusted-runtime",
     runId: 1,
+    requestFingerprint,
     actor: "founder", workload: "experiment", dataClass: "public", workflow: "bypass",
   });
   assert.equal(lease.allowed, true);
@@ -117,6 +122,7 @@ test("closed policy, server resolver and tenant scope control an admitted action
   const reservation = deps.capacityStore.calls.find(([name]) => name === "reserve")[1];
   assert.deepEqual(reservation.requirements, [{ pool: "gemini_project", units: 2 }]);
   assert.equal(reservation.actorId, "runtime-line");
+  assert.equal(reservation.requestDigest.length, 64);
   assert.equal((await lease.markDispatched()).ok, true);
   assert.equal(deps.capacityStore.calls.find(([name]) => name === "dispatch")[1].actorId, "runtime-line");
   assert.equal(deps.audits.some((entry) => entry.outcome === "POLICY_ACTION_UNKNOWN"), true);
@@ -135,7 +141,7 @@ test("missing tenant scope and an unaccepted production workflow stay blocked", 
   const deps = dependencies();
   const gate = createProductionAdmission({ flag: "true", ...deps, registerLoader: loadPassportRegister });
   const lease = await gate.acquire("model.gemini.frontline", {
-    actionKey: "run-2.gemini.1", authority: "trusted-runtime", runId: 2,
+    actionKey: "run-2.gemini.1", authority: "trusted-runtime", runId: 2, requestFingerprint,
   });
   assert.equal(lease.allowed, false);
   assert.equal(lease.code, "INCOMPATIBLE");
@@ -154,7 +160,7 @@ test("an unavailable durable store degrades frontline and operator without permi
     ["model.gemini.operator", "trusted-founder"],
   ]) {
     const denied = await gate.acquire(actionId, {
-      actionKey: `run-3.${actionId}`, authority, runId: 3,
+      actionKey: `run-3.${actionId}`, authority, runId: 3, requestFingerprint,
     });
     assert.equal(denied.allowed, false);
     assert.equal(denied.code, "CONTINUITY_DEGRADED");

@@ -40,6 +40,13 @@ ranking. See the [named-agent workflow guide](docs/NAMED_AGENT_WORKFLOW.md),
 [post-guardrail review](artifacts/benchmarks/2026-09-17-real-named-review-after-guardrails.json).
 No production connection or deployment is claimed.
 
+The staged software-admission work is also not a production release. Its model
+transport lifecycle is connected locally while `SOFTWARE_ADMISSION_ENABLED`
+remains `false`; the machine-readable release pack currently records **2 of 12
+controls passed locally and 10 partial**. Run `npm run release:audit` to inspect
+that evidence. `npm run release:gate` is expected to fail until all controls
+have verified evidence and founder acceptance.
+
 Neurohands aims to give a business an AI workforce that can answer questions, use approved business tools, work with company documents and report what it did. The owner decides each agent's responsibilities and access.
 
 **Today, this is a v3.10 pilot for KNC Glass.** The LINE gateway, customer agent, owner console and document portal are implemented and deployed. The next milestone is proving a complete customer conversation about a real uploaded document. The larger team and department platform is still under development.
@@ -194,6 +201,14 @@ https://neurohands-ai-agent-production.up.railway.app/webhook
 In the intended LINE channel's Messaging API settings, set that URL, verify it and enable webhooks. Keep the channel secret and access token in Railway Variables. The same channel must belong to the OA being tested.
 
 Use [`.env.example`](.env.example) for the configuration names. Store real keys privately in Railway or a local `.env`, never in GitHub. Core connections use `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and the configured model provider's key. `WEBHOOK_ENCRYPTION_KEY` protects stored incoming events and must remain stable across restarts. `FOUNDER_LINE_ID` identifies the operator. Backend API and scheduled digest routes have separate secrets.
+
+`POST /api/agent/run` requires both `x-api-key` and a caller-generated, globally unique
+`Idempotency-Key` of 8–128 letters, digits, dots, underscores, colons or
+hyphens. Keep the same key only when retrying the exact same tenant,
+department, user and message. A completed retry returns its stored response;
+in-progress, failed, uncertain or changed-payload retries do not run the agent
+again. The additive `agent_api_request_idempotency` migration must be applied
+before releasing this API behavior. It does not change the LINE webhook path.
 
 | Guide | Use it for |
 | --- | --- |

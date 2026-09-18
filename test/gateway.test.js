@@ -115,18 +115,21 @@ test("gateway regression checks (all external services mocked)", async (t) => {
     const missing=await serve(t,loadGateway({WEBHOOK_ENCRYPTION_KEY:''}).app);
     assert.equal((await missing('/ready')).status,503);
     const request=await serve(t,loadGateway({FOUNDER_LINE_ID:'local-founder'}).app);
-    let publicBucket=false,missingSchema=false;
+    let publicBucket=false,missingWebhookSchema=false,missingApiLedger=false;
     t.mock.method(globalThis,'fetch',async(address)=>{
       const url=new URL(String(address));
       assert.equal(url.hostname,'example.invalid');
       if(url.pathname.startsWith('/storage/'))return new Response(JSON.stringify({public:publicBucket}));
-      if(url.pathname.endsWith('/line_webhook_events'))return new Response(missingSchema?'{}':'[]',{status:missingSchema?404:200});
+      if(url.pathname.endsWith('/line_webhook_events'))return new Response(missingWebhookSchema?'{}':'[]',{status:missingWebhookSchema?404:200});
+      if(url.pathname.endsWith('/agent_api_requests'))return new Response(missingApiLedger?'{}':'[]',{status:missingApiLedger?404:200});
       return new Response('[{"id":1}]');
     });
     assert.equal((await request('/ready')).status,200);
     publicBucket=true;
     assert.equal((await request('/ready')).status,503);
-    publicBucket=false;missingSchema=true;
+    publicBucket=false;missingWebhookSchema=true;
+    assert.equal((await request('/ready')).status,503);
+    missingWebhookSchema=false;missingApiLedger=true;
     assert.equal((await request('/ready')).status,503);
     const version=JSON.parse((await request('/version')).text);
     assert.equal(version.version,'3.10.0');

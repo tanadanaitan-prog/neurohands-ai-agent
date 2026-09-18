@@ -128,14 +128,18 @@ the request or completed the action.
   server-owned authority resolver, tenant/resource scope, a durable-store
   readiness check, and audited early denials. Its Supabase adapter matches the
   staged multi-pool RPC contract.
+- The actual model transport now passes a privacy-safe action key, request
+  fingerprint, lane and run identity through a complete reserve, dispatch and
+  settlement lifecycle. Replayed dispatches never call a provider again;
+  unverified settlement never exposes a model answer.
 - `SOFTWARE_ADMISSION_ENABLED=false` is the only supported deployed setting for
   this milestone. In this mode the model seam preserves existing behavior and
   does not load passports, reserve capacity, resolve authority, or write an
   admission audit. If the flag is enabled before the missing dependencies are
   supplied, model dispatch stops before an external request.
 
-The production server contains the disabled model-dispatch seam, but live
-LINE/Gemini admission is not enabled. Tool calls, database writes, LINE replies
+The production server contains the connected but disabled model-dispatch seam,
+but live LINE/Gemini admission is not enabled. Tool calls, database writes, LINE replies
 and pushes are not yet connected to the new controller. This is deliberate:
 the passport reports several unknown account allowances, no production
 workflow is founder-accepted, and the policy forbids silently shutting down an
@@ -156,6 +160,18 @@ modeled. Nine external services still report an unknown account allowance.
 That is a correct unresolved result, not a zero balance and not permission to
 spend. No passport revision is marked founder-accepted for a workflow yet;
 that status requires your review of the exact revision.
+
+The separate release-control register tracks the 12 failure tests from the
+Software-Aware Operation Policy. Inspect it without changing the release gate:
+
+```powershell
+npm run release:audit
+```
+
+The current evidence result is **2 pass and 10 partial**. `npm run release:gate`
+therefore exits with failure by design. It must remain failed until every
+control is tested and explicitly accepted; test counts alone do not authorize
+a production release.
 
 ## Required next evidence
 

@@ -111,3 +111,24 @@ test("lost lifecycle responses can be retried without reporting a false failure"
     "nh_settle_allowance_reservation",
   ]);
 });
+
+test("the database's reconciliation-required result is a successful lifecycle transition", async () => {
+  const store = createSupabaseCapacityStore({ rpc: async (name) => {
+    assert.equal(name, "nh_mark_allowance_reconciliation_required");
+    return {
+      data: { allowed: false, code: "TRANSPORT_UNCERTAIN", state: "reconciliation_required" },
+      error: null,
+    };
+  } });
+  const result = await store.settle({
+    reservationId: "reservation-uncertain",
+    actorId: "runtime-opaque-uncertain",
+    outcome: "transport_uncertain",
+  });
+  assert.deepEqual(result, {
+    ok: true,
+    idempotent: false,
+    code: "TRANSPORT_UNCERTAIN",
+    state: "reconciliation_required",
+  });
+});
