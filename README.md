@@ -1,5 +1,10 @@
 # Neurohands — AI agents for business
 
+**Start with the [complete project history and technical map](docs/NEUROHANDS_PROJECT_HISTORY_AND_TECHNICAL_MAP.md).**
+It records the chronology, coding languages, platform ownership, production and
+local data flows, verified tests, limits, incidents, completed work, and open
+work in one evidence-based file.
+
 **Local agent lab:** run `npm run lab:studio`, select `neurohands_concierge`,
 `neurohands_aria` or `neurohands_jarvis`, and open **Chat**. These roles use the
 same local Qwen model with permitted tools for fictional company information,

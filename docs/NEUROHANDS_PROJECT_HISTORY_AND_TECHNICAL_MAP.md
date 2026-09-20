@@ -1,6 +1,6 @@
 # Neurohands project history and technical map
 
-**Evidence snapshot:** 18 September 2026, Asia/Bangkok  
+**Evidence snapshot:** refreshed 20 September 2026, Asia/Bangkok
 **Repository:** `tanadanaitan-prog/neurohands-ai-agent`  
 **Application version:** `3.10.0`  
 **Purpose of this file:** consolidate what has been built, which language runs on which platform, how the parts connect, what has been verified, and what remains incomplete.
@@ -26,14 +26,15 @@ Repository files, commit history, machine-readable evidence, and dated runtime o
 | Item | Current evidence-based status |
 | --- | --- |
 | Production source | `origin/main` at `a315fdd0cad03a5339abb87440c83061fc401dbe`, the merged Gemini adapter repair from PR #14. |
-| Development source | `codex/langgraph-local-test` was at `e506d233d02413182b2a15ce2a78f6575929d483` before this archive was added, 17 commits ahead of production `main`. |
-| Remote development branch | The remote branch was at `ccc06f1563d8e3251e460aae358ced2870cc4e33`; the local Aria Qwen tool-smoke commit had not yet been pushed. |
-| Production runtime evidence | Latest repository evidence is dated 16 September 2026. Railway could not be freshly queried from the current restricted environment. |
-| Local runtime now | Direct checks on 18 September found ports `127.0.0.1:2024` and `127.0.0.1:11434` unavailable. LangGraph Studio and Ollama are currently stopped, although earlier bounded tests passed. |
+| Development source | Immediately before this document refresh, `codex/langgraph-local-test` was at `a6c48787f922a6f7ff9a3778541fd38c297ee623`, 20 commits ahead of production `main`. This refresh is documentation-only, so the exact current head should be read from Git rather than copied from an older report. |
+| Remote development branch | At the same inspection point, `origin/codex/langgraph-local-test` matched local commit `a6c48787f922a6f7ff9a3778541fd38c297ee623`; the earlier unpushed Qwen tool-smoke and history commits had been pushed. |
+| Production runtime evidence | A read-only refresh on 20 September returned HTTP 200 from `/`, `/version`, and `/ready`. The service reported version `3.10.0`, production commit `a315fdd0cad03a5339abb87440c83061fc401dbe`, and `ready:true`. This proves process/configuration/database/storage readiness only; it does not test LINE delivery, invoke a model, or prove answer quality. |
+| Local runtime now | A direct check on 20 September found Ollama reachable at `127.0.0.1:11434` and LangGraph unavailable at `127.0.0.1:2024`. Installed models were `qwen3.5:4b`, `llama3.2:3b`, `qwen3-embedding:0.6b`, and newly present `qwen3.8:latest`; only the first has recorded Neurohands smoke evidence. |
 | Current automated source checks | `npm run check`, **511/511** tests, and `npm run build` passed on 18 September 2026. |
 | Release gate | **Failed by design:** 4 controls pass and 8 remain partial. Six controls have passing deterministic local machine probes; C03 and C04 remain partial because live requirements are incomplete. No release acceptance or founder approval is recorded. |
 | Account allowances | Nine externally metered services have unresolved private allowance data. No unknown balance is treated as available capacity. |
 | Sineid Glass Decor | On hold by founder instruction. Its current local profile/documents are untracked and must not be represented as an implemented pilot. |
+| Model-training safety notes | The local `model-lab/` folder is untracked planning/evaluation material. It is not an implemented model-training pipeline and is excluded from release claims. |
 
 The main boundary is:
 
@@ -133,8 +134,8 @@ There is **no tracked TypeScript or Python application runtime**. Any ignored te
 
 | Platform | Responsibility | Connection status | What is proven | What is not proven |
 | --- | --- | --- | --- | --- |
-| GitHub | Source history, branches, pull requests, CI | Connected | The audited pre-archive history contained 104 commits from 7–18 September; production and development branches are distinguishable. The archive and its later evidence updates add further commits. | Current private plan/Actions allowance and the latest remote workflow outcome were not reverified. |
-| Railway | Hosts the production Node/Express service | Connected in last dated evidence | Builds, `/ready`, `/version`, webhook handling, and the Gemini delivery path were observed in dated releases. | Current live state was not refreshed on 18 September; new local branch work is not deployed. |
+| GitHub | Source history, branches, pull requests, CI | Connected | Immediately before this refresh, the development branch contained 106 commits, production `main` contained 86, and development was 20 commits ahead. The production and development branches are distinguishable. | Current private plan/Actions allowance and the latest remote workflow outcome were not reverified. |
+| Railway | Hosts the production Node/Express service | Connected; public health refreshed 20 September | `/`, `/ready`, and `/version` returned HTTP 200; the deployed version remained `3.10.0` at production commit `a315fdd`. Earlier dated evidence observed webhook handling and the Gemini delivery path. | The refresh did not call the model or LINE, and new development-branch work is not deployed. |
 | LINE OA | User-facing channel | Connected to Railway | Founder `help` replied; signed webhook traffic and completed handlers were observed. | Full real Aria document conversation and repeat reliability are incomplete. |
 | LINE Developers | Messaging API channel, webhook, channel credentials, rich menus | Configured in production path | Webhook signature verification and reply/push code are tested. | Current console toggle, exact webhook URL, and rich-menu assignments were not freshly checked. |
 | Supabase | Database authority, audit records, tenant data, private document storage | Connected to Railway | Phase 1 schema recovery, 131-record preservation, private bucket, selected migrations, and many isolated authorization tests are recorded. | Several newer migrations are staged only; complete production backup and real multi-connection load behavior remain incomplete. |
@@ -142,9 +143,9 @@ There is **no tracked TypeScript or Python application runtime**. Any ignored te
 | OpenAI API | Proposed fallback/standby route | Inactive | Code path and safe failure classification exist. | Historical generation attempts reported credit exhaustion/auth rejection; usable allowance and production approval are unknown. |
 | OpenRouter / Inkling Small | Synthetic/public third-model route | Manual and isolated | A bounded harness and data restrictions exist. | No current live success or verified account allowance; never authorized for private LINE/customer data. |
 | Groq, Mistral, Cerebras | OpenAI-compatible alternatives supported by code | Not established | Generic provider support exists. | No current active provider, allowance, answer-quality, or production evidence. |
-| LangGraph | Local graph orchestration | Previously connected locally | Five graphs are defined: echo, chat, Concierge, Aria, and Jarvis. Local tests passed. | It is currently stopped and not connected to Railway/LINE. |
+| LangGraph | Local graph orchestration | Previously connected locally; currently stopped | Five graphs are defined: echo, chat, Concierge, Aria, and Jarvis. Local tests passed. | Port `127.0.0.1:2024` was unavailable on 20 September and the lab is not connected to Railway/LINE. |
 | LangSmith Studio | Local graph UI and optional diagnostics | Previously connected locally | One fixed sanitized synthetic trace was uploaded/read back; automatic tracing remained off. | Current server is stopped; no private production trace export is authorized. |
-| Ollama | Local model runtime | Previously connected locally | Qwen 3.5 arithmetic and one Aria tool loop passed. | Runtime is currently stopped; no production availability or cloud failover. |
+| Ollama | Local model runtime | Running locally on 20 September | Qwen 3.5 arithmetic and one Aria tool loop passed; the local API is reachable. | No production availability or cloud failover. The other installed models are not validated for Neurohands roles. |
 | Codex | Engineering assistance | Active development tool | Branch edits, tests, documentation, and evidence were produced. | Account allowance remains private/unresolved; Codex has no self-deploy authority. |
 | Vite web UI | Experimental agent/workspace builder | Builds locally | Production build completed successfully on 18 September. | The website is disabled and not a live client deployment interface. |
 
@@ -321,6 +322,15 @@ This complete production sequence is the main outstanding Phase 1 acceptance tes
 - A bounded Aria fictional order-tool loop passed in 40,601 ms using 2 model calls, 1 tool call, and 2,398 total tokens, with no external model API charge.
 - Llama 3.2 3B and Qwen3 Embedding 0.6B were recorded as installed-only candidates. They are not connected or validated for checking/retrieval.
 - Current release evidence reached 4/12 controls passed; 8 remain partial. Release acceptance remains false.
+- The consolidated project history and technical map was added, then corrected to keep formal release status separate from local machine-probe coverage.
+- Deterministic machine evidence for C03 threshold alerts and C04 hard-limit continuity was bound to the release checker. The checker now verifies local evidence for C01, C02, C03, C04, C11, and C12, while the formal register correctly stays at 4 pass / 8 partial because C03 and C04 still lack production wiring, private-setting verification, and founder acceptance.
+
+### 20 September 2026 — history refresh and runtime recheck
+
+- The consolidated map was refreshed against the current Git branch rather than relying on its earlier archive snapshot.
+- The production Railway public health endpoints were rechecked without invoking LINE or a model: `/`, `/version`, and `/ready` returned HTTP 200, version `3.10.0`, commit `a315fdd`, and `ready:true`.
+- Ollama was reachable locally and four installed model packages were listed. LangGraph was not reachable, so no Studio chat or agent execution was claimed.
+- `qwen3.8:latest` was newly observed as installed-only. It has no recorded Neurohands quality, safety, tool-use, memory, CPU, or token benchmark and is not connected to a production workflow.
 
 ## 11. Database and storage state
 
@@ -395,6 +405,7 @@ These migrations must not be pushed as an undifferentiated batch. Each needs iso
 | `qwen3.5:4b` | Primary local synthetic agent model | Connected and passed two bounded smoke tests. |
 | `llama3.2:3b` | Candidate independent checker | Installed only; disconnected and unvalidated. |
 | `qwen3-embedding:0.6b` | Candidate document embedding model | Installed only; no retrieval pipeline or quality test. |
+| `qwen3.8:latest` | No approved role yet | Installed locally and listed at about 17 GB on 20 September; no Neurohands inference or benchmark evidence. |
 
 ### LangSmith
 
@@ -474,7 +485,7 @@ These controls are development evidence. The complete production release gate is
 | Multi-agent output lost required detail | The pair completed structurally but omitted source evidence; five-role flow produced empty replies | Add semantic evidence checks, golden answers, bounded repair only for safe empty responses, and stop downstream work on unverified output. |
 | 100 GB upload request exceeded verified Free limits | Requested size was not compatible with current Supabase Free plan | Use the verified 50 MB maximum for staged work and keep production at 10 MiB until live acceptance. |
 | GitHub untrusted-PR workflow failed remotely | Local workflow structure alone did not prove hosted execution | Inspect remote annotations, fix only the observed cause, rerun in the real hosted environment, and bind evidence to the exact commit. |
-| Documentation status drift | Older prose still states 2/12 release controls although the machine register now reports 4/12 | Treat machine-readable registers/checkers as authoritative and update narrative docs when the branch is reviewed. |
+| Documentation status drift | Earlier prose stated 2/12 controls after the formal register had reached 4/12, and later wording risked confusing six local machine probes with six formally passed controls | Keep three separate fields: formal register status, local machine-evidence coverage, and founder release acceptance. Narrative documents were updated to 4 pass / 8 partial, 6 machine-verified / 6 unbound, and release acceptance false. |
 | Sensitive credentials were pasted into chat/screenshots | Manual setup exposed secrets outside intended private fields | Rotate exposed credentials, keep secrets only in provider/Railway/private env stores, and never place them in Git or reports. Rotation remains unverified. |
 
 ## 17. Completed, incomplete, and planned
@@ -496,13 +507,13 @@ These controls are development evidence. The complete production release gate is
 
 ### Incomplete
 
-- Current live Railway refresh and exact production runtime status.
+- Full live production acceptance beyond the refreshed Railway health/version/readiness endpoints, including LINE delivery and answer quality.
 - Full KNC second-account activation → document question → correct Aria answer → authorized trace proof.
 - Current LINE Developer settings and rich-menu assignments.
 - Complete source-account/resource inventory before old resources are retired.
 - Full Supabase project and Storage-object backup/restore.
 - Account-specific allowance verification for externally metered services.
-- Eight release controls C03–C10.
+- Eight formal release controls C03–C10 remain partial. C03 and C04 have passing local machine probes but still require their listed live/manual evidence; C05–C10 have no deterministic probe bound to the release checker yet.
 - Founder acceptance of exact software passport/workflow/release revisions.
 - Live 50 MB resumable upload acceptance and quota/cleanup controls.
 - Llama checker and Qwen embedding integration.
@@ -523,11 +534,11 @@ These controls are development evidence. The complete production release gate is
 
 ## 18. Safe next milestone after this archive
 
-Do not expand agent count yet. The most useful next milestone is:
+Do not expand agent count yet. Continue one measurable release control at a time. The next safe engineering milestone is:
 
-> **Bring the local Qwen lab up, run one fixed Concierge/Aria/Jarvis acceptance pack with synthetic evidence, add a deterministic semantic grader for required facts, and compare the result with the current baseline before connecting any new model or production path.**
+> **Bind the existing deterministic C06 database read-only/connection-exhaustion and customer-safe-response evidence to the release audit, prove the exact tests cover the stated failure behavior, and keep C06 formally partial until its founder-approved message and controlled live behavior are verified.**
 
-After that local milestone passes, the founder can choose whether to review a controlled production release or continue improving the local model. No deployment, paid service, secret rotation, provider switch, or permission increase should happen without the applicable founder decision.
+After the local release evidence is accurate, return to the fixed Concierge/Aria/Jarvis synthetic acceptance pack and add semantic checks for required facts before connecting any new model or production path. No deployment, paid service, secret rotation, provider switch, or permission increase should happen without the applicable founder decision.
 
 ## 19. Evidence index
 
