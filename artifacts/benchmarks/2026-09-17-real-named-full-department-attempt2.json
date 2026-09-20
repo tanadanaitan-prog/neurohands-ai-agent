@@ -1,0 +1,628 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "real-local-qwen-named-workflow-v1-20260916174939",
+  "status": "finished",
+  "startedAt": "2026-09-16T17:49:39.237Z",
+  "finishedAt": "2026-09-16T17:49:52.344Z",
+  "scope": {
+    "execution": "Sequential local Ollama inference through the fixed named-agent workflow runtime.",
+    "network": "Loopback Ollama only. No production services, external connectors, or LangSmith upload.",
+    "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+    "grading": "Only deterministic structural checks are automatic. Model prose and business correctness require human review."
+  },
+  "selectedTopology": "full_department",
+  "executionOrder": [
+    "advanced-full-department"
+  ],
+  "executionMode": "sequential",
+  "suiteTimeoutMs": 900000,
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "architecture": "x64",
+    "cpuModel": "AMD Ryzen 7 5825U with Radeon Graphics         ",
+    "logicalCores": 16,
+    "totalRamBytes": 16538972160,
+    "nodeVersion": "v24.15.0",
+    "timezone": "Asia/Bangkok",
+    "ollamaOrigin": "http://127.0.0.1:11435",
+    "environmentSha256": "a3e4821dc1a235f65848f5d2f51c7eaa147037b9c06acb2c85962507a36b22e5"
+  },
+  "model": {
+    "configuredName": "qwen3:1.7b",
+    "reportedName": "qwen3:1.7b",
+    "artifactDigest": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
+    "sizeBytes": 1359293444,
+    "modifiedAt": "2026-09-16T22:10:13.2505907+07:00",
+    "details": {
+      "context_length": 40960,
+      "embedding_length": 2048,
+      "families": [
+        "qwen3"
+      ],
+      "family": "qwen3",
+      "format": "gguf",
+      "parameter_size": "2.0B",
+      "parent_model": "",
+      "quantization_level": "Q4_K_M"
+    },
+    "ollamaVersion": "0.34.1",
+    "modelMetadataSha256": "94ae3b884bb67b9dc6bad7ed11b6e4ae43be08158e88ffcb35035184a7f9c27b"
+  },
+  "generation": {
+    "temperature": 0.2,
+    "seed": 42,
+    "contextTokens": 4096,
+    "outputTokensPerCall": 256,
+    "think": false
+  },
+  "restrictions": {
+    "network": "loopback Ollama only",
+    "productionServices": false,
+    "externalConnectors": false,
+    "langsmithUpload": false,
+    "tracingEnvironmentForcedOff": {
+      "LANGSMITH_TRACING": true,
+      "LANGSMITH_TRACING_V2": true,
+      "LANGCHAIN_TRACING": true,
+      "LANGCHAIN_TRACING_V2": true
+    },
+    "fixtureContainsOnlySyntheticData": true,
+    "networkEnforcement": "Validated loopback Ollama base URL, same-origin request wrapper, fixed local tools, and tracing forced off."
+  },
+  "processSampling": {
+    "available": true,
+    "intervalMs": 500,
+    "scope": "All local ollama and llama-server processes; excludes runner and whole-machine peaks.",
+    "reason": null
+  },
+  "provenance": {
+    "fixtureSha256": "6a69bb428345db79ae7b92cc39abb21e8e8bd1c8bd921a9ff79bf2ff436dfe5c",
+    "sourceSha256": {
+      "scripts/real-named-workflow-benchmark.mjs": "950dfd3006adb7da15aed1929c3fa1dc00aaa7d5c2e9f65a0ed3ea9eca56ec5e",
+      "test/fixtures/real-named-workflow-benchmark.json": "6a69bb428345db79ae7b92cc39abb21e8e8bd1c8bd921a9ff79bf2ff436dfe5c",
+      "src/agent/workflow.mjs": "b958597f505a1b3b264db9113e643986a8b0bbc92ce216180cfc408a7db631d5",
+      "src/agent/profiles.mjs": "f2b18b2a50b9f843fa710e8453e283fe6e582d3df1150667de9c649c87bcc7d8",
+      "src/agent/team.mjs": "e95f902a756ca27e40664d90fbe01c5625443d98edb02b55538ac6364f6082be",
+      "src/agent/skills.mjs": "c9894eeb7c9b83cab43bc20f632029542f2937e6d42f3a358a6c5b9a12e4adef",
+      "package-lock.json": "14879c6cc97bdfef7c482adf8b00258750f05c7975cd326b7201918ac2fa9304"
+    },
+    "provenanceSha256": "0c068597fce031f17573a76f753c4531b41a22c763821bb77b3130945b69a024"
+  },
+  "grading": {
+    "automatic": "deterministic structural checks only",
+    "semanticCorrectness": "not automatically graded from model prose",
+    "humanReview": null
+  },
+  "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+  "limitations": [
+    "Loopback-only access is enforced by benchmark application checks and tracing-off settings; this is not a process-wide network sandbox or operating-system firewall.",
+    "The three topologies have different duties and task complexity, so their outputs are not a fair model-quality comparison or evidence of optimization.",
+    "Model prose is preserved for human review and is not automatically graded for semantic correctness.",
+    "Ollama/LangChain may omit token metadata; absent values remain null or not_available.",
+    "CPU and RAM are sampled for all local Ollama model processes, so short calls may have no sample and concurrent local inference can affect measurements."
+  ],
+  "scenarios": [
+    {
+      "scenarioId": "advanced-full-department",
+      "complexity": {
+        "level": "advanced",
+        "ordinal": 3,
+        "description": "Five named departments build, constrain, persist, and review a fictional launch dossier through four sequential handoffs.",
+        "taskDimensions": [
+          "local company and document evidence",
+          "one arithmetic expression",
+          "permission and client-boundary analysis",
+          "idempotent local simulated task opportunity",
+          "four sequential evidence handoffs",
+          "final independent QA"
+        ]
+      },
+      "topology": {
+        "templateId": "full_department",
+        "agentCount": 5,
+        "sequential": true,
+        "agentIds": [
+          "sales-suri",
+          "marketing-mira",
+          "it-ivo",
+          "backend-beck",
+          "ai-qa-quinn"
+        ],
+        "stepIds": [
+          "requirements_quote",
+          "marketing_proposal",
+          "connector_permission_review",
+          "crm_persistence_design",
+          "final_verification"
+        ],
+        "edges": [
+          {
+            "fromAgentId": "sales-suri",
+            "toAgentId": "marketing-mira"
+          },
+          {
+            "fromAgentId": "marketing-mira",
+            "toAgentId": "it-ivo"
+          },
+          {
+            "fromAgentId": "it-ivo",
+            "toAgentId": "backend-beck"
+          },
+          {
+            "fromAgentId": "backend-beck",
+            "toAgentId": "ai-qa-quinn"
+          }
+        ]
+      },
+      "objective": "This is a fictional local benchmark for benchmark-advanced-client. Build a reviewable five-department launch dossier for Mango Works using the fixed role instructions and sequential handoffs. The user-supplied local document identifier is DEMO-DOC-001. The commercial quantity is 40 notebooks at 110 THB each plus a 600 THB setup fee; use the local calculate skill for 40 * 110 + 600 when relevant. Use local company or document evidence instead of inventing facts. The IT step must keep every capability local, client-scoped, and free of external connectors. The backend step may create exactly one title-only simulated task named Prepare fictional Mango Works launch dossier; repeated creation must remain idempotent. Quinn must review the recorded handoffs and tool evidence. Do not send messages, use production data, or access any external service.",
+      "clientId": "benchmark-advanced-client",
+      "authorizedClientIds": [
+        "benchmark-advanced-client"
+      ],
+      "status": "failed",
+      "workflowId": "advanced-full-department-workflow",
+      "effectiveBudget": {
+        "maxModelCalls": 20,
+        "maxToolCalls": 40,
+        "maxTokens": 60000,
+        "maxDurationMs": 540000,
+        "maxStoredBytes": 4000000
+      },
+      "execution": {
+        "startedAt": "2026-09-16T17:49:39.245Z",
+        "finishedAt": "2026-09-16T17:49:52.337Z",
+        "sequential": true,
+        "isolatedStorage": true,
+        "runnerClosed": true,
+        "ephemeralStorageRemoved": true
+      },
+      "measurements": {
+        "workflowWallMs": 13092,
+        "summedStepWallMs": 13074.494,
+        "durationNote": "Workflow wall time is measured end to end; summed step wall time is reported separately and is not substituted for it.",
+        "runtime": {
+          "modelCalls": 4,
+          "toolCalls": 2,
+          "inputTokens": 3221,
+          "outputTokens": 113,
+          "totalTokens": 3334,
+          "durationMs": 13074.494,
+          "storedBytes": 7080,
+          "completedSteps": 0,
+          "failedSteps": 1,
+          "blockedSteps": 4
+        },
+        "tools": {
+          "callCount": 2,
+          "successfulCallCount": 2,
+          "failedCallCount": 0,
+          "callsByName": {
+            "read_document": 1,
+            "calculate": 1
+          }
+        },
+        "ollamaTokenMetadata": {
+          "callCount": 4,
+          "providerReportedCallCount": 4,
+          "providerMissingCallCount": 0,
+          "totals": {
+            "inputTokens": 3221,
+            "outputTokens": 113,
+            "totalTokens": 3334
+          }
+        },
+        "modelProcess": {
+          "sampleCount": 25,
+          "peakSampledRamBytes": 2344013824,
+          "cpuSecondsSampled": 100.203,
+          "averageCpuPercentOfMachine": 49.79
+        },
+        "storage": {
+          "format": "JSONL",
+          "bytes": 7080,
+          "recordCount": 11,
+          "recordsByType": {
+            "step": 11
+          },
+          "recordsByStatus": {
+            "queued": 5,
+            "running": 1,
+            "failed": 1,
+            "blocked": 4
+          }
+        }
+      },
+      "steps": [
+        {
+          "stepId": "requirements_quote",
+          "agentId": "sales-suri",
+          "departmentId": "sales",
+          "status": "failed",
+          "error": {
+            "code": "AGENT_REPORTED_FAILURE",
+            "message": "The agent reported that its step failed."
+          },
+          "answer": null,
+          "evidence": null,
+          "toolAudit": [
+            {
+              "agent": "aria",
+              "name": "read_document",
+              "args": {
+                "doc_code": "DEMO-DOC-001",
+                "client_id": "benchmark-advanced-client"
+              },
+              "result": {
+                "doc_code": "DEMO-DOC-001",
+                "title": "Mango Works fictional service guide",
+                "text": "Mango Works sells notebooks and offers notebook cover printing. Standard cover printing takes 4 working days after artwork approval. This is fictional test data.",
+                "source": "local fictional demo guide",
+                "client_id": "benchmark-advanced-client"
+              },
+              "ok": true
+            },
+            {
+              "agent": "aria",
+              "name": "calculate",
+              "args": {
+                "expression": "40 * 110 + 600"
+              },
+              "result": {
+                "expression": "40 * 110 + 600",
+                "result": 5000
+              },
+              "ok": true
+            }
+          ],
+          "measurements": {
+            "workflowStepWallMs": 13074.494,
+            "modelCalls": 4,
+            "toolCalls": 2,
+            "inputTokens": 3221,
+            "outputTokens": 113,
+            "totalTokens": 3334,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 25,
+              "peakSampledRamBytes": 2344013824,
+              "cpuSecondsSampled": 100.203,
+              "averageCpuPercentOfMachine": 49.79
+            }
+          },
+          "ollamaCalls": [
+            {
+              "callIndex": 1,
+              "startedAt": "2026-09-16T17:49:39.275Z",
+              "startedAtMs": 1789580979275,
+              "finishedAtMs": 1789580984604,
+              "wallMs": 5329,
+              "inputMessageCount": 2,
+              "inputCharacters": 2408,
+              "outputCharacters": 0,
+              "toolCallCount": 1,
+              "toolCalls": [
+                {
+                  "name": "read_document",
+                  "args": {
+                    "doc_code": "DEMO-DOC-001",
+                    "client_id": "benchmark-advanced-client"
+                  },
+                  "argumentsTruncated": false
+                }
+              ],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 680,
+                "output_tokens": 38,
+                "total_tokens": 718
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:44.6027131Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 5321840900,
+                "load_duration": 3984100,
+                "prompt_eval_count": 680,
+                "prompt_eval_duration": 3539783000,
+                "eval_count": 38,
+                "eval_duration": 1750244000
+              },
+              "error": null
+            },
+            {
+              "callIndex": 2,
+              "startedAt": "2026-09-16T17:49:44.607Z",
+              "startedAtMs": 1789580984607,
+              "finishedAtMs": 1789580986693,
+              "wallMs": 2086,
+              "inputMessageCount": 4,
+              "inputCharacters": 2730,
+              "outputCharacters": 0,
+              "toolCallCount": 1,
+              "toolCalls": [
+                {
+                  "name": "calculate",
+                  "args": {
+                    "expression": "40 * 110 + 600"
+                  },
+                  "argumentsTruncated": false
+                }
+              ],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 795,
+                "output_tokens": 29,
+                "total_tokens": 824
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:46.6926286Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 2082035900,
+                "load_duration": 4753000,
+                "prompt_eval_count": 795,
+                "prompt_eval_duration": 689295000,
+                "eval_count": 29,
+                "eval_duration": 1378947000
+              },
+              "error": null
+            },
+            {
+              "callIndex": 3,
+              "startedAt": "2026-09-16T17:49:46.694Z",
+              "startedAtMs": 1789580986694,
+              "finishedAtMs": 1789580988186,
+              "wallMs": 1492,
+              "inputMessageCount": 6,
+              "inputCharacters": 2775,
+              "outputCharacters": 0,
+              "toolCallCount": 0,
+              "toolCalls": [],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 859,
+                "output_tokens": 23,
+                "total_tokens": 882
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:48.18624Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 1489407300,
+                "load_duration": 3675400,
+                "prompt_eval_count": 859,
+                "prompt_eval_duration": 405423000,
+                "eval_count": 23,
+                "eval_duration": 1067113000
+              },
+              "error": null
+            },
+            {
+              "callIndex": 4,
+              "startedAt": "2026-09-16T17:49:48.186Z",
+              "startedAtMs": 1789580988186,
+              "finishedAtMs": 1789580992325,
+              "wallMs": 4139,
+              "inputMessageCount": 6,
+              "inputCharacters": 2923,
+              "outputCharacters": 0,
+              "toolCallCount": 0,
+              "toolCalls": [],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 887,
+                "output_tokens": 23,
+                "total_tokens": 910
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:52.3246737Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 4135843400,
+                "load_duration": 4186500,
+                "prompt_eval_count": 887,
+                "prompt_eval_duration": 3021698000,
+                "eval_count": 23,
+                "eval_duration": 1076987000
+              },
+              "error": null
+            }
+          ]
+        },
+        {
+          "stepId": "marketing_proposal",
+          "agentId": "marketing-mira",
+          "departmentId": "marketing",
+          "status": "blocked",
+          "error": {
+            "code": "UPSTREAM_NOT_COMPLETED",
+            "message": "This step was blocked because its dependency did not complete with confirmed evidence."
+          },
+          "answer": null,
+          "evidence": null,
+          "toolAudit": [],
+          "measurements": {
+            "workflowStepWallMs": 0,
+            "modelCalls": 0,
+            "toolCalls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 0,
+              "peakSampledRamBytes": null,
+              "cpuSecondsSampled": null,
+              "averageCpuPercentOfMachine": null
+            }
+          },
+          "ollamaCalls": []
+        },
+        {
+          "stepId": "connector_permission_review",
+          "agentId": "it-ivo",
+          "departmentId": "it",
+          "status": "blocked",
+          "error": {
+            "code": "UPSTREAM_NOT_COMPLETED",
+            "message": "This step was blocked because its dependency did not complete with confirmed evidence."
+          },
+          "answer": null,
+          "evidence": null,
+          "toolAudit": [],
+          "measurements": {
+            "workflowStepWallMs": 0,
+            "modelCalls": 0,
+            "toolCalls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 0,
+              "peakSampledRamBytes": null,
+              "cpuSecondsSampled": null,
+              "averageCpuPercentOfMachine": null
+            }
+          },
+          "ollamaCalls": []
+        },
+        {
+          "stepId": "crm_persistence_design",
+          "agentId": "backend-beck",
+          "departmentId": "backend-engineering",
+          "status": "blocked",
+          "error": {
+            "code": "UPSTREAM_NOT_COMPLETED",
+            "message": "This step was blocked because its dependency did not complete with confirmed evidence."
+          },
+          "answer": null,
+          "evidence": null,
+          "toolAudit": [],
+          "measurements": {
+            "workflowStepWallMs": 0,
+            "modelCalls": 0,
+            "toolCalls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 0,
+              "peakSampledRamBytes": null,
+              "cpuSecondsSampled": null,
+              "averageCpuPercentOfMachine": null
+            }
+          },
+          "ollamaCalls": []
+        },
+        {
+          "stepId": "final_verification",
+          "agentId": "ai-qa-quinn",
+          "departmentId": "ai-engineering-quality",
+          "status": "blocked",
+          "error": {
+            "code": "UPSTREAM_NOT_COMPLETED",
+            "message": "This step was blocked because its dependency did not complete with confirmed evidence."
+          },
+          "answer": null,
+          "evidence": null,
+          "toolAudit": [],
+          "measurements": {
+            "workflowStepWallMs": 0,
+            "modelCalls": 0,
+            "toolCalls": 0,
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "totalTokens": 0,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 0,
+              "peakSampledRamBytes": null,
+              "cpuSecondsSampled": null,
+              "averageCpuPercentOfMachine": null
+            }
+          },
+          "ollamaCalls": []
+        }
+      ],
+      "handoffs": [],
+      "answerAndEvidenceReview": "Preserved verbatim below each step; not semantically graded.",
+      "structuralChecks": {
+        "policy": "Deterministic structure only; no model-prose or business-correctness grading.",
+        "checks": [
+          {
+            "id": "result_identity",
+            "status": "pass",
+            "detail": "Result template and client must match the fixed scenario."
+          },
+          {
+            "id": "fixed_topology",
+            "status": "pass",
+            "detail": "Step and named-agent order must match the fixed runtime template."
+          },
+          {
+            "id": "terminal_step_states",
+            "status": "pass",
+            "detail": "Every fixed step must end in completed, failed, or blocked state."
+          },
+          {
+            "id": "authorized_client_scope",
+            "status": "pass",
+            "detail": "Every ledger record must remain inside the runner's single authorized client."
+          },
+          {
+            "id": "workflow_scope",
+            "status": "pass",
+            "detail": "Every ledger record must belong to the reported workflow."
+          },
+          {
+            "id": "jsonl_storage_accounting",
+            "status": "pass",
+            "detail": "Measured JSONL bytes must equal the runtime's stored-byte total."
+          },
+          {
+            "id": "jsonl_records_parseable",
+            "status": "pass",
+            "detail": "Every nonempty JSONL line must parse as a versioned workflow record."
+          },
+          {
+            "id": "fixed_handoff_chain",
+            "status": "pass",
+            "detail": "Completed workflows require the exact chain; incomplete workflows may contain only its valid prefix."
+          },
+          {
+            "id": "tool_audit_shape",
+            "status": "pass",
+            "detail": "Every recorded tool call must name a tool allowed for that fixed agent and expose a boolean outcome."
+          },
+          {
+            "id": "model_session_attribution",
+            "status": "pass",
+            "detail": "Model sessions must map to the fixed step order without extra agents."
+          },
+          {
+            "id": "provider_token_metadata",
+            "status": "pass",
+            "detail": "Available provider token metadata must contain nonnegative numeric values only."
+          }
+        ],
+        "summary": {
+          "pass": 11
+        }
+      },
+      "humanReview": null
+    }
+  ],
+  "humanReview": null,
+  "measurements": {
+    "suiteWallMs": 13107,
+    "scenarioCount": 1,
+    "executedScenarioCount": 1
+  }
+}

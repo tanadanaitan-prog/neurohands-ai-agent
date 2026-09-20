@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "conformanceId": "synthetic-proposal-conformance-v2",
+  "status": "deterministic_orchestration_conformance",
+  "use": "The same fixed objective is exercised with one, two, and five configured agents. The checks establish deterministic runtime wiring, persisted evidence, and structural role coverage only; they do not compare model quality or establish an optimal team size.",
+  "clientId": "CONFORMANCE-CLIENT-A",
+  "objective": "Prepare a client-ready five-seat AI workforce proposal, its marketing plan, connector and permission review, CRM persistence design, and an independent final verification. Use only synthetic local evidence and do not contact a client or external service.",
+  "proposal": {
+    "currency": "THB",
+    "seatCount": 5,
+    "monthlyPricePerSeat": 1000,
+    "discountPercent": 10,
+    "setupFee": 2000,
+    "expectedSubtotal": 5000,
+    "expectedDiscount": 500,
+    "expectedMonthly": 4500,
+    "expectedFirstMonth": 6500
+  },
+  "requiredAgentIds": ["sales-suri", "marketing-mira", "it-ivo", "backend-beck", "ai-qa-quinn"],
+  "agents": [
+    {
+      "id": "sales-suri",
+      "name": "Suri",
+      "department": "sales",
+      "stepId": "requirements_quote",
+      "role": "Sales lead",
+      "responsibility": "Confirm the commercial requirements, calculate the proposal, and create the sales evidence.",
+      "plannedTools": ["calculate"]
+    },
+    {
+      "id": "marketing-mira",
+      "name": "Mira",
+      "department": "marketing",
+      "stepId": "marketing_proposal",
+      "role": "Marketing strategist",
+      "responsibility": "Turn the verified proposal into a bounded positioning brief and a draft-only campaign plan.",
+      "plannedTools": []
+    },
+    {
+      "id": "it-ivo",
+      "name": "Ivo",
+      "department": "it",
+      "stepId": "connector_permission_review",
+      "role": "IT and connector operator",
+      "responsibility": "Specify connector ownership, least-privilege permissions, tenant boundaries, freshness, and audit controls.",
+      "plannedTools": []
+    },
+    {
+      "id": "backend-beck",
+      "name": "Beck",
+      "department": "backend-engineering",
+      "stepId": "crm_persistence_design",
+      "role": "Backend and software engineer",
+      "responsibility": "Define idempotent CRM persistence and the measurable runtime data contract.",
+      "plannedTools": []
+    },
+    {
+      "id": "ai-qa-quinn",
+      "name": "Quinn",
+      "department": "ai-engineering-quality",
+      "stepId": "final_verification",
+      "role": "AI quality engineer",
+      "responsibility": "Independently recompute the evidence gate and verify the cross-department handoff chain.",
+      "plannedTools": ["calculate"]
+    }
+  ],
+  "scenarios": [
+    {
+      "templateId": "individual",
+      "label": "1 agent",
+      "agentIds": ["sales-suri"],
+      "expectedStepIds": ["requirements_quote"],
+      "structuralEligibility": {
+        "includesAllRequiredRoles": false,
+        "missingAgentIds": ["marketing-mira", "it-ivo", "backend-beck", "ai-qa-quinn"]
+      }
+    },
+    {
+      "templateId": "pair",
+      "label": "2 agents",
+      "agentIds": ["sales-suri", "ai-qa-quinn"],
+      "expectedStepIds": ["requirements_quote", "final_verification"],
+      "structuralEligibility": {
+        "includesAllRequiredRoles": false,
+        "missingAgentIds": ["marketing-mira", "it-ivo", "backend-beck"]
+      }
+    },
+    {
+      "templateId": "full_department",
+      "label": "5 agents",
+      "agentIds": ["sales-suri", "marketing-mira", "it-ivo", "backend-beck", "ai-qa-quinn"],
+      "expectedStepIds": ["requirements_quote", "marketing_proposal", "connector_permission_review", "crm_persistence_design", "final_verification"],
+      "structuralEligibility": {
+        "includesAllRequiredRoles": true,
+        "missingAgentIds": []
+      }
+    }
+  ],
+  "budget": {
+    "maxModelCalls": 10,
+    "maxToolCalls": 20,
+    "maxTokens": 5000,
+    "maxDurationMs": 10000,
+    "maxStoredBytes": 1048576
+  },
+  "expectedEvidence": {
+    "sales_quote": {
+      "ownerAgentId": "sales-suri",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "seats": 5,
+        "currency": "THB",
+        "monthlyTotal": 4500,
+        "firstMonthTotal": 6500,
+        "setupFee": 2000,
+        "discountPercent": 10,
+        "status": "draft_pending_approval"
+      }
+    },
+    "marketing_brief": {
+      "ownerAgentId": "marketing-mira",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "audience": "Thai SME owner evaluating an AI workforce",
+        "valueProposition": "Five accountable specialist agents with measured handoffs and owner-controlled tools",
+        "verifiedMonthlyTHB": 4500,
+        "verifiedFirstMonthTHB": 6500
+      }
+    },
+    "campaign_plan": {
+      "ownerAgentId": "marketing-mira",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "channel": "owner-approved direct proposal",
+        "callToAction": "Review scope, permissions, and evidence before activation",
+        "externalSend": false,
+        "claimsRequireEvidence": true
+      }
+    },
+    "connector_authorization": {
+      "ownerAgentId": "it-ivo",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "sales-suri": ["pricing.read", "proposal.draft"],
+        "marketing-mira": ["proposal.read", "campaign.draft"],
+        "it-ivo": ["connector.inspect", "permission.review"],
+        "backend-beck": ["crm.schema", "crm.write-test"],
+        "ai-qa-quinn": ["audit.read", "quality.verify"]
+      }
+    },
+    "security_controls": {
+      "ownerAgentId": "it-ivo",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "tenantScope": "CONFORMANCE-CLIENT-A",
+        "leastPrivilege": true,
+        "freshnessRecorded": true,
+        "auditTrailRequired": true,
+        "productionCredentialsUsed": false
+      }
+    },
+    "crm_persistence_design": {
+      "ownerAgentId": "backend-beck",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "idempotencyKeyRequired": true,
+        "records": ["workflow", "step", "tool_call", "handoff", "evidence"],
+        "failureRecovery": "resume_from_last_completed_step",
+        "externalWrite": false
+      }
+    },
+    "measurement_plan": {
+      "ownerAgentId": "backend-beck",
+      "source": "trusted_injected_agent_result",
+      "data": {
+        "perAgent": ["wall_ms", "input_tokens", "output_tokens", "total_tokens", "tool_calls", "tool_failure_count", "failed_step_count", "blocked_step_count", "repeated_identical_tool_call_count"],
+        "workflow": ["conformance_checks_passed", "conformance_checks_total", "jsonl_bytes", "storage_bytes", "record_count"],
+        "interpretation": "conformance_only_no_optimization_claim"
+      }
+    }
+  },
+  "plans": {
+    "requirements_quote": {
+      "agentId": "sales-suri",
+      "evidenceTypes": ["sales_quote"],
+      "usage": { "inputTokens": 128, "outputTokens": 48, "totalTokens": 176, "durationMs": 4 },
+      "tools": [
+        {
+          "name": "calculate",
+          "args": { "operation": "calculate_pricing", "seatCount": 5, "monthlyPricePerSeat": 1000, "discountPercent": 10, "setupFee": 2000 }
+        }
+      ]
+    },
+    "marketing_proposal": {
+      "agentId": "marketing-mira",
+      "evidenceTypes": ["marketing_brief", "campaign_plan"],
+      "usage": { "inputTokens": 96, "outputTokens": 42, "totalTokens": 138, "durationMs": 4 },
+      "tools": []
+    },
+    "connector_permission_review": {
+      "agentId": "it-ivo",
+      "evidenceTypes": ["connector_authorization", "security_controls"],
+      "usage": { "inputTokens": 104, "outputTokens": 44, "totalTokens": 148, "durationMs": 4 },
+      "tools": []
+    },
+    "crm_persistence_design": {
+      "agentId": "backend-beck",
+      "evidenceTypes": ["crm_persistence_design", "measurement_plan"],
+      "usage": { "inputTokens": 116, "outputTokens": 50, "totalTokens": 166, "durationMs": 4 },
+      "tools": []
+    },
+    "final_verification": {
+      "agentId": "ai-qa-quinn",
+      "evidenceTypes": [],
+      "usage": { "inputTokens": 90, "outputTokens": 38, "totalTokens": 128, "durationMs": 4 },
+      "tools": [
+        { "name": "calculate", "args": { "operation": "verify_evidence" } }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "id": "SURI-1",
+      "category": "correctness",
+      "ownerAgentId": "sales-suri",
+      "description": "The pricing tool accepted the exact five-seat inputs and independently returned subtotal 5,000, discount 500, monthly 4,500, and first month 6,500 THB.",
+      "proof": { "type": "tool_result", "tool": "calculate", "operation": "calculate_pricing", "resultPath": "verified", "equals": true }
+    },
+    {
+      "id": "SURI-2",
+      "category": "correctness",
+      "ownerAgentId": "sales-suri",
+      "description": "A validated draft sales quote records monthly 4,500 THB and first month 6,500 THB without claiming approval.",
+      "proof": { "type": "evidence_record", "evidenceType": "sales_quote" }
+    },
+    {
+      "id": "MIRA-1",
+      "category": "correctness",
+      "ownerAgentId": "marketing-mira",
+      "description": "A validated marketing brief uses the verified prices and names the target audience and evidence-based value proposition.",
+      "proof": { "type": "evidence_record", "evidenceType": "marketing_brief" }
+    },
+    {
+      "id": "MIRA-2",
+      "category": "quality",
+      "ownerAgentId": "marketing-mira",
+      "description": "A validated campaign plan remains draft-only and requires owner approval and evidence for claims.",
+      "proof": { "type": "evidence_record", "evidenceType": "campaign_plan" }
+    },
+    {
+      "id": "IVO-1",
+      "category": "coverage",
+      "ownerAgentId": "it-ivo",
+      "description": "A validated connector authorization record assigns least-privilege capabilities to all five named agents.",
+      "proof": { "type": "evidence_record", "evidenceType": "connector_authorization" }
+    },
+    {
+      "id": "IVO-2",
+      "category": "quality",
+      "ownerAgentId": "it-ivo",
+      "description": "A validated security record fixes the client scope and requires freshness and audit evidence without using production credentials.",
+      "proof": { "type": "evidence_record", "evidenceType": "security_controls" }
+    },
+    {
+      "id": "BECK-1",
+      "category": "quality",
+      "ownerAgentId": "backend-beck",
+      "description": "A validated CRM persistence design requires idempotency, durable workflow records, and resumable failure recovery.",
+      "proof": { "type": "evidence_record", "evidenceType": "crm_persistence_design" }
+    },
+    {
+      "id": "BECK-2",
+      "category": "efficiency",
+      "ownerAgentId": "backend-beck",
+      "description": "A validated measurement plan distinguishes tool failures, failed or blocked steps, identical repeated calls, conformance checks, JSONL bytes, storage bytes, and record count.",
+      "proof": { "type": "evidence_record", "evidenceType": "measurement_plan" }
+    },
+    {
+      "id": "QUINN-1",
+      "category": "quality",
+      "ownerAgentId": "ai-qa-quinn",
+      "description": "The independent evidence verifier confirms every required pre-QA evidence record and recomputes the proposal totals.",
+      "proof": { "type": "tool_result", "tool": "calculate", "operation": "verify_evidence", "resultPath": "complete", "equals": true }
+    },
+    {
+      "id": "QUINN-2",
+      "category": "coverage",
+      "ownerAgentId": "ai-qa-quinn",
+      "description": "Runtime handoff packets prove the complete Suri to Mira to Ivo to Beck to Quinn collaboration chain.",
+      "proof": { "type": "handoff_chain", "agentIds": ["sales-suri", "marketing-mira", "it-ivo", "backend-beck", "ai-qa-quinn"] }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestVersion": "2026-09-18.1",
+  "reviewedOn": "2026-09-18",
+  "scope": "customer_safe_responses",
+  "responses": [
+    {
+      "id": "c06_database_degraded",
+      "controlId": "C06",
+      "responseVersion": "1.0.0",
+      "locale": "en",
+      "failureCodes": [
+        "database_read_only",
+        "database_connection_exhausted",
+        "database_timeout",
+        "database_unavailable",
+        "database_request_failed"
+      ],
+      "message": "I could not complete that request. Some work may already be saved. Please ask the team to check what was completed before repeating the request.",
+      "messageSha256": "ec6181b60778bddb7ff3deba111d802cc4957661380011ae6f514747a328f469",
+      "approval": {
+        "status": "pending",
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvedCommit": null
+      },
+      "releaseEligible": false
+    },
+    {
+      "id": "c06_database_degraded_no_side_effect",
+      "controlId": "C06",
+      "responseVersion": "1.0.0",
+      "locale": "en",
+      "failureCodes": [
+        "database_read_only",
+        "database_connection_exhausted",
+        "database_timeout",
+        "database_unavailable",
+        "database_request_failed"
+      ],
+      "message": "Sorry, I could not complete that request. Please try again or contact the team.",
+      "messageSha256": "b247e4f59597302f5ef5e9605546483e824e6ca4a7e94b6bea8c58d7d3880b74",
+      "approval": {
+        "status": "pending",
+        "approvedBy": null,
+        "approvedAt": null,
+        "approvedCommit": null
+      },
+      "releaseEligible": false
+    }
+  ]
+}

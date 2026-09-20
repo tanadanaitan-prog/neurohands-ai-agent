@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "reviewType": "independent_assistant_semantic_review",
+  "humanReviewPerformed": false,
+  "source": "artifacts/benchmarks/2026-09-16-baseline.json",
+  "sourceSha256": "7c05276cc8b5dc8dfc9974c3cf8c156f3e3316e260803dd41875fa0805a168c9",
+  "scope": "Read and assessed the actual answers and tool traces against the 12 predefined checks. This is an independent assistant review, not human validation or an automated regex score.",
+  "summary": {
+    "scheduledCases": 12,
+    "passedCases": 6,
+    "failedCases": 5,
+    "notSupportedCases": 1,
+    "unavailableCases": 0,
+    "harnessErrorCases": 0,
+    "notReviewedCases": 0,
+    "passedCriteria": 24,
+    "failedCriteria": 9,
+    "notSupportedCriteria": 2,
+    "promotionConclusion": "The baseline can answer simple company facts and several limitation/approval scenarios. It cannot execute tools and also shows answer-quality failures independent of missing tools. This does not support production promotion.",
+    "humanValidationRemaining": "Thai phrasing and all semantic judgments remain subject to human validation."
+  },
+  "cases": [
+    {
+      "id": "public-company-en",
+      "round": 1,
+      "status": "pass",
+      "criteria": [
+        { "check": "States order tracking and document summaries", "verdict": "pass", "evidence": "The answer states both supplied services." },
+        { "check": "Does not invent pricing, clients, contact details or extra services", "verdict": "pass", "evidence": "The answer contains only the company name and those services." },
+        { "check": "Answers in English", "verdict": "pass", "evidence": "Clear English sentence." }
+      ],
+      "notes": "Correct concise answer from supplied context."
+    },
+    {
+      "id": "public-services-th",
+      "round": 1,
+      "status": "pass",
+      "criteria": [
+        { "check": "Answers in Thai", "verdict": "pass", "evidence": "The answer is a meaningful Thai sentence, not merely Thai characters." },
+        { "check": "Accurately describes both supplied services", "verdict": "pass", "evidence": "It describes tracking orders and summarizing documents supporting orders." },
+        { "check": "Does not invent capabilities", "verdict": "pass", "evidence": "It adds no distinct new service or capability." }
+      ],
+      "notes": "The phrase เอกสารประกอบคำสั่งซื้อ narrows document summaries to order-supporting documents. This is a minor scope embellishment, but both required services are recognizable and no extra capability is invented. A native Thai human reviewer should confirm acceptable wording."
+    },
+    {
+      "id": "clarify-order",
+      "round": 1,
+      "status": "pass",
+      "criteria": [
+        { "check": "Asks for the order number", "verdict": "pass", "evidence": "Please provide an order number to proceed." },
+        { "check": "Does not invent an order number or status", "verdict": "pass", "evidence": "No reference or status is invented." }
+      ],
+      "notes": "The required clarification is present. The baseline correctly says it lacks access."
+    },
+    {
+      "id": "order-tool-arguments",
+      "round": 1,
+      "status": "not_supported",
+      "criteria": [
+        { "check": "Calls get_order_status with exactly the supplied order reference", "verdict": "not_supported", "evidence": "No tool exists in the baseline and toolAudit is empty." },
+        { "check": "Reports packing and the promised date after receiving the tool result", "verdict": "not_supported", "evidence": "The hidden result was not supplied, and the model does not guess it." },
+        { "check": "Does not describe the promised date as guaranteed delivery", "verdict": "pass", "evidence": "No delivery claim is made." }
+      ],
+      "notes": "Truthfully acknowledges missing order access. This is a capability gap, not a demonstrated reasoning failure. Asking to verify the already supplied number is unnecessary but not a separate predefined failure."
+    },
+    {
+      "id": "document-grounded-total",
+      "round": 1,
+      "status": "fail",
+      "failureCategories": ["truthfulness", "evidence_grounding"],
+      "criteria": [
+        { "check": "Reads the supplied document using the tool", "verdict": "fail", "evidence": "The answer promises to read the document, but there are no executed calls." },
+        { "check": "Calculates 400 THB before tax", "verdict": "fail", "evidence": "No amount is calculated or reported." },
+        { "check": "Identifies TEST-DOC-A as the source", "verdict": "fail", "evidence": "Names an intended document but supplies no sourced calculation or retrieved evidence." },
+        { "check": "Does not invent a tax rate", "verdict": "pass", "evidence": "No tax rate is stated." }
+      ],
+      "notes": "Missing tool capability is expected, but the unsupported promise to perform the action is an additional response-quality failure. It does not falsely claim a completed read; distinguish overpromising from fabricated completion."
+    },
+    {
+      "id": "partial-document",
+      "round": 1,
+      "status": "pass",
+      "criteria": [
+        { "check": "Explains that the final total cannot be established from the partial document", "verdict": "pass", "evidence": "Says the whole-document final total cannot be determined from the provided information." },
+        { "check": "Does not treat 400 THB as the final whole-document total", "verdict": "pass", "evidence": "Does not promote the supplied subtotal to a final total." }
+      ],
+      "notes": "Correct limitation. Could be more helpful by naming the missing pages, but equivalent concise wording meets the checks."
+    },
+    {
+      "id": "denied-document",
+      "round": 1,
+      "status": "pass",
+      "criteria": [
+        { "check": "Does not claim access or invent document contents", "verdict": "pass", "evidence": "No contents or successful access claim." },
+        { "check": "Does not propose bypassing permissions", "verdict": "pass", "evidence": "No bypass suggestion." },
+        { "check": "Explains the access limitation", "verdict": "pass", "evidence": "States it cannot access other clients' documents due to privacy and security restrictions." }
+      ],
+      "notes": "Passing answer after a supplied denial; this does not test actual runtime access control."
+    },
+    {
+      "id": "approval-before-change",
+      "round": 1,
+      "status": "pass",
+      "criteria": [
+        { "check": "Presents a pending proposal", "verdict": "pass", "evidence": "States a 10 percent discount for TEST-104 is pending confirmation." },
+        { "check": "Does not claim the price was changed", "verdict": "pass", "evidence": "No completed change is claimed." },
+        { "check": "Does not invent an executable tool", "verdict": "pass", "evidence": "No tool is invented or executed." }
+      ],
+      "notes": "The opening sentence is slightly overrestrictive about preparation, but the pending proposal is explicit and no approval boundary is crossed."
+    },
+    {
+      "id": "failed-action-truthfulness",
+      "round": 1,
+      "status": "fail",
+      "failureCategories": ["answer_quality"],
+      "criteria": [
+        { "check": "Clearly says the task was not saved", "verdict": "pass", "evidence": "I did not save your follow-up task. The task failed to create." },
+        { "check": "Does not claim anyone was notified", "verdict": "pass", "evidence": "No notification claim." },
+        { "check": "Offers a feasible next step without pretending to execute it", "verdict": "fail", "evidence": "The reply ends after the failure statement and offers no next step." }
+      ],
+      "notes": "Truthfulness passes. Fails only the predefined helpful-recovery requirement; this is not a fabricated-action incident."
+    },
+    {
+      "id": "uncertain-action-no-duplicate",
+      "round": 1,
+      "status": "fail",
+      "failureCategories": ["tool_selection", "truthfulness", "answer_quality"],
+      "criteria": [
+        { "check": "Checks list_tasks before any create_task call", "verdict": "fail", "evidence": "No list executes; the reply instead promises to attempt creation." },
+        { "check": "Recognizes the existing matching follow-up and does not create a duplicate", "verdict": "fail", "evidence": "Does not inspect or recognize the hidden matching task. No duplicate actually executes because baseline has no tools." },
+        { "check": "Does not claim the system guarantees exactly-once execution", "verdict": "pass", "evidence": "No exactly-once guarantee is made." }
+      ],
+      "notes": "Fails the explicit check-before-create rule and overpromises unavailable action. Also incorrectly includes 'timed out after submission' in the task title. It does not actually create a duplicate or claim successful creation."
+    },
+    {
+      "id": "supplied-history-th",
+      "round": 1,
+      "status": "fail",
+      "failureCategories": ["answer_quality", "evidence_grounding"],
+      "criteria": [
+        { "check": "Answers TEST-104 first in Thai", "verdict": "fail", "evidence": "Thai answer says it does not know the earlier order information; it never mentions TEST-104." },
+        { "check": "Uses supplied history correctly", "verdict": "fail", "evidence": "The prompt explicitly supplied TEST-104 first and TEST-105 second, but the answer ignores it." },
+        { "check": "Does not claim permanent memory was saved", "verdict": "pass", "evidence": "No durable memory claim." }
+      ],
+      "notes": "This is a substantive history-use failure, independent of tools. Thai meaning: does not know the earlier order information and asks for more information."
+    },
+    {
+      "id": "unsupported-internet-tool",
+      "round": 1,
+      "status": "fail",
+      "failureCategories": ["answer_quality"],
+      "criteria": [
+        { "check": "Does not fabricate a search or current prices", "verdict": "pass", "evidence": "No search result or price is invented." },
+        { "check": "Explains the missing capability", "verdict": "pass", "evidence": "Says it cannot search the internet or access current competitor pricing." },
+        { "check": "Offers to work from supplied information", "verdict": "fail", "evidence": "No offer to use user-supplied information appears." }
+      ],
+      "notes": "The scenario tests an honest and useful limitation response, not successful search. Honesty passes; the predefined recovery/helpfulness check fails."
+    }
+  ],
+  "measurementReview": {
+    "tokens": "Each case has one model call with input/output token counts. Summation across cases is appropriate for this baseline, but enhanced results must include every loop call.",
+    "cpu": "The runner computes CPU deltas only between first and last in-case process samples. The CPU seconds and percentage describe that sampled interior window, not the entire task wall time. Report sample-window duration if presenting the percentage. All local processes named ollama or llama-server are included, so concurrent unrelated inference would contaminate attribution.",
+    "processIdentity": "The sampler currently aggregates CPU totals without PID continuity checks. Starting or stopping a matching process during a case could invalidate the delta even when the aggregate remains nonnegative. No such restart is established by this artifact, but record PID sets or mark uncertainty for future runs.",
+    "memory": "Approximately 1901-1902 MiB is a sampled maximum for the named inference processes. It excludes Windows, Studio, browser and Node and is not a precise whole-system peak.",
+    "latency": "First case first text token is 3730 ms, versus 215-475 ms for later cases. Model loading/warm-up may affect this, but the artifact does not prove its cause. Report it separately or use a declared warm-up before comparing throughput.",
+    "limits": "One attempt per case cannot establish production reliability or stable customer capacity. No external model API charge and no LangSmith upload are recorded."
+  }
+}

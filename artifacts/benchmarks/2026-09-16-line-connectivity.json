@@ -1,0 +1,215 @@
+{
+  "initialInspectionAtUtc": "2026-09-16T15:50:13.6609972Z",
+  "scope": "Initial read-only production connectivity diagnosis, followed by an authorized configuration-only redeployment, a failed user LINE math test and a minimal Gemini adapter repair deployed successfully. No model inference calls or messages were sent by the inspector. The code-repair release version and readiness are verified; a new user LINE reply remains unverified.",
+  "publicChecks": [
+    {
+      "url": "https://neurohands-ai-agent-production.up.railway.app/",
+      "httpStatus": 200,
+      "result": "Neurohands v3.10 agent gateway is running"
+    },
+    {
+      "url": "https://neurohands-ai-agent-production.up.railway.app/ready",
+      "httpStatus": 200,
+      "ready": true
+    },
+    {
+      "url": "https://neurohands-ai-agent-production.up.railway.app/version",
+      "httpStatus": 200,
+      "version": "3.10.0",
+      "commit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb"
+    }
+  ],
+  "deployment": {
+    "status": "SUCCESS",
+    "id": "8cbb1ef5-6b15-4d79-87e3-98c239f42bd5",
+    "sourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent",
+    "configurationOnlyRedeployment": false
+  },
+  "configurationOnlyDeployment": {
+    "status": "SUCCESS",
+    "id": "3a9dabfb-c98e-49be-baf5-574ea8814389",
+    "sourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent",
+    "configurationOnlyRedeployment": true
+  },
+  "initialDeployment": {
+    "status": "SUCCESS",
+    "id": "fb73eecf-bbb6-4305-b033-b12575d52924",
+    "createdAtUtc": "2026-09-09T16:50:58.653Z",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent"
+  },
+  "latestDeploymentAttempt": {
+    "status": "SUCCESS",
+    "id": "8cbb1ef5-6b15-4d79-87e3-98c239f42bd5",
+    "createdAtUtc": "2026-09-16T16:13:13.326Z",
+    "sourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "sourceBranch": "main",
+    "sourceRepository": "tanadanaitan-prog/neurohands-ai-agent",
+    "healthCheckPassedAtUtc": "2026-09-16T16:14:09Z"
+  },
+  "recentWebhookEvidence": {
+    "httpRequests": [
+      {
+        "timestampUtc": "2026-09-16T15:47:49.143828452Z",
+        "method": "POST",
+        "path": "/webhook",
+        "httpStatus": 200,
+        "proxyDurationMs": 320
+      },
+      {
+        "timestampUtc": "2026-09-16T15:48:18.376918497Z",
+        "method": "POST",
+        "path": "/webhook",
+        "httpStatus": 200,
+        "proxyDurationMs": 1314
+      }
+    ],
+    "handlerCompletions": [
+      {
+        "timestampUtc": "2026-09-16T15:47:58.441188500Z",
+        "status": "completed",
+        "elapsedMs": 1904
+      },
+      {
+        "timestampUtc": "2026-09-16T15:48:28.221484856Z",
+        "status": "completed",
+        "elapsedMs": 877
+      }
+    ],
+    "limitation": "Proxy and handler timings are separate observations, not full customer latency or AI model measurements. No message bodies were read."
+  },
+  "userVerification": {
+    "founderHelpReplyConfirmed": true,
+    "source": "User report relayed by coordinating agent",
+    "healthCommand": "Before configuration repair, user supplied actual LINE health response: Gemini disabled or not configured; fallback paused - authentication rejected.",
+    "healthCommandUsesModelInference": false,
+    "postRepairModelTest": {
+      "status": "failed",
+      "input": "what is 12+5=",
+      "expectedAnswer": "17",
+      "actualReply": "I could not verify that request. If you were proposing an action or note, type pending to check whether a proposal was saved before retrying.",
+      "cause": "Gemini HTTP 400 observed in the live request log. A request-format/schema mismatch is under investigation but is not yet causally confirmed."
+    }
+  },
+  "postRepairFailureEvidence": {
+    "timestampUtc": "2026-09-16T16:05:09.043574544Z",
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "runId": 5,
+    "attempt": 1,
+    "httpStatus": 400,
+    "requestElapsedMs": 82,
+    "failureReason": "http_error",
+    "reportedUsage": null,
+    "webhookStatus": "failed",
+    "webhookElapsedMs": 2684,
+    "failureReplyDelivered": true,
+    "userScreenshotSequence": "Health response at 10:49 before repair deployment; math test at 11:05 after deployment.",
+    "investigationHypothesis": "Request-format/schema mismatch; not yet causally confirmed",
+    "limitation": "Request and webhook durations measure different scopes. Missing usage is unknown, not zero."
+  },
+  "postCodeRepairSuccessEvidence": {
+    "deploymentId": "8cbb1ef5-6b15-4d79-87e3-98c239f42bd5",
+    "windowUtc": {
+      "start": "2026-09-16T16:17:17.517Z",
+      "end": "2026-09-16T16:25:03.192Z"
+    },
+    "completedModelRuns": 6,
+    "providerAttempts": 16,
+    "provider": "gemini",
+    "model": "gemini-3.6-flash",
+    "httpStatus": 200,
+    "status": "usable_response",
+    "reportedTotalTokens": 41827,
+    "summedProviderRequestElapsedMs": 35034,
+    "completedWebhookElapsedMs": [4867, 5258, 10519, 22692, 16785, 11188],
+    "deliveryEvidence": "Each associated webhook finished with status completed. In the deployed runtime, that status follows accepted LINE delivery and persistence of outgoing evidence.",
+    "privacy": "No incoming or outgoing message bodies were read for this observation.",
+    "proves": "The deployed LINE to Railway to Gemini to LINE path can complete successfully after the code repair.",
+    "doesNotProve": "Answer correctness, useful tool execution, task completion, five-agent coordination or reliability under repeated load."
+  },
+  "historicalProviderFailure": {
+    "timestampUtc": "2026-09-10T04:34:16.210650711Z",
+    "provider": "openai",
+    "model": "gpt-4.1-mini",
+    "httpStatus": 401,
+    "failureReason": "authentication_rejected",
+    "classification": "Historical log from the pre-repair deployment, not a new provider probe",
+    "currentStatus": "Current pause confirmed by user-supplied LINE health reply before configuration repair."
+  },
+  "configurationInspection": {
+    "phase": "Initial read-only diagnosis before the configuration repair",
+    "variableNamesRead": true,
+    "secretValuesRead": false,
+    "modelConfigurationValuesRead": false,
+    "connectorValuesRedacted": true,
+    "requiredConnectionVariableNamesPresent": true,
+    "thirdApiKeyVariableNamePresent": false,
+    "limitation": "Variable-name presence does not prove validity or usability."
+  },
+  "currentModelAbilityVerified": false,
+  "newLocalGraphsConnectedToLine": false,
+  "automaticOllamaToGeminiTakeoverConnected": false,
+  "localConnectionLimitation": "Railway cannot reach the laptop's loopback Ollama or Studio address. A test-only connection needs an authenticated bridge or separate test deployment and channel.",
+  "actions": {
+    "directModelInferenceCallsByInspector": 0,
+    "messagesSentByInspector": 0,
+    "productionMutations": 2,
+    "deploymentsTriggered": 2,
+    "supabaseConnectorQueries": 0
+  },
+  "codeRepair": {
+    "pullRequest": "https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14",
+    "merged": true,
+    "mergeCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "changes": [
+      "Correct Gemini JSON schema field",
+      "Use the user role for tool results",
+      "Preserve tool-call IDs",
+      "Add static private error categories"
+    ],
+    "validation": {
+      "productionAutomatedTestsPassed": 198,
+      "codeChecksPassed": true,
+      "buildPassed": true,
+      "independentReviewBlockingIssues": 0,
+      "localLabBranchTestsAfterIncorporatingRepair": 226,
+      "localModelBenchmarkRevisionTests": 219,
+      "localModelBenchmarkRerun": false
+    },
+    "secretValuesChanged": false,
+    "paidFallbackEnabled": false,
+    "experimentalCodeDeployed": false,
+    "deploymentStatus": "SUCCESS",
+    "healthCheckPassedAtUtc": "2026-09-16T16:14:09Z",
+    "postDeploymentReady": true,
+    "postDeploymentSourceCommit": "a315fdd0cad03a5339abb87440c83061fc401dbe",
+    "liveReplyVerified": true,
+    "answerCorrectnessVerified": false,
+    "testStatus": "Six post-deployment Gemini runs returned usable HTTP 200 responses and their webhook handlers completed. Message bodies were not read, so answer correctness remains unverified.",
+    "causalLimitation": "The earlier request failed with HTTP 400 and the repaired deployment later completed the same provider path successfully. The logs do not isolate which individual contract change resolved the request."
+  },
+  "repair": {
+    "userConfirmedGeminiFreeTier": true,
+    "changedVariableValues": {
+      "GEMINI_ENABLED": "true",
+      "GEMINI_MODEL": "gemini-3.6-flash",
+      "FALLBACK_PROVIDER": "",
+      "FALLBACK_BASE_URL": ""
+    },
+    "secretValuesChanged": false,
+    "experimentalCodeDeployed": false,
+    "sourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
+    "deploymentId": "3a9dabfb-c98e-49be-baf5-574ea8814389",
+    "status": "SUCCESS",
+    "modelReplyVerified": false,
+    "postDeploymentReadyHttpStatus": 200,
+    "postDeploymentReady": true,
+    "postDeploymentSourceCommit": "0bc4b7b35707bd2c2bba16607e024287e8c597cb",
+    "testStatus": "Failed: the user's LINE math test received an unverified-request response instead of 17; cause under investigation"
+  }
+}

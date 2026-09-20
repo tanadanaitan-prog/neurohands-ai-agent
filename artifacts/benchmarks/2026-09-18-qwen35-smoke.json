@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-18T13:33:36.3779698+07:00",
+  "purpose": "Verify the newly installed local primary model through the bounded Neurohands LangGraph chat path.",
+  "environment": "local_synthetic_only",
+  "dataClass": "synthetic",
+  "reservation": {
+    "maximumModelCalls": 1,
+    "maximumOutputTokens": 256,
+    "contextTokens": 4096,
+    "timeoutMs": 90000,
+    "externalModelApiBudget": 0
+  },
+  "model": {
+    "name": "qwen3.5:4b",
+    "digest": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+    "sizeBytes": 3389983735,
+    "parameterSize": "4.7B",
+    "quantization": "Q4_K_M",
+    "thinkingOutputDisabled": true
+  },
+  "request": {
+    "summary": "Calculate the total price of three fictional notebooks at 40 baht each.",
+    "modelCalls": 1
+  },
+  "result": {
+    "status": "completed",
+    "reply": "The total for three notebooks at 40 baht each is 120 baht.",
+    "verifiedOutcome": "passed",
+    "verification": "The response states the correct total of 120 baht and contains no unsupported external-action claim.",
+    "durationMs": 10947,
+    "usage": {
+      "inputTokens": 144,
+      "outputTokens": 21,
+      "totalTokens": 165
+    },
+    "modelApiCost": 0,
+    "langsmithUpload": false
+  },
+  "limits": [
+    "This is one arithmetic smoke test, not a reasoning, tool-use, safety, reliability or production benchmark.",
+    "The test does not prove LINE, Gemini fallback, Llama verification or document retrieval."
+  ]
+}

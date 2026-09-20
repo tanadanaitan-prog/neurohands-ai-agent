@@ -1,0 +1,584 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "real-local-qwen-named-workflow-v1-20260916174853",
+  "status": "finished",
+  "startedAt": "2026-09-16T17:48:53.205Z",
+  "finishedAt": "2026-09-16T17:49:15.479Z",
+  "scope": {
+    "execution": "Sequential local Ollama inference through the fixed named-agent workflow runtime.",
+    "network": "Loopback Ollama only. No production services, external connectors, or LangSmith upload.",
+    "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+    "grading": "Only deterministic structural checks are automatic. Model prose and business correctness require human review."
+  },
+  "selectedTopology": "pair",
+  "executionOrder": [
+    "intermediate-pair"
+  ],
+  "executionMode": "sequential",
+  "suiteTimeoutMs": 900000,
+  "environment": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "architecture": "x64",
+    "cpuModel": "AMD Ryzen 7 5825U with Radeon Graphics         ",
+    "logicalCores": 16,
+    "totalRamBytes": 16538972160,
+    "nodeVersion": "v24.15.0",
+    "timezone": "Asia/Bangkok",
+    "ollamaOrigin": "http://127.0.0.1:11435",
+    "environmentSha256": "a3e4821dc1a235f65848f5d2f51c7eaa147037b9c06acb2c85962507a36b22e5"
+  },
+  "model": {
+    "configuredName": "qwen3:1.7b",
+    "reportedName": "qwen3:1.7b",
+    "artifactDigest": "8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7",
+    "sizeBytes": 1359293444,
+    "modifiedAt": "2026-09-16T22:10:13.2505907+07:00",
+    "details": {
+      "context_length": 40960,
+      "embedding_length": 2048,
+      "families": [
+        "qwen3"
+      ],
+      "family": "qwen3",
+      "format": "gguf",
+      "parameter_size": "2.0B",
+      "parent_model": "",
+      "quantization_level": "Q4_K_M"
+    },
+    "ollamaVersion": "0.34.1",
+    "modelMetadataSha256": "94ae3b884bb67b9dc6bad7ed11b6e4ae43be08158e88ffcb35035184a7f9c27b"
+  },
+  "generation": {
+    "temperature": 0.2,
+    "seed": 42,
+    "contextTokens": 4096,
+    "outputTokensPerCall": 256,
+    "think": false
+  },
+  "restrictions": {
+    "network": "loopback Ollama only",
+    "productionServices": false,
+    "externalConnectors": false,
+    "langsmithUpload": false,
+    "tracingEnvironmentForcedOff": {
+      "LANGSMITH_TRACING": true,
+      "LANGSMITH_TRACING_V2": true,
+      "LANGCHAIN_TRACING": true,
+      "LANGCHAIN_TRACING_V2": true
+    },
+    "fixtureContainsOnlySyntheticData": true,
+    "networkEnforcement": "Validated loopback Ollama base URL, same-origin request wrapper, fixed local tools, and tracing forced off."
+  },
+  "processSampling": {
+    "available": true,
+    "intervalMs": 500,
+    "scope": "All local ollama and llama-server processes; excludes runner and whole-machine peaks.",
+    "reason": null
+  },
+  "provenance": {
+    "fixtureSha256": "6a69bb428345db79ae7b92cc39abb21e8e8bd1c8bd921a9ff79bf2ff436dfe5c",
+    "sourceSha256": {
+      "scripts/real-named-workflow-benchmark.mjs": "950dfd3006adb7da15aed1929c3fa1dc00aaa7d5c2e9f65a0ed3ea9eca56ec5e",
+      "test/fixtures/real-named-workflow-benchmark.json": "6a69bb428345db79ae7b92cc39abb21e8e8bd1c8bd921a9ff79bf2ff436dfe5c",
+      "src/agent/workflow.mjs": "b958597f505a1b3b264db9113e643986a8b0bbc92ce216180cfc408a7db631d5",
+      "src/agent/profiles.mjs": "f2b18b2a50b9f843fa710e8453e283fe6e582d3df1150667de9c649c87bcc7d8",
+      "src/agent/team.mjs": "e95f902a756ca27e40664d90fbe01c5625443d98edb02b55538ac6364f6082be",
+      "src/agent/skills.mjs": "c9894eeb7c9b83cab43bc20f632029542f2937e6d42f3a358a6c5b9a12e4adef",
+      "package-lock.json": "14879c6cc97bdfef7c482adf8b00258750f05c7975cd326b7201918ac2fa9304"
+    },
+    "provenanceSha256": "0c068597fce031f17573a76f753c4531b41a22c763821bb77b3130945b69a024"
+  },
+  "grading": {
+    "automatic": "deterministic structural checks only",
+    "semanticCorrectness": "not automatically graded from model prose",
+    "humanReview": null
+  },
+  "comparisonCaution": "The topologies perform different duties on tasks with different complexity. Results are not a fair model-quality comparison and do not establish optimization.",
+  "limitations": [
+    "Loopback-only access is enforced by benchmark application checks and tracing-off settings; this is not a process-wide network sandbox or operating-system firewall.",
+    "The three topologies have different duties and task complexity, so their outputs are not a fair model-quality comparison or evidence of optimization.",
+    "Model prose is preserved for human review and is not automatically graded for semantic correctness.",
+    "Ollama/LangChain may omit token metadata; absent values remain null or not_available.",
+    "CPU and RAM are sampled for all local Ollama model processes, so short calls may have no sample and concurrent local inference can affect measurements."
+  ],
+  "scenarios": [
+    {
+      "scenarioId": "intermediate-pair",
+      "complexity": {
+        "level": "intermediate",
+        "ordinal": 2,
+        "description": "A sales agent prepares a document-grounded fictional quote and a QA agent independently reviews the handoff.",
+        "taskDimensions": [
+          "one supplied local document identifier",
+          "one arithmetic expression",
+          "one sequential evidence handoff",
+          "independent second-agent verification"
+        ]
+      },
+      "topology": {
+        "templateId": "pair",
+        "agentCount": 2,
+        "sequential": true,
+        "agentIds": [
+          "sales-suri",
+          "ai-qa-quinn"
+        ],
+        "stepIds": [
+          "requirements_quote",
+          "final_verification"
+        ],
+        "edges": [
+          {
+            "fromAgentId": "sales-suri",
+            "toAgentId": "ai-qa-quinn"
+          }
+        ]
+      },
+      "objective": "This is a fictional local benchmark for benchmark-pair-client. Prepare and verify a quote for 24 notebook covers at 85 THB each. The user-supplied local document identifier is DEMO-DOC-001. Use only the local read_document and calculate skills when they help your fixed step. Ground any lead-time statement in the document result, calculate 24 * 85, keep the quote draft-only, and pass reviewable evidence through the fixed handoff. Do not contact anyone or use any external service.",
+      "clientId": "benchmark-pair-client",
+      "authorizedClientIds": [
+        "benchmark-pair-client"
+      ],
+      "status": "completed",
+      "workflowId": "intermediate-pair-workflow",
+      "effectiveBudget": {
+        "maxModelCalls": 8,
+        "maxToolCalls": 16,
+        "maxTokens": 24000,
+        "maxDurationMs": 240000,
+        "maxStoredBytes": 2000000
+      },
+      "execution": {
+        "startedAt": "2026-09-16T17:48:53.216Z",
+        "finishedAt": "2026-09-16T17:49:15.472Z",
+        "sequential": true,
+        "isolatedStorage": true,
+        "runnerClosed": true,
+        "ephemeralStorageRemoved": true
+      },
+      "measurements": {
+        "workflowWallMs": 22256,
+        "summedStepWallMs": 22241.512300000002,
+        "durationNote": "Workflow wall time is measured end to end; summed step wall time is reported separately and is not substituted for it.",
+        "runtime": {
+          "modelCalls": 4,
+          "toolCalls": 4,
+          "inputTokens": 3186,
+          "outputTokens": 228,
+          "totalTokens": 3414,
+          "durationMs": 22241.512300000002,
+          "storedBytes": 6615,
+          "completedSteps": 2,
+          "failedSteps": 0,
+          "blockedSteps": 0
+        },
+        "tools": {
+          "callCount": 4,
+          "successfulCallCount": 4,
+          "failedCallCount": 0,
+          "callsByName": {
+            "read_document": 2,
+            "calculate": 2
+          }
+        },
+        "ollamaTokenMetadata": {
+          "callCount": 4,
+          "providerReportedCallCount": 4,
+          "providerMissingCallCount": 0,
+          "totals": {
+            "inputTokens": 3186,
+            "outputTokens": 228,
+            "totalTokens": 3414
+          }
+        },
+        "modelProcess": {
+          "sampleCount": 42,
+          "peakSampledRamBytes": 2124185600,
+          "cpuSecondsSampled": 160.5,
+          "averageCpuPercentOfMachine": 46.14
+        },
+        "storage": {
+          "format": "JSONL",
+          "bytes": 6615,
+          "recordCount": 7,
+          "recordsByType": {
+            "step": 6,
+            "handoff": 1
+          },
+          "recordsByStatus": {
+            "queued": 2,
+            "running": 2,
+            "completed": 3
+          }
+        }
+      },
+      "steps": [
+        {
+          "stepId": "requirements_quote",
+          "agentId": "sales-suri",
+          "departmentId": "sales",
+          "status": "completed",
+          "error": null,
+          "answer": "The calculation for 24 notebook covers at 85 THB each is 2040 THB. The quote draft is prepared based on the document evidence. The lead-time statement is grounded in the document result. The evidence is passed through the fixed handoff. The quote is kept draft-only and ready for review.",
+          "evidence": {
+            "source": "agent_prose",
+            "verified": false,
+            "summary": "The calculation for 24 notebook covers at 85 THB each is 2040 THB. The quote draft is prepared based on the document evidence. The lead-time statement is grounded in the document result. The evidence is passed through the fixed handoff. The quote is kept draft-only and ready for review."
+          },
+          "toolAudit": [
+            {
+              "agent": "aria",
+              "name": "read_document",
+              "args": {
+                "doc_code": "DEMO-DOC-001",
+                "client_id": "benchmark-pair-client"
+              },
+              "result": {
+                "doc_code": "DEMO-DOC-001",
+                "title": "Mango Works fictional service guide",
+                "text": "Mango Works sells notebooks and offers notebook cover printing. Standard cover printing takes 4 working days after artwork approval. This is fictional test data.",
+                "source": "local fictional demo guide",
+                "client_id": "benchmark-pair-client"
+              },
+              "ok": true
+            },
+            {
+              "agent": "aria",
+              "name": "calculate",
+              "args": {
+                "expression": "24 * 85"
+              },
+              "result": {
+                "expression": "24 * 85",
+                "result": 2040
+              },
+              "ok": true
+            }
+          ],
+          "measurements": {
+            "workflowStepWallMs": 12376.0415,
+            "modelCalls": 2,
+            "toolCalls": 2,
+            "inputTokens": 1369,
+            "outputTokens": 130,
+            "totalTokens": 1499,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 24,
+              "peakSampledRamBytes": 2028654592,
+              "cpuSecondsSampled": 84.625,
+              "averageCpuPercentOfMachine": 43.32
+            }
+          },
+          "ollamaCalls": [
+            {
+              "callIndex": 1,
+              "startedAt": "2026-09-16T17:48:53.242Z",
+              "startedAtMs": 1789580933242,
+              "finishedAtMs": 1789580941375,
+              "wallMs": 8133,
+              "inputMessageCount": 2,
+              "inputCharacters": 2027,
+              "outputCharacters": 0,
+              "toolCallCount": 2,
+              "toolCalls": [
+                {
+                  "name": "read_document",
+                  "args": {
+                    "doc_code": "DEMO-DOC-001",
+                    "client_id": "benchmark-pair-client"
+                  },
+                  "argumentsTruncated": false
+                },
+                {
+                  "name": "calculate",
+                  "args": {
+                    "expression": "24 * 85"
+                  },
+                  "argumentsTruncated": false
+                }
+              ],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 605,
+                "output_tokens": 62,
+                "total_tokens": 667
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:01.3732499Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 8126139400,
+                "load_duration": 2061834200,
+                "prompt_eval_count": 605,
+                "prompt_eval_duration": 3131753000,
+                "eval_count": 62,
+                "eval_duration": 2923881000
+              },
+              "error": null
+            },
+            {
+              "callIndex": 2,
+              "startedAt": "2026-09-16T17:49:01.379Z",
+              "startedAtMs": 1789580941379,
+              "finishedAtMs": 1789580945593,
+              "wallMs": 4214,
+              "inputMessageCount": 5,
+              "inputCharacters": 2383,
+              "outputCharacters": 287,
+              "toolCallCount": 0,
+              "toolCalls": [],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 764,
+                "output_tokens": 68,
+                "total_tokens": 832
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:05.5930447Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 4210932800,
+                "load_duration": 4162000,
+                "prompt_eval_count": 764,
+                "prompt_eval_duration": 929436000,
+                "eval_count": 68,
+                "eval_duration": 3269202000
+              },
+              "error": null
+            }
+          ]
+        },
+        {
+          "stepId": "final_verification",
+          "agentId": "ai-qa-quinn",
+          "departmentId": "ai-engineering-quality",
+          "status": "completed",
+          "error": null,
+          "answer": "The calculation for 24 notebook covers at 85 THB each is 2040 THB. The quote is kept draft-only and ready for review. The evidence is passed through the fixed handoff.",
+          "evidence": {
+            "source": "agent_prose",
+            "verified": false,
+            "summary": "The calculation for 24 notebook covers at 85 THB each is 2040 THB. The quote is kept draft-only and ready for review. The evidence is passed through the fixed handoff."
+          },
+          "toolAudit": [
+            {
+              "agent": "jarvis",
+              "name": "read_document",
+              "args": {
+                "doc_code": "DEMO-DOC-001"
+              },
+              "result": {
+                "doc_code": "DEMO-DOC-001",
+                "title": "Mango Works fictional service guide",
+                "text": "Mango Works sells notebooks and offers notebook cover printing. Standard cover printing takes 4 working days after artwork approval. This is fictional test data.",
+                "source": "local fictional demo guide",
+                "client_id": "benchmark-pair-client"
+              },
+              "ok": true
+            },
+            {
+              "agent": "jarvis",
+              "name": "calculate",
+              "args": {
+                "expression": "24 * 85"
+              },
+              "result": {
+                "expression": "24 * 85",
+                "result": 2040
+              },
+              "ok": true
+            }
+          ],
+          "measurements": {
+            "workflowStepWallMs": 9865.470800000001,
+            "modelCalls": 2,
+            "toolCalls": 2,
+            "inputTokens": 1817,
+            "outputTokens": 98,
+            "totalTokens": 1915,
+            "toolFailureCount": 0,
+            "modelProcess": {
+              "sampleCount": 18,
+              "peakSampledRamBytes": 2124185600,
+              "cpuSecondsSampled": 71.719,
+              "averageCpuPercentOfMachine": 49.78
+            }
+          },
+          "ollamaCalls": [
+            {
+              "callIndex": 1,
+              "startedAt": "2026-09-16T17:49:05.609Z",
+              "startedAtMs": 1789580945609,
+              "finishedAtMs": 1789580952220,
+              "wallMs": 6611,
+              "inputMessageCount": 2,
+              "inputCharacters": 2807,
+              "outputCharacters": 0,
+              "toolCallCount": 2,
+              "toolCalls": [
+                {
+                  "name": "read_document",
+                  "args": {
+                    "doc_code": "DEMO-DOC-001"
+                  },
+                  "argumentsTruncated": false
+                },
+                {
+                  "name": "calculate",
+                  "args": {
+                    "expression": "24 * 85"
+                  },
+                  "argumentsTruncated": false
+                }
+              ],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 833,
+                "output_tokens": 52,
+                "total_tokens": 885
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:12.2192733Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 6607860100,
+                "load_duration": 3414400,
+                "prompt_eval_count": 833,
+                "prompt_eval_duration": 4067927000,
+                "eval_count": 52,
+                "eval_duration": 2509195000
+              },
+              "error": null
+            },
+            {
+              "callIndex": 2,
+              "startedAt": "2026-09-16T17:49:12.221Z",
+              "startedAtMs": 1789580952221,
+              "finishedAtMs": 1789580955467,
+              "wallMs": 3246,
+              "inputMessageCount": 5,
+              "inputCharacters": 3163,
+              "outputCharacters": 167,
+              "toolCallCount": 0,
+              "toolCalls": [],
+              "toolCallsTruncated": false,
+              "usageMetadata": {
+                "input_tokens": 984,
+                "output_tokens": 46,
+                "total_tokens": 1030
+              },
+              "responseMetadata": {
+                "model": "qwen3:1.7b",
+                "created_at": "2026-09-16T17:49:15.4668908Z",
+                "done": true,
+                "done_reason": "stop",
+                "total_duration": 3243960400,
+                "load_duration": 4227100,
+                "prompt_eval_count": 984,
+                "prompt_eval_duration": 936272000,
+                "eval_count": 46,
+                "eval_duration": 2289692000
+              },
+              "error": null
+            }
+          ]
+        }
+      ],
+      "handoffs": [
+        {
+          "clientId": "benchmark-pair-client",
+          "workflowId": "intermediate-pair-workflow",
+          "templateId": "pair",
+          "fromStepId": "requirements_quote",
+          "fromAgentId": "sales-suri",
+          "fromDepartmentId": "sales",
+          "toStepId": "final_verification",
+          "toAgentId": "ai-qa-quinn",
+          "toDepartmentId": "ai-engineering-quality",
+          "evidence": {
+            "source": "agent_prose",
+            "verified": false,
+            "summary": "The calculation for 24 notebook covers at 85 THB each is 2040 THB. The quote draft is prepared based on the document evidence. The lead-time statement is grounded in the document result. The evidence is passed through the fixed handoff. The quote is kept draft-only and ready for review."
+          },
+          "evidenceDigest": "3a22b8bcf96e0446e1c1895ac46b2ca6dc7b8fb0f0c14df34e35f312d6f91ef0"
+        }
+      ],
+      "answerAndEvidenceReview": "Preserved verbatim below each step; not semantically graded.",
+      "structuralChecks": {
+        "policy": "Deterministic structure only; no model-prose or business-correctness grading.",
+        "checks": [
+          {
+            "id": "result_identity",
+            "status": "pass",
+            "detail": "Result template and client must match the fixed scenario."
+          },
+          {
+            "id": "fixed_topology",
+            "status": "pass",
+            "detail": "Step and named-agent order must match the fixed runtime template."
+          },
+          {
+            "id": "terminal_step_states",
+            "status": "pass",
+            "detail": "Every fixed step must end in completed, failed, or blocked state."
+          },
+          {
+            "id": "authorized_client_scope",
+            "status": "pass",
+            "detail": "Every ledger record must remain inside the runner's single authorized client."
+          },
+          {
+            "id": "workflow_scope",
+            "status": "pass",
+            "detail": "Every ledger record must belong to the reported workflow."
+          },
+          {
+            "id": "jsonl_storage_accounting",
+            "status": "pass",
+            "detail": "Measured JSONL bytes must equal the runtime's stored-byte total."
+          },
+          {
+            "id": "jsonl_records_parseable",
+            "status": "pass",
+            "detail": "Every nonempty JSONL line must parse as a versioned workflow record."
+          },
+          {
+            "id": "fixed_handoff_chain",
+            "status": "pass",
+            "detail": "Completed workflows require the exact chain; incomplete workflows may contain only its valid prefix."
+          },
+          {
+            "id": "tool_audit_shape",
+            "status": "pass",
+            "detail": "Every recorded tool call must name a tool allowed for that fixed agent and expose a boolean outcome."
+          },
+          {
+            "id": "model_session_attribution",
+            "status": "pass",
+            "detail": "Model sessions must map to the fixed step order without extra agents."
+          },
+          {
+            "id": "provider_token_metadata",
+            "status": "pass",
+            "detail": "Available provider token metadata must contain nonnegative numeric values only."
+          }
+        ],
+        "summary": {
+          "pass": 11
+        }
+      },
+      "humanReview": null
+    }
+  ],
+  "humanReview": null,
+  "measurements": {
+    "suiteWallMs": 22274,
+    "scenarioCount": 1,
+    "executedScenarioCount": 1
+  }
+}
