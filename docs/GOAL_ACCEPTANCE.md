@@ -1,5 +1,7 @@
 # Neurohands: goal acceptance record
 
+> **Latest goal-continuity revision:** See [`GOAL_CONTINUITY_PLAN.md`](GOAL_CONTINUITY_PLAN.md), prepared 20 September 2026. It preserves the main goal and this historical acceptance record while defining the current continuity assignment, acceptance criteria, and a 16–24 hour full-assignment estimate. No continuity implementation or production change is claimed by that plan.
+
 Prepared 9 September 2026 from the user's updated 12-part **Combined Goal and Working Instructions**, the checked-out source, test definitions, Git history and saved observation records. This is an acceptance map, not a completion certificate or a claim that Jarvis and Aria independently evaluated themselves.
 
 The reviewed source baseline is commit `899628db273cd26b6b2ed21590e5ad151e5a7bdb` (PR #7). The observations below are dated; they are not a fresh remote inspection. New work and live checks must record their own commit, deployment, observation time and result. Existing tests were inspected for coverage here, not rerun for this document.
