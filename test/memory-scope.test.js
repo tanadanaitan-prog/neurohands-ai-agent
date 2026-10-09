@@ -28,7 +28,7 @@ function filterRows(rows, params) {
 
 function loadGateway(t) {
   const values = {
-    GEMINI_API_KEY: "fixture-key", GEMINI_ENABLED: "true", GEMINI_MODEL: "fixture-gemini",
+    FOUNDER_LINE_ID: "Ufixturefounder", LINE_CHANNEL_ACCESS_TOKEN: "fixture-token", GEMINI_API_KEY: "fixture-key", GEMINI_ENABLED: "true", GEMINI_MODEL: "fixture-gemini",
     FALLBACK_API_KEY: "", SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture", ENABLE_STUDIO: "false",
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
@@ -53,6 +53,7 @@ function fakeBackend(t, { onGemini } = {}) {
       onGemini?.(JSON.parse(options.body));
       return json({ candidates: [{ content: { parts: [{ text: "Fixture answer" }] } }] });
     }
+    if (address.hostname === "api.line.me") return json({});
     assert.equal(address.hostname, "database.invalid");
     const table = address.pathname.replace("/rest/v1/", "");
     queries.push({ table, params: Object.fromEntries(address.searchParams), method: options.method || "GET" });
@@ -62,7 +63,7 @@ function fakeBackend(t, { onGemini } = {}) {
       return json([{ client_account_id: 1, department: "sales", line_user_id: user, status: "active" }]);
     }
     if (table === "client_accounts") return json([{ id: 1, active: true }]);
-    if (["tool_calls", "agent_runs"].includes(table)) return json([{ id: 1 }]);
+    if ((options.method || "GET") !== "GET") return json([{ id: 1 }]);
     return json([]);
   });
   return queries;
@@ -119,4 +120,18 @@ test("Aria's prompt for one user never contains another user's remembered facts"
   assert.ok(prompt.length > 0, "Gemini was called");
   assert.ok(prompt.includes(U2_FACT), "own fact is present");
   assert.equal(prompt.includes(U1_FACT), false, "another user's fact must not reach the prompt");
+});
+
+test("a customer cannot reach the staff-only account-wide memory or digest commands", async (t) => {
+  const gateway = loadGateway(t);
+  const queries = fakeBackend(t);
+  for (const text of ["brief", "memory:"]) {
+    await gateway.handleEvent({ type: "message", message: { type: "text", text }, source: { type: "user", userId: U2 },
+      replyToken: "fixture-reply", webhookEventId: `fixture-${text}`, timestamp: Date.now() });
+  }
+  const staffCheck = queries.filter((x) => x.table === "staff_activations");
+  assert.ok(staffCheck.length >= 2, "the staff gate is consulted for each message");
+  for (const q of queries.filter((x) => ["agent_memory", "agent_tasks"].includes(x.table) && x.method === "GET")) {
+    assert.equal(q.params.line_user_id, `eq.${U2}`, `unscoped ${q.table} read reached from a customer chat`);
+  }
 });
