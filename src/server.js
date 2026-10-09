@@ -492,7 +492,8 @@ const TOOL_HANDLERS = {
     return { remembered: true, id: rows?.[0]?.id || null };
   },
   async recall_customer(ctx) {
-    const rows = await db(`agent_memory?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&active=eq.true&select=memory_type,content&order=created_at.desc&limit=5`);
+    if (!ctx.clientAccountId || !ctx.lineUserId) return { memories: [] };
+    const rows = await db(`agent_memory?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&line_user_id=eq.${encodeURIComponent(ctx.lineUserId)}&active=eq.true&select=memory_type,content&order=created_at.desc&limit=5`);
     return { memories: rows || [] };
   },
   async create_task(ctx, args) {
@@ -503,7 +504,8 @@ const TOOL_HANDLERS = {
     return { task_id: rows?.[0]?.id || null };
   },
   async list_tasks(ctx) {
-    const rows = await db(`agent_tasks?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&status=eq.open&select=id,title,domain,created_at&order=created_at.desc&limit=10`);
+    if (!ctx.clientAccountId || !ctx.lineUserId) return { tasks: [] };
+    const rows = await db(`agent_tasks?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&line_user_id=eq.${encodeURIComponent(ctx.lineUserId)}&status=eq.open&select=id,title,domain,created_at&order=created_at.desc&limit=10`);
     return { tasks: rows || [] };
   },
   async list_documents(ctx) {
@@ -591,8 +593,8 @@ async function askAI(systemContext, userMessage) {
 
 // ---------- AGENT RUNTIME ----------
 async function loadMemories(ctx) {
-  if (!ctx.clientAccountId) return [];
-  return (await db(`agent_memory?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&active=eq.true&select=memory_type,content&order=created_at.desc&limit=5`)) || [];
+  if (!ctx.clientAccountId || !ctx.lineUserId) return [];
+  return (await db(`agent_memory?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&line_user_id=eq.${encodeURIComponent(ctx.lineUserId)}&active=eq.true&select=memory_type,content&order=created_at.desc&limit=5`)) || [];
 }
 
 function buildAgentSystem(agent, ctx, memories) {
@@ -805,8 +807,8 @@ async function getProductText() {
 async function getAgentCard(lineUserId) {
   const bindings = await getBindings(lineUserId);
   const agent = await getAgent(bindings[0]?.department || "business");
-  const memCount = bindings[0]?.client_account_id
-    ? ((await db(`agent_memory?client_account_id=eq.${encodeURIComponent(bindings[0].client_account_id)}&active=eq.true&select=id`)) || []).length
+  const memCount = bindings[0]?.client_account_id && lineUserId
+    ? ((await db(`agent_memory?client_account_id=eq.${encodeURIComponent(bindings[0].client_account_id)}&line_user_id=eq.${encodeURIComponent(lineUserId)}&active=eq.true&select=id`)) || []).length
     : 0;
   return `🤖 Your agent\n\n${agent.callsign || agent.agent_name} (${agent.agent_code || "-"})\nDomains: ${(agent.domains || []).join(" • ")}\nManager: ${agent.manager || "Jarvis"} (human approval for changes)\nMemory: ${memCount} stored fact(s)\n\nAsk about products, prices, orders, lead time, follow-ups, or your uploaded documents.`;
 }
@@ -1469,4 +1471,4 @@ if (require.main === module) {
     Promise.allSettled([stopped, closed]).then(() => process.exit(0));
   });
 }
-module.exports = { app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent };
+module.exports = { loadMemories, getAgentCard, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent };
