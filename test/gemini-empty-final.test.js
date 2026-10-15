@@ -29,6 +29,60 @@ function loadGateway(t, overrides = {}) {
   return { gateway: require("../src/server"), logs, metrics };
 }
 
+test("Gemini thinkingConfig is sent only for gemini-3 and later", async (t) => {
+  await t.test("gemini-2.5-flash request has NO thinkingConfig", async (t) => {
+    const { gateway } = loadGateway(t, { GEMINI_MODEL: "gemini-2.5-flash" });
+    const requests = [];
+
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+      const address = new URL(url);
+      if (address.hostname === "generativelanguage.googleapis.com") {
+        const body = JSON.parse(options.body);
+        requests.push(body);
+        return json({ candidates: [{ content: { parts: [{ text: "Answer" }] } }] });
+      }
+      assert.equal(address.hostname, "database.invalid");
+      if (address.pathname === "/rest/v1/staff_activations") return json([{ role: "admin" }]);
+      if (address.pathname === "/rest/v1/jarvis_notes") return json([]);
+      if (address.pathname === "/rest/v1/agent_runs") return json([{ id: 1 }]);
+      if (address.pathname === "/rest/v1/jarvis_audit_log") return json([{ id: 1 }]);
+      throw new Error(`Unexpected: ${address.pathname}`);
+    });
+
+    const ctx = { lineUserId: "fixture-operator" };
+    await gateway.runJarvis(ctx, "Test");
+
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].generationConfig.thinkingConfig, undefined, "gemini-2.5-flash should NOT have thinkingConfig");
+  });
+
+  await t.test("gemini-3.6-flash request has thinkingLevel LOW", async (t) => {
+    const { gateway } = loadGateway(t, { GEMINI_MODEL: "gemini-3.6-flash" });
+    const requests = [];
+
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+      const address = new URL(url);
+      if (address.hostname === "generativelanguage.googleapis.com") {
+        const body = JSON.parse(options.body);
+        requests.push(body);
+        return json({ candidates: [{ content: { parts: [{ text: "Answer" }] } }] });
+      }
+      assert.equal(address.hostname, "database.invalid");
+      if (address.pathname === "/rest/v1/staff_activations") return json([{ role: "admin" }]);
+      if (address.pathname === "/rest/v1/jarvis_notes") return json([]);
+      if (address.pathname === "/rest/v1/agent_runs") return json([{ id: 1 }]);
+      if (address.pathname === "/rest/v1/jarvis_audit_log") return json([{ id: 1 }]);
+      throw new Error(`Unexpected: ${address.pathname}`);
+    });
+
+    const ctx = { lineUserId: "fixture-operator" };
+    await gateway.runJarvis(ctx, "Test");
+
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].generationConfig.thinkingConfig.thinkingLevel, "LOW", "gemini-3.6-flash should have LOW thinking");
+  });
+});
+
 test("Gemini empty final answer after tools triggers tool-free retry and records error code", async (t) => {
   await t.test("Jarvis with tool call then empty MAX_TOKENS response retries with mode NONE", async (t) => {
     const { gateway } = loadGateway(t);
@@ -441,5 +495,117 @@ test("Gemini empty final answer after tools triggers tool-free retry and records
     assert.equal(requests.length, 3);
     assert.equal(requests[2].toolConfig.functionCallingConfig.mode, "NONE");
     assert.equal(reply, "Recovered");
+  });
+
+  await t.test("empty final with finishReason STOP records empty_final error code", async (t) => {
+    const { gateway } = loadGateway(t);
+    const requests = [];
+    const completions = [];
+
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+      const address = new URL(url);
+      if (address.hostname === "generativelanguage.googleapis.com") {
+        const body = JSON.parse(options.body);
+        requests.push(body);
+
+        if (requests.length === 1) {
+          return json({
+            candidates: [{ content: { parts: [
+              { functionCall: { name: "list_clients", args: {} } },
+            ] } }],
+          });
+        }
+
+        if (requests.length === 2) {
+          return json({
+            candidates: [{ content: { parts: [
+              { thoughtSignature: "hash" },
+            ] }, finishReason: "STOP" }],
+            usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 0, thoughtsTokenCount: 800 },
+          });
+        }
+
+        if (requests.length === 3) {
+          return json({
+            candidates: [{ content: { parts: [{ thoughtSignature: "hash2" }] }, finishReason: "STOP" }],
+            usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 0 },
+          });
+        }
+      }
+
+      assert.equal(address.hostname, "database.invalid");
+      const query = address.pathname + address.search;
+      if (query.startsWith("/rest/v1/staff_activations")) return json([{ role: "admin" }]);
+      if (query.startsWith("/rest/v1/jarvis_notes")) return json([]);
+      if (query.startsWith("/rest/v1/client_accounts")) return json([{ client_code: "KNC", company: "Test" }]);
+      if (query.startsWith("/rest/v1/tool_calls")) return json([{ id: 1 }]);
+      if (query.startsWith("/rest/v1/agent_runs")) {
+        if (options.method === "PATCH") completions.push(JSON.parse(options.body));
+        return json([{ id: 500 }]);
+      }
+      if (query.startsWith("/rest/v1/jarvis_audit_log")) return json([{ id: 1 }]);
+      throw new Error(`Unexpected: ${query}`);
+    });
+
+    const ctx = { lineUserId: "fixture-operator" };
+    await gateway.runJarvis(ctx, "List clients");
+
+    assert.equal(completions.length, 1);
+    assert.equal(completions[0].error, "empty_final", "Should record empty_final when finishReason is STOP");
+  });
+
+  await t.test("empty final with absent finishReason records empty_final error code", async (t) => {
+    const { gateway } = loadGateway(t);
+    const requests = [];
+    const completions = [];
+
+    t.mock.method(globalThis, "fetch", async (url, options) => {
+      const address = new URL(url);
+      if (address.hostname === "generativelanguage.googleapis.com") {
+        const body = JSON.parse(options.body);
+        requests.push(body);
+
+        if (requests.length === 1) {
+          return json({
+            candidates: [{ content: { parts: [
+              { functionCall: { name: "list_clients", args: {} } },
+            ] } }],
+          });
+        }
+
+        if (requests.length === 2) {
+          return json({
+            candidates: [{ content: { parts: [{ thoughtSignature: "hash" }] } }],
+            usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 0 },
+          });
+        }
+
+        if (requests.length === 3) {
+          return json({
+            candidates: [{ content: { parts: [{ thoughtSignature: "hash2" }] } }],
+            usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 0 },
+          });
+        }
+      }
+
+      assert.equal(address.hostname, "database.invalid");
+      const query = address.pathname + address.search;
+      if (query.startsWith("/rest/v1/staff_activations")) return json([{ role: "admin" }]);
+      if (query.startsWith("/rest/v1/jarvis_notes")) return json([]);
+      if (query.startsWith("/rest/v1/client_accounts")) return json([{ client_code: "KNC", company: "Test" }]);
+      if (query.startsWith("/rest/v1/tool_calls")) return json([{ id: 1 }]);
+      if (query.startsWith("/rest/v1/agent_runs")) {
+        if (options.method === "PATCH") completions.push(JSON.parse(options.body));
+        return json([{ id: 600 }]);
+      }
+      if (query.startsWith("/rest/v1/jarvis_audit_log")) return json([{ id: 1 }]);
+      throw new Error(`Unexpected: ${query}`);
+    });
+
+    const ctx = { lineUserId: "fixture-operator" };
+    await gateway.runJarvis(ctx, "List clients");
+
+    assert.equal(completions.length, 1);
+    assert.equal(completions[0].error, "empty_final", "Should record empty_final when finishReason is absent");
   });
 });

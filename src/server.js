@@ -686,6 +686,7 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
     if (!functionCalls.length) {
       const text = parts.map((p) => p.text).filter(Boolean).join("\n").trim();
       if (!text) {
+        let finalData = data;
         if (toolsRan && tools.length && iteration < maxIterations - 1) {
           contents.push({ role: "model", parts });
           const retryGenConfig = { temperature: 0.2, maxOutputTokens: 1024 };
@@ -704,8 +705,9 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
           const retryParts = geminiParts(retryData);
           const retryText = retryParts?.map((p) => p.text).filter(Boolean).join("\n").trim();
           if (retryText) return { text: retryText, iterations: iteration + 2 };
+          finalData = retryData;
         }
-        const finishReason = data?.candidates?.[0]?.finishReason;
+        const finishReason = finalData?.candidates?.[0]?.finishReason;
         console.error("Gemini request failed", "invalid_response");
         return { text: null, iterations: iteration + (toolsRan ? 2 : 1), emptyFinal: toolsRan, finishReason, apiFailed: !toolsRan };
       }
