@@ -49,14 +49,18 @@ function beginModelAttempt(provider, model, secrets = []) {
 function finishModelAttempt(attempt, status, httpStatus, elapsedMs, data, failureReason) {
   const gemini = attempt.provider.toLowerCase() === "gemini";
   const usage = gemini ? data?.usageMetadata : data?.usage;
+  const finishReason = gemini && typeof data?.candidates?.[0]?.finishReason === "string" ? data.candidates[0].finishReason : null;
+  const thoughtsCount = count(gemini ? usage?.thoughtsTokenCount : usage?.completion_tokens_details?.reasoning_tokens);
   Object.assign(attempt, {
     status, http_status: Number.isInteger(httpStatus) ? httpStatus : null,
     elapsed_ms: Math.max(0, Math.round(elapsedMs)),
     input_tokens: count(gemini ? usage?.promptTokenCount : usage?.prompt_tokens),
     output_tokens: count(gemini ? usage?.candidatesTokenCount : usage?.completion_tokens),
     total_tokens: count(gemini ? usage?.totalTokenCount : usage?.total_tokens),
-    reasoning_tokens: count(gemini ? usage?.thoughtsTokenCount : usage?.completion_tokens_details?.reasoning_tokens),
+    reasoning_tokens: thoughtsCount,
     cached_input_tokens: count(gemini ? usage?.cachedContentTokenCount : usage?.prompt_tokens_details?.cached_tokens),
+    finish_reason: finishReason,
+    thoughts_token_count: thoughtsCount,
   });
   if (status === "http_error" && safeReason(failureReason)) attempt.failure_reason = failureReason;
   else delete attempt.failure_reason;
