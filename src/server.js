@@ -578,7 +578,7 @@ async function askAI(systemContext, userMessage) {
       { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, {
       system_instruction: { parts: [{ text: systemContext }] },
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.3, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "LOW" } },
     }, GEMINI_MODEL, (data) => {
       const parts = geminiParts(data);
       return parts && !parts.some((part) => part.functionCall) && parts.some((part) => part.text?.trim());
@@ -649,12 +649,13 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
   contents.push({ role: "user", parts: [{ text: userMessage }] });
   let iteration = 0;
   const maxIterations = 5;
+  let toolsRan = false;
 
   while (iteration < maxIterations) {
     const body = {
       system_instruction: { parts: [{ text: systemContext }] },
       contents,
-      generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.2, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "LOW" } },
     };
     // These are JSON Schemas, including additionalProperties. Gemini's legacy
     // `parameters` Schema does not accept the complete JSON Schema vocabulary.
@@ -676,8 +677,25 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
     if (!functionCalls.length) {
       const text = parts.map((p) => p.text).filter(Boolean).join("\n").trim();
       if (!text) {
+        if (toolsRan && tools.length && iteration < maxIterations - 1) {
+          contents.push({ role: "model", parts });
+          const retryBody = {
+            system_instruction: { parts: [{ text: systemContext }] },
+            contents,
+            generationConfig: { temperature: 0.2, maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: "LOW" } },
+            toolConfig: { functionCallingConfig: { mode: "NONE" } },
+          };
+          const retryData = await requestModelJson("Gemini", url,
+            { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, retryBody, GEMINI_MODEL, (data) => {
+              const retryParts = geminiParts(data);
+              return retryParts && retryParts.some((part) => part.text?.trim());
+            });
+          const retryParts = geminiParts(retryData);
+          const retryText = retryParts?.map((p) => p.text).filter(Boolean).join("\n").trim();
+          if (retryText) return { text: retryText, iterations: iteration + 2 };
+        }
         console.error("Gemini request failed", "invalid_response");
-        return { text: null, iterations: iteration, apiFailed: true };
+        return { text: null, iterations: iteration + (toolsRan ? 2 : 1), emptyFinal: toolsRan, apiFailed: !toolsRan };
       }
       return { text, iterations: iteration + 1 };
     }
@@ -694,6 +712,7 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
         response: { content: output } } });
     }
     contents.push({ role: "user", parts: responses });
+    toolsRan = true;
     iteration += 1;
   }
   return { text: null, exhausted: true, iterations: iteration };
@@ -759,7 +778,13 @@ async function runAgent(ctx, userText, agent) {
         const fb = await runOpenAIToolLoop(system, userText, toolSchemas, ctx, runId, options);
         if (fb.text) result = fb;
       }
-      if (!result.text || result.exhausted) throw new Error("No complete model answer was returned");
+      if (!result.text || result.exhausted) {
+        const errorCode = result.emptyFinal ? "empty_final_max_tokens" : "No complete model answer was returned";
+        ctx.runStatus = "error";
+        try { await completeAgentRun(runId, "error", null, result.iterations, errorCode, finalizeRunMetrics(metrics)); }
+        catch { console.error("Could not persist agent empty final error"); }
+        return toolExecutions > 0 ? partialWorkReply : "Sorry, I could not complete that request. Please try again or contact the team.";
+      }
       const finalText = ctx.toolFailed ? (toolExecutions > 0 ? partialWorkReply : "I could not verify the requested information because a tool did not succeed. Please try again or contact the team.") : outputGuardrail(result.text);
       ctx.runStatus = ctx.toolFailed ? "error" : "completed";
       await completeAgentRun(runId, ctx.runStatus, finalText, result.iterations, ctx.toolFailed ? "One or more tool calls did not succeed" : null, finalizeRunMetrics(metrics));
@@ -1076,7 +1101,13 @@ Confirmed notes (data): ${JSON.stringify(notes)}`;
       if (ctx.proposal) {
         finalText = `Proposal #${ctx.proposal.id}:\n${ctx.proposal.content}\n\nType yes to confirm or no to reject. It has not been executed or confirmed yet.`;
       } else {
-        if (!result.text || result.exhausted) throw new Error("No complete operator answer");
+        if (!result.text || result.exhausted) {
+          const errorCode = result.emptyFinal ? "empty_final_max_tokens" : "No complete operator answer";
+          ctx.runStatus = "error";
+          try { await completeAgentRun(runId, "error", null, result.iterations, errorCode, finalizeRunMetrics(metrics)); }
+          catch { console.error("Could not persist Jarvis empty final error"); }
+          return "I could not verify that request. If you were proposing an action or note, type pending to check whether a proposal was saved before retrying.";
+        }
         finalText = result.text;
       }
       finalText = outputGuardrail(finalText);
