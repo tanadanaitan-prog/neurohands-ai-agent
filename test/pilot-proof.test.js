@@ -167,9 +167,10 @@ test("Phase 1 document proof with simulated providers (not a live LINE/deploymen
     assert.equal((await f.run("local-knc-user", "finance")).status, 403);
     f.tables.client_agent_bindings.push({ id: 2, line_user_id: "other-user", client_account_id: 2, department: "sales", status: "active" });
     const other = await f.run("other-user");
-    assert.equal(other.status, 200);
+    assert.equal(other.status, 503);
     assert.equal(other.text.includes(marker), false);
-    assert.deepEqual(f.tables.tool_calls.at(-1).output, { found: false });
+    assert.deepEqual(f.tables.tool_calls.at(-1).output, { found: false, error: "Document not found." });
+    assert.equal(f.tables.tool_calls.at(-1).status, "error");
     f.tables.client_agent_bindings[0].status = "revoked";
     assert.equal((await f.run()).status, 403);
   });
