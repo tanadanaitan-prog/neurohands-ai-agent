@@ -126,3 +126,30 @@ test("a successful list_documents call does not back an invented price", async (
   assert.match(reply, HANDOFF);
   assert.equal(log.runPatches.at(-1).error, "Unsupported number replaced with handoff");
 });
+
+test("get_product_info with found:false does not back an invented price", async (t) => {
+  const gateway = loadGateway(t);
+  const log = { systems: [], toolCalls: [], runPatches: [] };
+  const turns = [call("get_product_info", { query: "xyz" }), [{ text: "Clear glass is 999 THB per square foot." }]];
+  t.mock.method(globalThis, "fetch", async (url, options = {}) => {
+    const address = new URL(url);
+    const method = options.method || "GET";
+    if (address.hostname === "generativelanguage.googleapis.com") {
+      log.systems.push(JSON.parse(options.body).system_instruction.parts[0].text);
+      return json({ candidates: [{ content: { parts: turns.shift() } }] });
+    }
+    const table = address.pathname.replace("/rest/v1/", "");
+    if (table === "client_agent_bindings") return json([{ client_account_id: 1, department: "sales", line_user_id: USER, status: "active" }]);
+    if (table === "client_accounts") return json([{ id: 1, active: true }]);
+    if (table === "glass_types") return json([]);  // empty result -> found:false
+    if (table === "tool_calls") log.toolCalls.push(JSON.parse(options.body));
+    if (table.startsWith("agent_runs") && method === "PATCH") log.runPatches.push(JSON.parse(options.body));
+    if (method !== "GET") return json([{ id: 1 }]);
+    return json([]);
+  });
+  const c = ctx();
+  const reply = await gateway.runAgent(c, "price of clear glass?", AGENT);
+  assert.equal(log.toolCalls[0].status, "success");
+  assert.match(reply, HANDOFF);
+  assert.equal(log.runPatches.at(-1).error, "Unsupported number replaced with handoff");
+});

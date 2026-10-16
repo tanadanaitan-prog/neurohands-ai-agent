@@ -741,7 +741,8 @@ const SUPPORTING_TOOLS = ["get_product_info", "get_edging_info", "get_lead_time"
 function isSupportingResult(name, output) {
   if (!output || output.error) return false;
   if (name === "read_document") return output.found === true && output.readable === true;
-  return SUPPORTING_TOOLS.includes(name);
+  if (SUPPORTING_TOOLS.includes(name)) return output.found !== false;
+  return false;
 }
 const UNSUPPORTED_ANSWER_REPLY = "ขออภัย ข้อมูลนี้ต้องให้ทีมงานยืนยันก่อน กรุณาติดต่อทีมงาน / Sorry, our team needs to confirm this information first. Please contact the team.";
 async function runAgent(ctx, userText, agent) {
