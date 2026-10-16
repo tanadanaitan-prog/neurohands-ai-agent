@@ -52,22 +52,25 @@ function fakeBackend(t, turns) {
 const ctx = () => ({ lineUserId: USER, clientAccountId: 1, department: "sales", allowedTools: [] });
 const call = (name, args = {}) => [{ functionCall: { name, args } }];
 
-test("read_document with no matching document is logged as an error, not success", async (t) => {
+test("read_document with no matching document is logged as an error and answered with the no-information reply", async (t) => {
   const gateway = loadGateway(t);
   const log = fakeBackend(t, [call("read_document", { doc_code: "DOC-NONE" }), [{ text: "The document says the price is 450." }]]);
   const c = ctx();
   const reply = await gateway.runAgent(c, "What does DOC-NONE say?", AGENT);
   assert.deepEqual(log.toolCalls[0].output, { found: false, error: "Document not found." });
   assert.equal(log.toolCalls[0].status, "error");
-  assert.equal(c.runStatus, "error");
+  assert.equal(c.runStatus, "completed");
   assert.doesNotMatch(reply, /450/);
+  assert.match(reply, /I don't have that information/);
+  assert.doesNotMatch(reply, /Some work may already be saved/);
+  assert.equal(log.runPatches.at(-1).error, "Document not found; no-information reply");
 });
 
 test("Aria's prompt asks for a Source line and a request_human handoff (rule 9)", async (t) => {
   const gateway = loadGateway(t);
   const log = fakeBackend(t, [[{ text: "Hello, how can I help?" }]]);
   await gateway.runAgent(ctx(), "hi", AGENT);
-  assert.match(log.systems[0], /9\. When you used a document, end your reply with "Source: <doc_code>"\. If no tool result supports the answer, call request_human/);
+  assert.match(log.systems[0], /9\. When you used a document, end your reply with "Source: <doc_code>"; when you used a price tool, say "per current price list"\. If no tool result supports the answer, say you don't have it and call request_human/);
 });
 
 test("a price with no successful tool result is replaced by the Thai/English handoff", async (t) => {
@@ -102,4 +105,24 @@ test("a normal priced reply backed by a successful tool result passes through un
   assert.equal(reply, "Clear 6mm is 450 THB per sq ft.");
   assert.equal(c.runStatus, "completed");
   assert.equal(log.runPatches.at(-1).error, null);
+});
+
+test("web API returns 200 with the no-information reply when a document is not found", async (t) => {
+  const gateway = loadGateway(t);
+  fakeBackend(t, [call("read_document", { doc_code: "DOC-NONE" }), [{ text: "It costs 450." }]]);
+  const c = ctx();
+  const reply = await gateway.runAgent(c, "DOC-NONE price?", AGENT);
+  assert.equal(c.runStatus === "error" ? 503 : 200, 200);
+  assert.match(reply, /ขออภัย/);
+});
+
+test("a successful list_documents call does not back an invented price", async (t) => {
+  const gateway = loadGateway(t);
+  const agent = { ...AGENT, allowed_tools: [...AGENT.allowed_tools, "list_documents"] };
+  const log = fakeBackend(t, [call("list_documents"), [{ text: "Clear 6mm is 999 THB per sq ft." }]]);
+  const c = ctx();
+  const reply = await gateway.runAgent(c, "price of clear glass?", agent);
+  assert.equal(log.toolCalls[0].status, "success");
+  assert.match(reply, HANDOFF);
+  assert.equal(log.runPatches.at(-1).error, "Unsupported number replaced with handoff");
 });
