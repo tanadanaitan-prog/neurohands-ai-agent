@@ -41,7 +41,10 @@ function fixture(t, overrides = {}) {
       parsed_summary: { text: "Other client's secret data", extraction_complete: true } }],
     agent_runs: [], tool_calls: [], jarvis_notes: [], jarvis_audit_log: [], messages: [], agent_tasks: [],
     support_cases: [], escalations: [], agent_memory: [], orders: [], jarvis_checklist: [], bot_feedback: [],
-    clients: [], client_agent_bindings: [], settings: [], glass_types: [], edging_services: [],
+    clients: [], client_agent_bindings: [], settings: [], glass_types: [], edging_services: [], agent_registry: [
+      { id: 1, department: "sales", agent_name: "Aria", agent_code: "ARIA", active: true, objective: "Customer service" },
+      { id: 2, department: "business", agent_name: "Aria", agent_code: "ARIA", active: true, objective: "Business support" },
+    ],
   };
   const state = { tables, gateway, calls: [], requests: [], logs: [], line: [], unexpected: [], faults: new Set(), claims: [] };
   state.model = async () => { state.unexpected.push("Unexpected model call"); throw new Error("Unexpected model call"); };
@@ -54,7 +57,11 @@ function fixture(t, overrides = {}) {
     if (value === "is.null") return row[key] === null;
     if (value === "not.is.null") return row[key] != null;
     if (value.startsWith("gte.")) return String(row[key]) >= value.slice(4);
-    return unexpected(`Unsupported fixture filter: ${key}`);
+    if (value.startsWith("in.(")) {
+      const values = value.slice(4, -1).split(",");
+      return values.includes(String(row[key]));
+    }
+    return unexpected(`Unsupported fixture filter: ${key}=${value}`);
   });
   t.mock.method(globalThis, "fetch", async (address, options = {}) => {
     const url = new URL(String(address));
@@ -522,3 +529,146 @@ test("Jarvis keeps health and evidence commands available after account credit r
   assert.equal(f.calls.length, 1, "Deterministic commands must not attempt AI generation");
   assert.equal(f.logs.join("\n").includes(PRIVATE), false);
 });
+
+test("per-client price filtering: bound LINE user sees prices via menu", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+  ];
+  f.tables.edging_services = [
+    { id: 1, client_account_id: 11, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 10, active: true },
+  ];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "customer-one" },
+    replyToken: "fixture-reply", postback: { data: "menu=products" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /CLR-6/);
+  assert.match(msg, /100 THB/);
+  assert.match(msg, /FLAT-E/);
+  assert.match(msg, /10 THB/);
+});
+
+test("per-client price filtering: unbound LINE user gets activate message via menu", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+  ];
+  f.tables.client_agent_bindings = [];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "unbound-user" },
+    replyToken: "fixture-reply", postback: { data: "menu=products" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Please activate/);
+  assert.match(msg, /กรุณาเปิดใช้งาน/);
+  assert.match(msg, /ติดต่อทีมงานเพื่อขอรหัส/);
+  assert.ok(!msg.includes("THB"));
+});
+
+test("per-client price filtering: client B gets different prices than client A via menu", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+    { id: 2, client_account_id: 22, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 200, active: true },
+  ];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-two", client_account_id: 22, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "customer-two" },
+    replyToken: "fixture-reply", postback: { data: "menu=products" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /CLR-6/);
+  assert.match(msg, /200 THB/);
+  assert.ok(!msg.includes("100 THB"));
+});
+
+test("per-client price filtering: tool layer - get_product_info filters by client", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+    { id: 2, client_account_id: 22, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 200, active: true },
+  ];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  const ctx = { lineUserId: "customer-one", clientAccountId: 11, department: "sales", allowedTools: ["get_product_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_product_info", {});
+  assert.equal(result.found, true);
+  assert.equal(result.products.length, 1);
+  assert.equal(result.products[0].product_code, "CLR-6");
+  assert.equal(result.products[0].price_per_sqft, 100);
+});
+
+test("per-client price filtering: tool layer - get_product_info fails closed without client ID", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+  ];
+  const ctx = { lineUserId: "unbound-user", clientAccountId: null, department: "sales", allowedTools: ["get_product_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_product_info", {});
+  assert.equal(result.found, false);
+  assert.deepEqual(result.products, []);
+});
+
+test("per-client price filtering: tool layer - get_edging_info filters by client", async (t) => {
+  const f = fixture(t);
+  f.tables.edging_services = [
+    { id: 1, client_account_id: 11, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 10, active: true },
+    { id: 2, client_account_id: 22, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 20, active: true },
+  ];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  const ctx = { lineUserId: "customer-one", clientAccountId: 11, department: "sales", allowedTools: ["get_edging_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_edging_info", {});
+  assert.equal(result.found, true);
+  assert.equal(result.services.length, 1);
+  assert.equal(result.services[0].service_code, "FLAT-E");
+  assert.equal(result.services[0].price_per_sqft, 10);
+});
+
+test("per-client price filtering: tool layer - get_edging_info fails closed without client ID", async (t) => {
+  const f = fixture(t);
+  f.tables.edging_services = [
+    { id: 1, client_account_id: 11, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 10, active: true },
+  ];
+  const ctx = { lineUserId: "unbound-user", clientAccountId: null, department: "sales", allowedTools: ["get_edging_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_edging_info", {});
+  assert.equal(result.found, false);
+  assert.deepEqual(result.services, []);
+});
+
+test("postback access check: revoked binding sees activate message with no prices or orders", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [{ id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true }];
+  f.tables.orders = [{ id: 1, client_account_id: 11, order_no: "PO001", stage: "production", promised_date: "2024-12-01", on_track: true }];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "revoked-user", client_account_id: 11, department: "sales", status: "revoked", activated_at: "2024-01-01T00:00:00Z" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "revoked-user" },
+    replyToken: "fixture-reply", postback: { data: "menu=products" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Please activate/);
+  assert.match(msg, /กรุณาเปิดใช้งาน/);
+  assert.match(msg, /ติดต่อทีมงานเพื่อขอรหัส/);
+  assert.doesNotMatch(msg, /\d+\s*(THB|บาท)/);
+  assert.doesNotMatch(msg, /PO001/);
+});
+
+test("postback access check: inactive binding sees activate message", async (t) => {
+  const f = fixture(t);
+  f.tables.client_agent_bindings = [];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "unbound-user" },
+    replyToken: "fixture-reply", postback: { data: "menu=agent" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Please activate/);
+  assert.match(msg, /กรุณาเปิดใช้งานก่อน/);
+  assert.match(msg, /ติดต่อทีมงานเพื่อขอรหัส/);
+});
+
+test("postback access check: active bound user can access agent menu", async (t) => {
+  const f = fixture(t);
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "customer-one" },
+    replyToken: "fixture-reply", postback: { data: "menu=agent" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Your agent/);
+  assert.match(msg, /Aria/);
+});
+
