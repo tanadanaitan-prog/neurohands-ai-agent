@@ -579,3 +579,91 @@ test("per-client price filtering: client B gets different prices than client A v
   assert.match(msg, /200 THB/);
   assert.ok(!msg.includes("100 THB"));
 });
+
+test("per-client price filtering: tool layer - get_product_info filters by client", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+    { id: 2, client_account_id: 22, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 200, active: true },
+  ];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  const ctx = { lineUserId: "customer-one", clientAccountId: 11, department: "sales", allowedTools: ["get_product_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_product_info", {});
+  assert.equal(result.found, true);
+  assert.equal(result.products.length, 1);
+  assert.equal(result.products[0].product_code, "CLR-6");
+  assert.equal(result.products[0].price_per_sqft, 100);
+});
+
+test("per-client price filtering: tool layer - get_product_info fails closed without client ID", async (t) => {
+  const f = fixture(t);
+  f.tables.glass_types = [
+    { id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true },
+  ];
+  const ctx = { lineUserId: "unbound-user", clientAccountId: null, department: "sales", allowedTools: ["get_product_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_product_info", {});
+  assert.equal(result.found, false);
+  assert.deepEqual(result.products, []);
+});
+
+test("per-client price filtering: tool layer - get_edging_info filters by client", async (t) => {
+  const f = fixture(t);
+  f.tables.edging_services = [
+    { id: 1, client_account_id: 11, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 10, active: true },
+    { id: 2, client_account_id: 22, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 20, active: true },
+  ];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  const ctx = { lineUserId: "customer-one", clientAccountId: 11, department: "sales", allowedTools: ["get_edging_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_edging_info", {});
+  assert.equal(result.found, true);
+  assert.equal(result.services.length, 1);
+  assert.equal(result.services[0].service_code, "FLAT-E");
+  assert.equal(result.services[0].price_per_sqft, 10);
+});
+
+test("per-client price filtering: tool layer - get_edging_info fails closed without client ID", async (t) => {
+  const f = fixture(t);
+  f.tables.edging_services = [
+    { id: 1, client_account_id: 11, service_code: "FLAT-E", service_name: "Flat edge", price_per_sqft: 10, active: true },
+  ];
+  const ctx = { lineUserId: "unbound-user", clientAccountId: null, department: "sales", allowedTools: ["get_edging_info"] };
+  const result = await f.gateway.executeToolWithLog(ctx, 1, "get_edging_info", {});
+  assert.equal(result.found, false);
+  assert.deepEqual(result.services, []);
+});
+
+test("postback access check: revoked staff user refused", async (t) => {
+  const f = fixture(t);
+  f.tables.staff_activations = [{ id: 1, line_user_id: "staff-one", role: "admin", active: false, account_type: "staff" }];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "staff-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z", account_type: "staff" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "staff-one" },
+    replyToken: "fixture-reply", postback: { data: "menu=products" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Access removed/);
+  assert.match(msg, /สิทธิ์การเข้าถึงถูกลบออก/);
+  assert.ok(!msg.includes("THB"));
+});
+
+test("postback access check: inactive binding sees activate message", async (t) => {
+  const f = fixture(t);
+  f.tables.client_agent_bindings = [];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "unbound-user" },
+    replyToken: "fixture-reply", postback: { data: "menu=agent" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Please activate/);
+  assert.match(msg, /กรุณาเปิดใช้งาน/);
+});
+
+test("postback access check: active bound user can access agent menu", async (t) => {
+  const f = fixture(t);
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "customer-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "customer-one" },
+    replyToken: "fixture-reply", postback: { data: "menu=agent" } });
+  assert.equal(f.line.length, 1);
+  const msg = f.line[0].messages[0].text;
+  assert.match(msg, /Your agent/);
+  assert.match(msg, /Aria/);
+});
+

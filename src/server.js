@@ -829,6 +829,20 @@ async function handlePostback(event) {
   if (BRAND_COPY[menu]) return send(BRAND_COPY[menu]);
 
   if (menu === "updates") return send(await getSetting("public_updates", "No public updates yet."));
+  
+  // Business-gated menus: check access
+  if (["order_status", "products", "agent"].includes(menu)) {
+    const bindings = await getBindings(userId);
+    const staff = bindings.find((b) => b.account_type === "staff");
+    if (staff && !staff.active) {
+      return send("🚫 Access removed\n\nสิทธิ์การเข้าถึงถูกลบออก\n\nYour staff access has been revoked.");
+    }
+    const clientAccountId = bindings[0]?.client_account_id || null;
+    if (!clientAccountId) {
+      return send("⚠️ Please activate first\n\nกรุณาเปิดใช้งานก่อน\n\nPlease activate your account with your activation code to access this feature.\n\nโปรดเปิดใช้งานบัญชีของคุณด้วยรหัสเปิดใช้งานเพื่อเข้าถึงฟีเจอร์นี้");
+    }
+  }
+  
   if (menu === "order_status") return send(await getOrderStatusText(userId));
   if (menu === "products") return send(await getProductText(userId));
   if (menu === "lead_time") return send(`⏱ Lead time\n\nDefault lead time: ${await getSetting("default_lead_time_days", "7")} days.\n\nFor order-specific lead time, ask with your order number.\n\nExample:\nCheck order PO12345`);
