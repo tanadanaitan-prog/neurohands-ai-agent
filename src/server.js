@@ -802,7 +802,7 @@ async function getOrderStatusText(lineUserId) {
 async function getProductText(userId) {
   const bindings = await getBindings(userId);
   const clientAccountId = bindings[0]?.client_account_id || null;
-  if (!clientAccountId) return "⚠️ Please activate first\n\nกรุณาเปิดใช้งานก่อน\n\nPlease activate your account with your activation code to access pricing.\n\nโปรดเปิดใช้งานบัญชีของคุณด้วยรหัสเปิดใช้งานเพื่อเข้าถึงราคา";
+  if (!clientAccountId) return "⚠️ Please activate first\n\nกรุณาเปิดใช้งานก่อน\n\nPlease activate your account with your activation code to access pricing.\n\nโปรดเปิดใช้งานบัญชีของคุณด้วยรหัสเปิดใช้งานเพื่อเข้าถึงราคา\n\nติดต่อทีมงานเพื่อขอรหัส / contact the team for a code";
   
   const glass = await db(`glass_types?active=eq.true&client_account_id=eq.${encodeURIComponent(clientAccountId)}&select=product_code,glass_name,thickness_mm,price_per_sqft&order=product_code&limit=30`);
   const edging = await db(`edging_services?active=eq.true&client_account_id=eq.${encodeURIComponent(clientAccountId)}&select=service_code,service_name,price_per_sqft&limit=20`);
@@ -833,13 +833,9 @@ async function handlePostback(event) {
   // Business-gated menus: check access
   if (["order_status", "products", "agent"].includes(menu)) {
     const bindings = await getBindings(userId);
-    const staff = bindings.find((b) => b.account_type === "staff");
-    if (staff && !staff.active) {
-      return send("🚫 Access removed\n\nสิทธิ์การเข้าถึงถูกลบออก\n\nYour staff access has been revoked.");
-    }
     const clientAccountId = bindings[0]?.client_account_id || null;
     if (!clientAccountId) {
-      return send("⚠️ Please activate first\n\nกรุณาเปิดใช้งานก่อน\n\nPlease activate your account with your activation code to access this feature.\n\nโปรดเปิดใช้งานบัญชีของคุณด้วยรหัสเปิดใช้งานเพื่อเข้าถึงฟีเจอร์นี้");
+      return send("⚠️ Please activate first\n\nกรุณาเปิดใช้งานก่อน\n\nPlease activate your account with your activation code to access this feature.\n\nโปรดเปิดใช้งานบัญชีของคุณด้วยรหัสเปิดใช้งานเพื่อเข้าถึงฟีเจอร์นี้\n\nติดต่อทีมงานเพื่อขอรหัส / contact the team for a code");
     }
   }
   

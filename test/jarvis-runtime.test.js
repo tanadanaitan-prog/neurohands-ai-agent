@@ -561,6 +561,7 @@ test("per-client price filtering: unbound LINE user gets activate message via me
   const msg = f.line[0].messages[0].text;
   assert.match(msg, /Please activate/);
   assert.match(msg, /กรุณาเปิดใช้งาน/);
+  assert.match(msg, /ติดต่อทีมงานเพื่อขอรหัส/);
   assert.ok(!msg.includes("THB"));
 });
 
@@ -632,17 +633,20 @@ test("per-client price filtering: tool layer - get_edging_info fails closed with
   assert.deepEqual(result.services, []);
 });
 
-test("postback access check: revoked staff user refused", async (t) => {
+test("postback access check: revoked binding sees activate message with no prices or orders", async (t) => {
   const f = fixture(t);
-  f.tables.staff_activations = [{ id: 1, line_user_id: "staff-one", role: "admin", active: false, account_type: "staff" }];
-  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "staff-one", client_account_id: 11, department: "sales", status: "active", activated_at: "2024-01-01T00:00:00Z", account_type: "staff" }];
-  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "staff-one" },
+  f.tables.glass_types = [{ id: 1, client_account_id: 11, product_code: "CLR-6", glass_name: "Clear", thickness_mm: 6, price_per_sqft: 100, active: true }];
+  f.tables.orders = [{ id: 1, client_account_id: 11, order_no: "PO001", stage: "production", promised_date: "2024-12-01", on_track: true }];
+  f.tables.client_agent_bindings = [{ id: 1, line_user_id: "revoked-user", client_account_id: 11, department: "sales", status: "revoked", activated_at: "2024-01-01T00:00:00Z" }];
+  await f.gateway.handleEvent({ type: "postback", source: { type: "user", userId: "revoked-user" },
     replyToken: "fixture-reply", postback: { data: "menu=products" } });
   assert.equal(f.line.length, 1);
   const msg = f.line[0].messages[0].text;
-  assert.match(msg, /Access removed/);
-  assert.match(msg, /สิทธิ์การเข้าถึงถูกลบออก/);
-  assert.ok(!msg.includes("THB"));
+  assert.match(msg, /Please activate/);
+  assert.match(msg, /กรุณาเปิดใช้งาน/);
+  assert.match(msg, /ติดต่อทีมงานเพื่อขอรหัส/);
+  assert.doesNotMatch(msg, /\d+\s*(THB|บาท)/);
+  assert.doesNotMatch(msg, /PO001/);
 });
 
 test("postback access check: inactive binding sees activate message", async (t) => {
@@ -653,7 +657,8 @@ test("postback access check: inactive binding sees activate message", async (t) 
   assert.equal(f.line.length, 1);
   const msg = f.line[0].messages[0].text;
   assert.match(msg, /Please activate/);
-  assert.match(msg, /กรุณาเปิดใช้งาน/);
+  assert.match(msg, /กรุณาเปิดใช้งานก่อน/);
+  assert.match(msg, /ติดต่อทีมงานเพื่อขอรหัส/);
 });
 
 test("postback access check: active bound user can access agent menu", async (t) => {
