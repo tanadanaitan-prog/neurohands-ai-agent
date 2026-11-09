@@ -10,7 +10,8 @@ const {
 
 const LINE_SENTINEL = "U-private-line-sentinel-731";
 const PROMPT_SENTINEL = "private-customer-prompt-sentinel-842";
-const ANSWER_SENTINEL = "private-customer-answer-sentinel-953";
+// Keep this trace-isolation fixture free of unsupported numbers (Aria sourcing rule).
+const ANSWER_SENTINEL = "private-customer-answer-sentinel-alpha";
 const DOCUMENT_SENTINEL = "private-document-text-sentinel-164";
 const TOOL_SENTINEL = "private-tool-output-sentinel-275";
 
