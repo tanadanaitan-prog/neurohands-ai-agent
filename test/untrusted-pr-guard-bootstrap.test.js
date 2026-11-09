@@ -16,7 +16,7 @@ const {
 } = require("../scripts/check-untrusted-pr-workflow");
 
 const REVIEWED_FIXTURE_PATH = path.join(__dirname, "fixtures", "untrusted-pr-reviewed.yml");
-const WORKFLOW = readFileSync(REVIEWED_FIXTURE_PATH, "utf8");
+const WORKFLOW = readFileSync(REVIEWED_FIXTURE_PATH, "utf8").replace(/\r\n?/g, "\n");
 
 function mutate(from, to) {
   assert.equal(WORKFLOW.includes(from), true, `fixture is missing: ${from}`);
