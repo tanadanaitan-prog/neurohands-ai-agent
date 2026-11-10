@@ -3,7 +3,11 @@
   "snapshot_date": "2026-11-10",
   "timezone": "Asia/Bangkok",
   "kind": "static_reviewed_handoff_not_runtime_enforcement",
-  "objective": "Analyze and support continued Neurohands work across GitHub, local folders, Railway, Supabase, APIs, MCP, skills, memory and documentation.",
+  "objective": "Research, organize and verify Neurohands files and platform/data maps across GitHub, local folders, Railway and Supabase; maintain evidence-based planning, implementation, testing, review and continuation.",
+  "organization_branch": "codex/structure-organization-20261110",
+  "organization_baseline": "52bfc191093dde6064b1827aa28421ca37160c6b",
+  "organization_guide": "docs/architecture/PROJECT_STRUCTURE.md",
+  "structure_catalog": "config/project-structure.v1.json",
   "status": "OPEN_VERIFICATION",
   "tested_code_commit": "a5693f9efdff63bfffb46cd805e519c583258da1",
   "live_main_commit": "889c8a4dd86c5dd615e60bc3f0a9e5b428851acf",
@@ -18,7 +22,7 @@
     "github_isolation_ci": "PASS",
     "public_version_and_readiness": "PASS_ON_BOTH_RECORDED_DOMAINS",
     "supabase_metadata_and_health": "PASS_WITH_DOCUMENTED_INFORMATIONAL_ADVISORIES",
-    "railway_to_supabase_exact_url_comparison": "AWAITING_CONFIRMATION",
+    "railway_to_supabase_exact_url_comparison": "FOUNDER_CONFIRMED_IDENTICAL_2026-11-10",
     "live_model_and_line_customer_acceptance": "NOT_RUN_BY_THIS_AUDIT",
     "strict_release_gate": "FAIL_EXPECTED_INCOMPLETE_ACCEPTANCE"
   },
@@ -40,7 +44,7 @@
     "grok_communication": "manual_folder_relay_no_computer_chat"
   },
   "next_actions": [
-    { "id": "VERIFY_URL", "owner": "Founder/ENG", "state": "pending", "done_when": "Railway SUPABASE_URL is compared with the audited project reference without disclosing keys." },
+    { "id": "VERIFY_URL", "owner": "Founder/ENG", "state": "complete_manual_confirmation", "done_when": "Railway SUPABASE_URL is compared with the audited project reference without disclosing keys.", "evidence": "Founder reply: no4 correct is identical, 2026-11-10. No secret read or configuration change." },
     { "id": "REVIEW_SCHEMA", "owner": "Backend/Database", "state": "pending", "done_when": "The candidate's migration/RPC prerequisites have an isolated test and approved rollout sequence." },
     { "id": "VERIFY_ALLOWANCE", "owner": "ENG/founder", "state": "pending", "done_when": "Current approved model allowance is verified before any live model test; intended automatic-deployment policy is confirmed." },
     { "id": "PILOT_PROOF", "owner": "QA & Safety", "state": "pending", "depends_on": ["VERIFY_ALLOWANCE"], "done_when": "The reviewed customer checklist proves correct document answers, permitted tools, tenant denial and persisted delivery evidence." },

@@ -14,7 +14,7 @@ was performed. Evidence timestamps are UTC; user-facing dates use Asia/Bangkok.
 | Local folder | The original working branch was safely fast-forwarded during repair. Two modified tracked files and 98 untracked files were hash-checked and preserved. All 195 tracked files at the tested code revision were present and hashed. | These counts describe that revision, before this documentation update. Presence/hashes do not prove behavior. Unfinished work is not in GitHub. |
 | Railway | Project `9a97651f-2fdf-4537-bce4-d6a7ad877720`, production service `neurohands-ai-agent`, source repository `tanadanaitan-prog/neurohands-ai-agent`, branch `main`. Deployment `f686a18d-530d-42d7-8902-234253a3cfac` succeeded. | Main merges automatically trigger Railway: the approved guard merge also rebuilt the existing application. PR #13's application was not deployed. |
 | Public gateway | Both recorded domains return HTTP 200 from `/version` with main `889c8a4`, and `/ready` returns `{"ready":true}`. | Readiness checks configuration/database/storage prerequisites; it does not call an LLM or prove LINE delivery. |
-| Supabase | Project `darxiaearohhnxiwhcbs`, organization plan `free`, status `ACTIVE_HEALTHY`; 25 public tables with RLS enabled; four recorded migrations. Required inspected Phase 1 columns exist. | Exact Railway `SUPABASE_URL` comparison remains pending; variable names alone cannot establish which project is configured. |
+| Supabase | Project `darxiaearohhnxiwhcbs`, organization plan `free`, status `ACTIVE_HEALTHY`; 25 public tables with RLS enabled; four recorded migrations. Required inspected Phase 1 columns exist. The founder confirmed Railway's saved `SUPABASE_URL` matches on 10 November. | The URL match is a manual configuration confirmation; this audit did not read Railway secrets or test live model answers. |
 | Storage | `neurohands-docs` is private, configured file limit 10,485,760 bytes (10 MiB), with document MIME restrictions. | This is the live configured ceiling, not a verified maximum for every plan. Large-upload activation remains held. |
 | Local model lab | Ollama port 11434 refused the read-only metadata connection. The port 2024 check timed out outside the sandbox. | Ollama was unreachable at that observation; a timeout does not prove LangGraph is absent. Neither service was started or reconfigured. |
 
@@ -55,11 +55,12 @@ flowchart LR
   AUDIT -. metadata only .-> DB
 ```
 
-The Supabase edge in this diagram is the implemented architecture. To finish
-the exact deployment-to-project match, compare Railway's `SUPABASE_URL` with
-`https://darxiaearohhnxiwhcbs.supabase.co`. Supabase's API tool confirms that base
-URL. Opening its bare `/` may return an invalid-path JSON response; it is not the
-dashboard. Keep the base URL in the variable: the application supplies API paths.
+The Supabase edge in this diagram is the implemented architecture. Supabase's
+API tool confirms `https://darxiaearohhnxiwhcbs.supabase.co`. On 10 November,
+the founder confirmed Railway's saved `SUPABASE_URL` is identical. This is a
+manual comparison, not a secret read or model test. Opening its bare `/` may
+return an invalid-path JSON response; it is not the dashboard. Keep the base URL
+in the variable: the application supplies API paths.
 [Official API routing documentation](https://supabase.com/docs/guides/api).
 
 ## Database reconciliation
@@ -114,7 +115,7 @@ remains on hold and was not inspected.
 
 | Priority | Owner/action | Acceptance evidence |
 | --- | --- | --- |
-| 1 | Founder/ENG: confirm the non-secret Supabase URL comparison. | Exact configured project reference matches this audit, or audit the actual target. |
+| 1 | Completed by founder: non-secret Supabase URL comparison. | Founder confirmed the saved value is identical on 10 November; no configuration change was required. |
 | 2 | Backend/Database: review PR #13 application/schema dependencies in isolation. | Explicit applied/unapplied inventory, required RPC checks and reviewed migration sequence; no blanket push. |
 | 3 | ENG/founder: verify provider allowance and intended deployment controls before live tests. | Current approved allowance established before any model request; confirm the intended automatic-deployment policy. This does not approve a release. |
 | 4 | QA & Safety: after allowance verification, complete the approved second-account KNC/Aria pilot checklist. | Correct document answer, permitted successful `read_document`, tenant-denial test, matching persisted run/tool/delivery evidence. Use the team's reviewed checklist; do not substitute unreviewed test scripts. Final release still requires explicit founder approval. |

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "observed_at_utc": "2026-11-10 08:01:48 UTC",
+  "kind": "observed_metadata_not_deployable_configuration",
+  "project_id": "9a97651f-2fdf-4537-bce4-d6a7ad877720",
+  "service": {
+    "id": "7a41f9eb-e772-4a63-86ba-89cdfd608386",
+    "name": "neurohands-ai-agent",
+    "state": "live"
+  },
+  "environment": {
+    "id": "d41441ac-3e12-4676-b989-ec9da8c10ec5",
+    "name": "production"
+  },
+  "configuration_authority": "dashboard",
+  "config": {
+    "source": {
+      "repo": "tanadanaitan-prog/neurohands-ai-agent",
+      "branch": "main",
+      "checkSuites": false
+    },
+    "networking": {
+      "serviceDomains": {
+        "neurohands-ai-agent-production.up.railway.app": {},
+        "neurohands-ai-agent-production-dd32.up.railway.app": {
+          "port": 8080
+        }
+      }
+    },
+    "build": {
+      "builder": "RAILPACK",
+      "buildCommand": "npm run check && npm test && npm run build",
+      "buildEnvironment": "V3"
+    },
+    "deploy": {
+      "startCommand": "npm start",
+      "preDeployCommand": [],
+      "healthcheckPath": "/ready",
+      "healthcheckTimeout": 60,
+      "restartPolicyMaxRetries": 3,
+      "useLegacyStacker": false,
+      "ipv6EgressEnabled": false,
+      "runtime": "V2",
+      "multiRegionConfig": {
+        "iad": {
+          "numReplicas": 1
+        }
+      }
+    }
+  },
+  "variable_names_only": [
+    "ENABLE_STUDIO",
+    "FALLBACK_API_KEY",
+    "FALLBACK_BASE_URL",
+    "FALLBACK_MODEL",
+    "FALLBACK_MODELS",
+    "FALLBACK_PROVIDER",
+    "FOUNDER_LINE_ID",
+    "GEMINI_API_KEY",
+    "GEMINI_ENABLED",
+    "GEMINI_MODEL",
+    "JARVIS_ACTIVATION_CODE",
+    "LINE_CHANNEL_ACCESS_TOKEN",
+    "LINE_CHANNEL_SECRET",
+    "NEUROHANDS_API_KEY",
+    "SUPABASE_SERVICE_KEY",
+    "SUPABASE_URL",
+    "THIRD_BASE_URL",
+    "THIRD_MODEL",
+    "THIRD_PROVIDER",
+    "WEBHOOK_ENCRYPTION_KEY"
+  ],
+  "volumes": [],
+  "tracing": {
+    "tracingEnabled": false,
+    "autoInstrumentationEnabled": false,
+    "autoInstrumentationActive": false
+  },
+  "latest_deployment": {
+    "id": "f686a18d-530d-42d7-8902-234253a3cfac",
+    "status": "SUCCESS",
+    "createdAt": "2026-11-10T07:51:03.936Z",
+    "url": null
+  },
+  "live_commit": "889c8a4dd86c5dd615e60bc3f0a9e5b428851acf",
+  "supabase_url_value_verified": "FOUNDER_CONFIRMED_IDENTICAL_2026-11-10",
+  "url_confirmation_method": "Founder compared only SUPABASE_URL in Railway Variables; connector did not retrieve values.",
+  "limitations": [
+    "This JSON does not apply configuration or verify credentials.",
+    "Refresh remote state before deployment; source.checkSuites was false when observed.",
+    "Legacy railway.json remains a reference; no IaC migration is activated."
+  ]
+}
