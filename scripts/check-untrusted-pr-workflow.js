@@ -6,7 +6,7 @@ const path = require("node:path");
 
 const REPOSITORY_ROOT = path.resolve(__dirname, "..");
 const DEFAULT_WORKFLOW_PATH = path.join(REPOSITORY_ROOT, ".github", "workflows", "untrusted-pr.yml");
-const REVIEWED_WORKFLOW_SHA256 = "8d633db00bf4c29127ded17c103383ebba279d303856dee49229592381997c89";
+const REVIEWED_WORKFLOW_SHA256 = "bdae0242087b0eb40634c8161d5c8a15be638d2e723f7c99557362fe929fca9f";
 const PINNED_CHECKOUT = "actions/checkout@11d5960a326750d5838078e36cf38b85af677262";
 const PINNED_NODE_IMAGE = "node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553";
 const MAX_WORKFLOW_BYTES = 32 * 1024;
@@ -115,6 +115,10 @@ function validateUntrustedPrWorkflowSource(source, { enforceFingerprint = true }
   }
   if (!normalized.includes("npm ci --ignore-scripts --no-audit --no-fund")) {
     errors.push("dependencies must be installed without lifecycle scripts, audit calls, or funding calls");
+  }
+  if (countMatches(normalized, /^\s+mkdir -- node_modules$/gm) !== 1 ||
+      !runBlocks.some((block) => /^\s+trap cleanup_c10_volume EXIT\n\s+mkdir -- node_modules\n\s+docker pull "\$c10_image"$/m.test(block))) {
+    errors.push("the dependency mountpoint must be created with fail-closed mkdir immediately after the cleanup trap and before Docker starts");
   }
   if (countMatches(normalized, /^\s+--network none \\$/gm) !== 2 ||
       !normalized.includes("node --test test/untrusted-execution-boundary.test.js")) {
