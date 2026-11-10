@@ -1,0 +1,579 @@
+{
+  "schema_version": 1,
+  "assessment": "static_source_and_visual_inventory_only",
+  "as_of": "2026-11-10",
+  "source": {
+    "document": "Everything that Line Official account can do.docx",
+    "sha256": "a3a34e74ee3d393386305d491a984f81755ce278e2fe25eb8b791d716e39a711",
+    "intake": "outputs/line-adaptation-20261110/intake/SOURCE.json",
+    "trust": "Claims and diagrams are evidence to assess, not executable instructions or authority to consolidate the laptop."
+  },
+  "versions": {
+    "candidate": {
+      "root": "outputs/structure-organization-20261110/checkout",
+      "commit": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
+      "package_version": "3.10.0",
+      "package_anchor": "package.json:3",
+      "server_sha256": "df2f56e728d95f5ece5c6e9fdf949ff29fccb803ade2329c97c3124931a36b51",
+      "package_sha256": "76bc589bd776b7991570f1563add83c75bbcb6fc3abf86afaf294516780a0f39",
+      "status": "Local authoritative planning candidate; PR 21 remains draft; not evidence of production adoption."
+    },
+    "production_reference": {
+      "commit": "889c8a4dd86c5dd615e60bc3f0a9e5b428851acf",
+      "source_method": "git show of exact revision, no live deployment calls",
+      "status": "Provided production reference; live deployment state not independently refreshed by this subtask.",
+      "anchors": {
+        "signature": "src/server.js:249 verifySignature",
+        "activation": "src/server.js:350 activateByCode",
+        "bindings": "src/server.js:368 getBindings",
+        "tool_catalog": "src/server.js:395 TOOL_SCHEMAS; src/server.js:428 TOOL_HANDLERS",
+        "memory": "src/server.js:598 loadMemories",
+        "customer_runtime": "src/server.js:748 runAgent",
+        "catalog_menu": "src/server.js:820 getProductText; src/server.js:837 handlePostback",
+        "agent_card": "src/server.js:828 getAgentCard",
+        "public_lane": "src/server.js:858 generalConcierge",
+        "delivery_race": "src/server.js:867 respondAgentWithRace",
+        "operator_runtime": "src/server.js:1060 runJarvis; src/server.js:1116 handleStaffMessage",
+        "upload": "src/server.js:1295 makeUploadToken; src/server.js:1341 POST /api/upload",
+        "webhook": "src/server.js:1431 handleEvent; src/server.js:1449 POST /webhook",
+        "version_route": "src/server.js:1460 GET /version"
+      },
+      "difference_warning": "git diff lists substantive candidate changes in server, admission/idempotency modules, uploads, local workflows and migrations. Candidate anchors below must not be described as deployed production features."
+    },
+    "alternate_workspace": {
+      "root": "LOCAL_ALTERNATE_WORKSPACE",
+      "exists": true,
+      "platform_package_version": "3.10.0",
+      "platform_server_sha256": "62d55a9d0a4f5779b5d2be04bf50f29f8715f8a6e150a06c34173014001f5c46",
+      "platform_package_sha256": "6f9d81bdbcfeebfe76b1111be3ef3013ffda7161c4d9b226e2939ffa37db3f8d",
+      "continuity_py_sha256": "4346e89b9a59a4e56ca15a20657a01291a8ddfb2f309da0604764d8b9b615165",
+      "provenance_manifest_sha256": "32e68d6ff47486d7d6ac9f3b50e92dfb78a94d43c7cb83aa66bc44d7bede1ef1",
+      "git_read_result": "git -C ... rev-parse/status returned fatal: cannot change to ...: Permission denied. File hashes supply bounded provenance instead; repository identity is unknown.",
+      "sdk_metadata": {
+        "file": ".venv/Lib/site-packages/google_antigravity-0.1.23.dist-info/METADATA",
+        "name_anchor": "2: Name: google-antigravity",
+        "version_anchor": "3: Version: 0.1.23",
+        "python_anchor": "16: Requires-Python: >=3.10",
+        "meaning": "Installed distribution metadata exists. SDK imports, publisher authenticity, credentials, live agent calls and model continuity were not executed or established."
+      },
+      "observed_source_filenames": [
+        "sdk_harness/continuity.py",
+        "sdk_harness/core001.py",
+        "sdk_harness/orchestrator.py",
+        "sdk_harness/pstack_policies.py",
+        "sdk_harness/pstack_skills.py",
+        "sdk_harness/pstack_tools.py"
+      ],
+      "status": "Separate unadopted source lineage. Equal 3.10.0 labels do not imply equal code. README claims are not independent test results; no alternate fixes copied."
+    }
+  },
+  "anchor_convention": "Unless a version is specified explicitly, each path:line below is relative to candidate root at 72f7e5f40a9a1e9930d9d099efb891f306bcffa2. Tests listed are existing source targets, not executions in this assessment.",
+  "capabilities": [
+    {
+      "id": "line_ingress",
+      "source_paragraphs": [
+        "P0721",
+        "P0722"
+      ],
+      "candidate_anchors": [
+        "src/server.js:425 verifySignature",
+        "src/server.js:1998 handleEvent",
+        "src/server.js:2015 createWebhookInbox",
+        "src/server.js:2016 POST /webhook"
+      ],
+      "contract": "Signed raw webhook -> durable inbox -> message/follow/postback routing. Reply and push transport: src/server.js:431 replyToLine; :443 pushToLine.",
+      "tests": [
+        "test/gateway.test.js:49",
+        "test/webhook-inbox.test.js",
+        "test/phase1-db.test.js:8"
+      ],
+      "adaptation": "Document event coverage from actual handleEvent branches. Do not promise all LINE event/message types or adopt the DOCX's account UI mode terminology without official API verification."
+    },
+    {
+      "id": "public_concierge_and_activation",
+      "source_paragraphs": [
+        "P0730",
+        "P0734",
+        "P0737",
+        "P0741",
+        "P0743"
+      ],
+      "candidate_anchors": [
+        "src/server.js:508 parseActivationCode",
+        "src/server.js:526 activateByCode",
+        "src/server.js:544 getBindings",
+        "src/server.js:1064 handlePostback",
+        "src/server.js:1085 generalConcierge",
+        "src/server.js:1133 handleMessage"
+      ],
+      "contract": "Activation uses nh_activate_client hash RPC and active account bindings; menu link failure does not undo access. Public natural answers use company_info; BRAND_COPY and public_updates serve public postbacks.",
+      "sql_anchors": [
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:42 activation_codes",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:54 client_agent_bindings",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:176 nh_activate_client",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:215 RPC grants"
+      ],
+      "tests": [
+        "test/phase1-db.test.js:8",
+        "test/gateway.test.js:49"
+      ],
+      "adaptation": "Preserve separate public/client/operator lanes. Verify demo write and account binding with synthetic cases before promising external follow-up or response time."
+    },
+    {
+      "id": "customer_tools_prompts_and_roles",
+      "source_paragraphs": [
+        "P0746",
+        "P0756",
+        "P0758",
+        "P0767"
+      ],
+      "candidate_anchors": [
+        "src/server.js:555 getAgent",
+        "src/server.js:571 TOOL_SCHEMAS",
+        "src/server.js:604 TOOL_HANDLERS",
+        "src/server.js:703 executeToolWithLog",
+        "src/server.js:797 buildAgentSystem",
+        "src/server.js:957 runAgent"
+      ],
+      "read_tools": [
+        "get_client_profile",
+        "get_recent_orders",
+        "get_order_status",
+        "get_product_info",
+        "get_edging_info",
+        "get_lead_time",
+        "recall_customer",
+        "list_tasks",
+        "list_documents",
+        "read_document"
+      ],
+      "write_tools": [
+        "create_support_case",
+        "request_human",
+        "remember_customer",
+        "create_task"
+      ],
+      "contract": "14 defined tools: 10 reads and 4 writes. Each agent receives its registry allowed_tools intersection with known schemas, not the whole catalog automatically. Frontline writes are tool-authorized; Jarvis proposal approval is a separate lane, not a universal customer yes/no gate.",
+      "sql_anchors": [
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:32 agent_registry",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:76 agent_runs",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:87 tool_calls",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:113 agent_tasks",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:122 support_cases",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:130 escalations"
+      ],
+      "tests": [
+        "test/aria-sourcing.test.js:69",
+        "test/aria-sourcing.test.js:76",
+        "test/gateway.test.js:49"
+      ],
+      "adaptation": "Correct DOCX's 13-tool count. Retain source-backed answers and no-human-notification-without-receipt language. Do not market order cancellation, price changes, discounts, scheduling or code execution."
+    },
+    {
+      "id": "orders_catalog_quote_and_freshness",
+      "source_paragraphs": [
+        "P0044",
+        "P0045",
+        "P0750",
+        "P0751",
+        "P0753",
+        "P0760",
+        "P0761"
+      ],
+      "candidate_anchors": [
+        "src/server.js:588 getClientOrders",
+        "src/server.js:615 get_order_status",
+        "src/server.js:622 get_product_info",
+        "src/server.js:628 get_edging_info",
+        "src/server.js:1033 getOrderStatusText",
+        "src/server.js:1047 getProductText",
+        "src/server.js:1074 products postback",
+        "src/server.js:1076 quote postback"
+      ],
+      "observed": "Products/edging handlers and products postback query active global catalogs without an account predicate; products postback calls getProductText() without getBindings. Order lookup uses substring matching of up to 20 recent client orders, not a guaranteed exact exhaustive order-number lookup. Quote postback prompts for dimensions; it is not a deterministic pricing calculator.",
+      "risk_status": "Catalog ownership and public/private classification require explicit data-contract review and synthetic route reproduction. Static absence of an account predicate is a concrete scope gap against DOCX's claim, not proof of a live data leak. Candidate catalog/document handlers shown here have no isFreshRecord expiry check.",
+      "tests": [
+        "test/gateway.test.js:49",
+        "test/aria-sourcing.test.js:99",
+        "test/aria-sourcing.test.js:130"
+      ],
+      "adaptation": "P0: classify shared vs tenant catalog, bind account on private routes, define freshness semantics and exact order lookup. P1: a separately tested deterministic quote service with unit/VAT/minimum/rounding rules if authorized; formal sales acceptance remains separate."
+    },
+    {
+      "id": "memory_and_tasks",
+      "source_paragraphs": [
+        "P0035",
+        "P0036",
+        "P0755",
+        "P0764",
+        "P0765"
+      ],
+      "candidate_anchors": [
+        "src/server.js:659 remember_customer",
+        "src/server.js:670 recall_customer",
+        "src/server.js:675 create_task",
+        "src/server.js:682 list_tasks",
+        "src/server.js:792 loadMemories",
+        "src/server.js:1055 getAgentCard"
+      ],
+      "observed": "Customer recall, task listing, prompt hydration and card memory count include both client_account_id and line_user_id predicates. Memory types have a bounded allowlist. This supports scoped memory behavior in candidate source, not model training.",
+      "sql_anchors": [
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:103 agent_memory",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:113 agent_tasks"
+      ],
+      "tests": [
+        "test/memory-scope.test.js:72",
+        "test/memory-scope.test.js:89",
+        "test/memory-scope.test.js:104",
+        "test/memory-scope.test.js:113",
+        "test/memory-scope.test.js:125"
+      ],
+      "adaptation": "Retain current scope tests and add any new cross-user/account/department tests before extending the contract. Customer memory and operator notes must remain separate."
+    },
+    {
+      "id": "secure_upload_and_document_reading",
+      "source_paragraphs": [
+        "P0748",
+        "P0766",
+        "P0808",
+        "P0814"
+      ],
+      "candidate_anchors": [
+        "src/server.js:687 list_documents",
+        "src/server.js:692 read_document",
+        "src/server.js:1195 customer upload command",
+        "src/server.js:1550 makeUploadToken",
+        "src/server.js:1558 checkUploadToken",
+        "src/server.js:1595 authorizedUploadAccount",
+        "src/server.js:1606 newDocumentIdentity",
+        "src/server.js:1619 reserveDocument",
+        "src/server.js:1634 createSignedResumableUpload",
+        "src/server.js:1739 GET /upload",
+        "src/server.js:1753 POST /api/upload/session",
+        "src/server.js:1784 POST /api/upload/signature",
+        "src/server.js:1799 POST /api/upload/finalize",
+        "src/server.js:1878 POST /api/upload",
+        "src/lib/document-parser.js:9 parseDocument"
+      ],
+      "contract": "7-day HMAC link; active bound tenant/department authorization; original retained in private neurohands-docs bucket; client_documents records source and parse state. Legacy path is 10 MiB. Opt-in resumable path has hard ceiling 50,000,000 bytes and /ready checks configured ceiling equals bucket ceiling. No live enablement verified.",
+      "parser_limits": {
+        "rows": 500,
+        "columns": 64,
+        "characters": 30000,
+        "supported_text": [
+          "xlsx",
+          "xls",
+          "csv",
+          "docx",
+          "UTF-8 txt"
+        ],
+        "pdf": "Original can be stored; parser returns unsupported.",
+        "docx_images": "Not extracted by application parser."
+      },
+      "sql_anchors": [
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:94 client_documents",
+        "supabase/migrations/20260917103000_resumable_upload_metadata.sql:9 size constraint",
+        "src/server.js:2043 private bucket readiness"
+      ],
+      "tests": [
+        "test/resumable-upload.test.js:143",
+        "test/resumable-upload.test.js:259",
+        "test/resumable-upload.test.js:306",
+        "test/resumable-upload.test.js:341",
+        "test/resumable-upload.test.js:392",
+        "test/gateway.test.js:49"
+      ],
+      "adaptation": "Correct PDF and unconditional 50 MB claims. Add reviewed PDF/image extraction only after bounded parsing, provenance, tenant authorization and injection tests. Direct LINE attachments remain unsupported by the agent prompt/runtime."
+    },
+    {
+      "id": "operator_commands_and_proposals",
+      "source_paragraphs": [
+        "P0769",
+        "P0770",
+        "P0816",
+        "P0827",
+        "P0836"
+      ],
+      "candidate_anchors": [
+        "src/server.js:489 isStaff",
+        "src/server.js:495 activateStaff",
+        "src/server.js:1251 proposeNote",
+        "src/server.js:1264 createActivationCode",
+        "src/server.js:1303 runJarvis",
+        "src/server.js:1364 handleStaffMessage",
+        "src/server.js:1473 yes command",
+        "src/server.js:1500 no command",
+        "src/lib/jarvis-tools.js:1 READ_TOOLS",
+        "src/lib/jarvis-tools.js:5 ACTION_TOOLS",
+        "src/lib/jarvis-tools.js:50 createJarvisTools",
+        "src/lib/jarvis-tools.js:113 execute"
+      ],
+      "contract": "Founder or active admin; founder-only activation secret; 13 Jarvis schemas: list_clients + operations_status + 9 reads + propose_note + propose_action. Write proposals require the same operator yes; nh_claim_note claims pending row before execution. Availability of read tools does not grant all tools or external integrations.",
+      "commands": [
+        "help / command",
+        "brief",
+        "health",
+        "agents",
+        "runs",
+        "events",
+        "trace:",
+        "memory:",
+        "whois:",
+        "code:",
+        "codes",
+        "upload",
+        "upload:",
+        "docs:",
+        "doc:",
+        "act:",
+        "note:",
+        "learn:",
+        "market:",
+        "pending",
+        "yes",
+        "no",
+        "notes",
+        "task:",
+        "done:",
+        "checklist"
+      ],
+      "sql_anchors": [
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:67 staff_activations",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:137 jarvis_notes",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:146 jarvis_checklist",
+        "supabase/migrations/20260907123525_phase1_gateway_recovery.sql:218 nh_claim_note",
+        "supabase/migrations/20260909155146_jarvis_operator_runs.sql"
+      ],
+      "tests": [
+        "test/jarvis-runtime.test.js:140",
+        "test/jarvis-runtime.test.js:207",
+        "test/jarvis-runtime.test.js:232",
+        "test/jarvis-runtime.test.js:262",
+        "test/jarvis-runtime.test.js:273",
+        "test/jarvis-runtime.test.js:484",
+        "test/jarvis-tools.test.js"
+      ],
+      "adaptation": "Keep operational commands, business proposals and code/deployment authority distinct. Prompt explicitly denies web search, browser, code execution, autonomous scheduling and agent delegation (src/server.js:1331)."
+    },
+    {
+      "id": "provider_continuity_and_final_delivery",
+      "source_paragraphs": [
+        "P0033",
+        "P0039",
+        "P0042"
+      ],
+      "candidate_anchors": [
+        "src/server.js:270 requestModelJson",
+        "src/server.js:843 askGeminiWithTools",
+        "src/server.js:883 empty final branch",
+        "src/server.js:988 no restart after tools",
+        "src/server.js:1095 respondAgentWithRace"
+      ],
+      "observed": "Candidate returns failure for empty Gemini final text; fallback conversation restarts only when no tools executed. It does not establish the DOCX's tools:[] synthesis recovery. Delivery race sends Checking after 2.5 seconds then push final; catch rethrows without the claimed checkingDelivered recovery. Multi-Gemini exact in-flight failover is not established by this code.",
+      "tests": [
+        "test/llm-recovery.test.js",
+        "test/jarvis-runtime.test.js:296",
+        "test/jarvis-runtime.test.js:334",
+        "test/jarvis-runtime.test.js:445",
+        "test/provider-failures.test.js"
+      ],
+      "adaptation": "P0: reproduce post-tool empty final and delayed delivery failure with synthetic deterministic transport/provider fixtures. Preserve tool receipts and prevent replay before implementing any continuity recovery."
+    },
+    {
+      "id": "web_studio_and_local_specialists",
+      "source_paragraphs": [
+        "P0838",
+        "P0839"
+      ],
+      "candidate_anchors": [
+        "web/src/main.js:19 api",
+        "web/src/main.js:44 renderAuth",
+        "web/src/main.js:95 renderBoard",
+        "web/src/main.js:101 renderVersions",
+        "web/src/main.js:160 editAgent",
+        "web/src/main.js:184 moveAgent",
+        "src/platform/router.js:9 GET /config runtimeConnected:false",
+        "src/platform/router.js:43 publish route",
+        "src/platform/validation.js:4 TOOL_CATALOG",
+        "src/agent/profiles.mjs:58 AGENT_PROFILES",
+        "src/agent/skills.mjs:31 ROLE_TOOLS",
+        "src/agent/workflow.mjs:1 local-only boundary",
+        "src/agent/workflow.mjs:99 WORKFLOW_TEMPLATES",
+        "src/agent/workflow.mjs:300 createWorkflowRunner"
+      ],
+      "contract": "Web is browser ES modules/HTML/CSS with Vite; it edits authenticated workspace definitions and immutable published revisions. It is not React in the inspected source and publishing is not execution. Fixed named specialist workflows are local and have no production adapters.",
+      "tests": [
+        "test/workspace-db.test.js",
+        "test/named-workflow.test.mjs",
+        "test/agent-skills.test.mjs",
+        "test/real-named-workflow-benchmark.test.mjs"
+      ],
+      "adaptation": "P2: define explicit published-version-to-runtime binding, approved tool catalog, lifecycle and tenancy adapter before any Studio -> LINE team execution. No generic application MCP integration is implemented; Codex engineering connectors are not Aria/Jarvis tools."
+    }
+  ],
+  "existing_rich_menu_assets": {
+    "public": {
+      "json": "config/rich-menus/richmenu-public.json:1",
+      "png": "assets/rich-menus/richmenu-public.png",
+      "dimensions": [
+        1664,
+        928
+      ],
+      "buttons": [
+        "about",
+        "services",
+        "projects",
+        "contact",
+        "updates",
+        "activate"
+      ],
+      "visual": "Six white cards, pale blue background, dark blue labels and blue edge accents."
+    },
+    "active": {
+      "json": "config/rich-menus/richmenu-active.json:1",
+      "png": "assets/rich-menus/richmenu-active.png",
+      "dimensions": [
+        1664,
+        928
+      ],
+      "buttons": [
+        "order_status",
+        "products",
+        "lead_time",
+        "quote",
+        "support",
+        "agent"
+      ],
+      "visual": "Matching six-card design; Order Status, Products, Lead Time, Quote, Support, My Agent."
+    },
+    "provisioning_anchors": [
+      "scripts/setup-richmenu.js:9 loadMenu",
+      "scripts/setup-richmenu.js:61 createMenu",
+      "scripts/setup-richmenu.js:80 main",
+      "scripts/setup-richmenu.js:86 --check returns before remote actions",
+      "scripts/setup-richmenu.js:94 settings writes and default linking"
+    ],
+    "reuse_condition": "Keep reviewed original menu image/JSON pairs and hitboxes aligned. Local --check is a non-network validator; richmenu:setup creates/uploads/links remote menus and writes settings, so requires the existing deployment/account approval. No provisioning was run."
+  },
+  "docx_image_inventory": [
+    {
+      "file": "intake/image1.png",
+      "paragraph": "P0009",
+      "sha256": "f3541c0f0fc6ca5f0007113960f151bf2767387afb994436acfd6bee1320c70e",
+      "description": "Wide consolidation diagram: 11 laptop source locations -> consolidation script -> provenance/platform/dashboard/bot_org/SDK/.agents -> verifier. Carries 12/12 and 100/100 labels.",
+      "reuse_condition": "Private reference only; redraw current verified component boundaries and remove scores/unverified consolidation claims before publication."
+    },
+    {
+      "file": "intake/image2.png",
+      "paragraph": "P0068",
+      "sha256": "bb38dea42140830e40d089eb1ce5289e8fc09fb84772837c00a2ce6ac7e7f72e",
+      "description": "English Mission Control v5 dashboard screenshot: 24 agents, status cards, open founder gates, 3D orbital bot display and live-built label.",
+      "reuse_condition": "Do not publish raw screenshot or use as live evidence. Reuse visual direction only via a synthetic redraw; verify bot counts, source timestamps and status definitions independently."
+    },
+    {
+      "file": "intake/image3.png",
+      "paragraph": "P0069",
+      "sha256": "788f495ffbec138ff115d3cf055eb33babdb14fc650bf015f509141b7288420b",
+      "description": "Narrower Thai Mission Control v5 screenshot with the same status cards, open founder gates and orbital bot view.",
+      "reuse_condition": "Private bilingual layout reference; redraw with synthetic content and current reviewed wording. A translated screenshot is not proof of runtime localization or current gates."
+    },
+    {
+      "file": "intake/image4.png",
+      "paragraph": "P0148",
+      "sha256": "2a74e39844878cf122e07a5c798a18ce10326492c3e888b3f52aaa2cdbc892ac",
+      "description": "Architecture proposal diagram joining laptop/cloud sources, Grok workspace and Supabase tasks/runs through live_grok_feed.py and local port 8080 server into v5 and four UI upgrades.",
+      "reuse_condition": "Redraw as proposed/local architecture with source freshness and privacy boundaries. Repository/project identifiers and asserted live connections require review before publication."
+    },
+    {
+      "file": "intake/image5.png",
+      "paragraph": "P0232",
+      "sha256": "e0dc4e861d5d053902c99f229b00a6fab37701a53caea9bb3e0e5e67d74c074c",
+      "description": "Engineering-hook flow: classify prompt, inject task protocol, run work, record evidence, stop verification, compute process score and append scorecards.",
+      "reuse_condition": "Conceptual engineering-process reference; redraw without implying that local hooks enforce production LINE runtime or that process score measures outcome quality."
+    },
+    {
+      "file": "intake/image6.png",
+      "paragraph": "P0507",
+      "sha256": "ceaf7fd08f525271d0fd088926c3e847f2b49c9c2b5f6f22b3f3f0ccb1217e85",
+      "description": "PStack hybrid provenance diagram: four input ecosystems -> Neurohands hybrid -> agents, skills, hooks and SDK harness, with pinned labels and counts.",
+      "reuse_condition": "Redraw only after provenance/licence/source review; retain SDK/hook components as separate unadopted engineering lane. Do not repeat 100/100 as verified performance."
+    }
+  ],
+  "implementation_dependency_order": [
+    {
+      "priority": "P0",
+      "step": 1,
+      "deliverable": "Version and claim ledger",
+      "depends_on": [],
+      "acceptance": "Each capability says candidate, production-reference, alternate claim or proposed; source hashes and test execution evidence are separate."
+    },
+    {
+      "priority": "P0",
+      "step": 2,
+      "deliverable": "Tenant/catalog ownership and freshness contract",
+      "depends_on": [
+        1
+      ],
+      "acceptance": "Decide shared/public vs private catalogs; synthetic public/unbound/revoked/cross-account postbacks and reads enforce the decision; expired data is explicitly handled."
+    },
+    {
+      "priority": "P0",
+      "step": 3,
+      "deliverable": "No-replay final synthesis and delivery recovery",
+      "depends_on": [
+        1
+      ],
+      "acceptance": "Post-tool empty result, provider failure, Checking delivery and push failure preserve action receipts without duplicate writes; unknown delivery remains unknown."
+    },
+    {
+      "priority": "P1",
+      "step": 4,
+      "deliverable": "Accurate LINE customer/operator copy and menus",
+      "depends_on": [
+        2,
+        3
+      ],
+      "acceptance": "14 frontline vs 13 Jarvis tools correctly scoped; no unsupported PDF, 50 MB, exact lookup, autonomous quote, notification or deployed-adoption claims; local menu hitbox validation passes."
+    },
+    {
+      "priority": "P1",
+      "step": 5,
+      "deliverable": "Opt-in document/quote enhancements",
+      "depends_on": [
+        2,
+        3
+      ],
+      "acceptance": "If authorized: bounded PDF/image parser and deterministic quotation have source provenance, limits, tenant isolation and independent calculations; existing originals remain recoverable."
+    },
+    {
+      "priority": "P2",
+      "step": 6,
+      "deliverable": "Studio/runtime or external connector adapter",
+      "depends_on": [
+        2,
+        3,
+        4
+      ],
+      "acceptance": "Explicit version binding, role allowlists, tenancy, idempotency, audit, pause/revoke lifecycle and synthetic 1->2->5 workflow tests before any live binding."
+    },
+    {
+      "priority": "P3",
+      "step": 7,
+      "deliverable": "Alternate SDK/workspace evaluation",
+      "depends_on": [
+        1
+      ],
+      "acceptance": "Separate provenance/licence/dependency/security review and bounded tests; no laptop consolidation, plugin auto-install or direct alternate-code adoption. Live calls and deployments retain their own approval gates."
+    }
+  ],
+  "not_done": [
+    "No application code changes",
+    "No tests executed",
+    "No SDK imports or harness execution",
+    "No installs",
+    "No live provider/LINE/Supabase/Railway calls",
+    "No raw DOCX images copied to a public repository",
+    "No remote mutation",
+    "No commits or PR state changes"
+  ]
+}

@@ -1,0 +1,1096 @@
+{
+  "schema_version": 1,
+  "id": "LINE-ADAPTATION-20261110",
+  "recorded_at_utc": "2026-11-10T14:08:39.407597+00:00",
+  "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
+  "source_document_sha256": "a3a34e74ee3d393386305d491a984f81755ce278e2fe25eb8b791d716e39a711",
+  "status": "planning_and_offline_harness",
+  "roles": [
+    {
+      "id": "coordinator",
+      "purpose": "Own objective, success criteria, approvals, task decomposition, budgets, ledger and final evidence reconciliation.",
+      "outputs": [
+        "bounded plan",
+        "assignments",
+        "decision record"
+      ],
+      "restriction": "Cannot turn a plan, reference claim or process score into acceptance."
+    },
+    {
+      "id": "researcher",
+      "purpose": "Resolve named uncertainties using primary sources or approved internal evidence and return compact claims with exact locators and limits.",
+      "outputs": [
+        "source/version table",
+        "supported recommendation"
+      ],
+      "restriction": "Report only; no remote changes, secret retrieval or production tool grant."
+    },
+    {
+      "id": "architect",
+      "purpose": "Specify interfaces, dependency order, tenant and authority boundaries, test oracles and rollback before implementation.",
+      "outputs": [
+        "contract matrix",
+        "design decision"
+      ],
+      "restriction": "Escalates material architecture or authority changes to the scoped owner."
+    },
+    {
+      "id": "implementer",
+      "purpose": "Edit the authorized paths and run focused checks while preserving raw outcomes and exact revision.",
+      "outputs": [
+        "reviewable patch",
+        "check evidence",
+        "handoff"
+      ],
+      "restriction": "Cannot independently approve its own final result or broaden scope."
+    },
+    {
+      "id": "qa",
+      "purpose": "Independently compare the actual artifact and behavior with frozen criteria, including negative cases and regressions.",
+      "outputs": [
+        "pass/fail findings",
+        "coverage",
+        "acceptance recommendation"
+      ],
+      "restriction": "Reviewer identity must differ from implementation author; QA does not grant release authority."
+    },
+    {
+      "id": "efficiency",
+      "purpose": "Compare equivalent accepted outcomes with the frozen resource baseline; identify the smallest justified improvement.",
+      "outputs": [
+        "paired measurements",
+        "overhead diagnosis"
+      ],
+      "restriction": "No speculative savings, model/provider setting changes or quality trade without covering authority."
+    },
+    {
+      "id": "operator",
+      "purpose": "A designated human or separately authorized service owns credential setup, environment verification, adoption, rollback and live acceptance.",
+      "outputs": [
+        "scoped approval",
+        "deployment/runtime receipt",
+        "acceptance record"
+      ],
+      "restriction": "Engineering access and reviewer recommendations are not operator approval."
+    }
+  ],
+  "features": [
+    {
+      "id": "LINE-01",
+      "name": "Configure Official Account, channel and webhook",
+      "support": "manual_oa",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-02",
+      "name": "Receive and authenticate supported webhook events",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-03",
+      "name": "Send text replies and delayed push answers",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-04",
+      "name": "Create default/per-user rich menus and handle postbacks",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/rich-menus-overview/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-05",
+      "name": "Manage menus made in Official Account Manager",
+      "support": "manual_oa",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/rich-menus-overview/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-06",
+      "name": "Authenticate or automate the account.line.biz login screen",
+      "support": "unverified",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "checked_date": "2026-11-10",
+        "supports": "Documented API alternative only; it does not substantiate the supplied login-screen assertion."
+      }
+    },
+    {
+      "id": "LINE-07",
+      "name": "Flex cards, buttons and templates",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-08",
+      "name": "Quick replies and camera/location/date controls",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/using-quick-reply/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-09",
+      "name": "Send images, video, audio and location messages",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-10",
+      "name": "Receive chat images, video, audio and files",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-11",
+      "name": "Outbound documents and signed portal downloads",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-12",
+      "name": "Durable media/document storage and gallery",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-13",
+      "name": "Create, edit or enumerate native LINE albums",
+      "support": "consumer_only",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://help.line.me/line/smartphone?contentId=20000248&ctype=article&lang=en",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-14",
+      "name": "Create native LINE Calendar events",
+      "support": "consumer_only",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://help.line.me/line/smartphone?contentId=200002132&lang=en",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-15",
+      "name": "Booking, external calendar and timed reminders",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/actions/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-16",
+      "name": "Use native Messaging API account linking",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/linking-accounts/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-17",
+      "name": "Custom NH activation and tenant/department binding",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/linking-accounts/",
+        "checked_date": "2026-11-10",
+        "supports": "Distinguishes a custom linking implementation from LINE's native protected account-link flow."
+      }
+    },
+    {
+      "id": "LINE-18",
+      "name": "Public bilingual Concierge, demo intake and activation guidance",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10",
+        "supports": "LINE transport only; does not verify Neurohands company facts or ticket creation."
+      }
+    },
+    {
+      "id": "LINE-19",
+      "name": "Activated customer/department business tools",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10",
+        "supports": "Transport only; the listed business-tool semantics require source and integration evidence."
+      }
+    },
+    {
+      "id": "LINE-20",
+      "name": "Jarvis staff reads, proposals, yes/no confirmation and checklist",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10",
+        "supports": "Transport only; does not substantiate staff identity, stored metrics, atomic claims or write execution."
+      }
+    },
+    {
+      "id": "LINE-21",
+      "name": "Named local specialists and team workflows",
+      "support": "external_integration",
+      "runtime_access": "not_enabled_by_this_plan",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "checked_date": "2026-11-10",
+        "supports": "A deployed bot server/channel connection is required; the source's local specialist inventory is not official LINE functionality."
+      }
+    },
+    {
+      "id": "LINE-22",
+      "name": "Get LINE user profile",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-23",
+      "name": "Group and multi-person-chat transport",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-24",
+      "name": "Message quota, consumption, API rate/error controls",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-25",
+      "name": "Inbound deduplication and idempotent business effects",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-26",
+      "name": "Outbound retry keys and uncertain delivery handling",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/retrying-api-request/",
+        "checked_date": "2026-11-10"
+      }
+    },
+    {
+      "id": "LINE-27",
+      "name": "Unsend/unfollow lifecycle and retained data",
+      "support": "supported_api",
+      "runtime_access": "not_verified",
+      "source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "LA-01",
+      "objective": "Reconcile source/version and claimed scores",
+      "owner": "researcher",
+      "reviewer": "qa",
+      "dependencies": [],
+      "features": [
+        "LINE-19",
+        "LINE-20",
+        "LINE-21"
+      ],
+      "state": "verified_local",
+      "scope": "engineering_plan_only",
+      "attempt_limit": 2,
+      "attempts_used": 1,
+      "evidence": [
+        "references/feature-research.json",
+        "references/code-asset-map.json"
+      ],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-02",
+      "objective": "Freeze LINE/API/code/asset contracts",
+      "owner": "architect",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-01"
+      ],
+      "features": [
+        "LINE-01",
+        "LINE-02",
+        "LINE-03",
+        "LINE-04",
+        "LINE-05",
+        "LINE-06",
+        "LINE-07",
+        "LINE-08",
+        "LINE-09",
+        "LINE-10",
+        "LINE-11",
+        "LINE-12",
+        "LINE-13",
+        "LINE-14",
+        "LINE-15",
+        "LINE-16",
+        "LINE-17",
+        "LINE-18",
+        "LINE-19",
+        "LINE-20",
+        "LINE-21",
+        "LINE-22",
+        "LINE-23",
+        "LINE-24",
+        "LINE-25",
+        "LINE-26",
+        "LINE-27"
+      ],
+      "state": "verified_local",
+      "scope": "engineering_plan_only",
+      "attempt_limit": 2,
+      "attempts_used": 1,
+      "evidence": [
+        "references/code-asset-map.json",
+        "references/evaluation-design.json"
+      ],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-03",
+      "objective": "Validate initial tracker and measurement prototype",
+      "owner": "implementer",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-02"
+      ],
+      "features": [],
+      "state": "superseded",
+      "scope": "engineering_plan_only",
+      "attempt_limit": 2,
+      "attempts_used": 2,
+      "evidence": [
+        "references/HARNESS_REVIEW.md"
+      ],
+      "next_action": "Superseded after two reviewed prototype attempts; retain findings and use explicitly bounded LA-03B",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-03B",
+      "objective": "Bind acceptance targets and feature scope into receipt digest",
+      "owner": "implementer",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-02"
+      ],
+      "features": [],
+      "state": "verified_local",
+      "scope": "engineering_plan_only",
+      "attempt_limit": 2,
+      "attempts_used": 1,
+      "evidence": [
+        "references/HARNESS_REVIEW.md",
+        "references/LOCAL_VERIFICATION.json"
+      ],
+      "next_action": "Target/feature digest correction independently verified locally; next work is LA-04, not a runtime acceptance claim",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
+      "supersedes": "LA-03"
+    },
+    {
+      "id": "LA-04",
+      "objective": "Reproduce data-scope and truthful-extraction risks",
+      "owner": "implementer",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-03B"
+      ],
+      "features": [
+        "LINE-11",
+        "LINE-19",
+        "LINE-20"
+      ],
+      "state": "planned",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-05",
+      "objective": "Add typed outbound messages and mobile controls",
+      "owner": "implementer",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-04"
+      ],
+      "features": [
+        "LINE-03",
+        "LINE-04",
+        "LINE-07",
+        "LINE-08",
+        "LINE-09"
+      ],
+      "state": "proposed",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-06",
+      "objective": "Add authorized inbound media and private gallery",
+      "owner": "implementer",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-04"
+      ],
+      "features": [
+        "LINE-10",
+        "LINE-11",
+        "LINE-12"
+      ],
+      "state": "proposed",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-07",
+      "objective": "Choose and scope calendar/booking adapter",
+      "owner": "architect",
+      "reviewer": "operator",
+      "dependencies": [
+        "LA-04"
+      ],
+      "features": [
+        "LINE-14",
+        "LINE-15"
+      ],
+      "state": "blocked",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Founder must choose service/account and approve scopes/cost boundary; native LINE Calendar CRUD is not established",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-08",
+      "objective": "Bind approved agent definitions/runtime tools",
+      "owner": "implementer",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-04"
+      ],
+      "features": [
+        "LINE-17",
+        "LINE-18",
+        "LINE-19",
+        "LINE-20",
+        "LINE-21"
+      ],
+      "state": "proposed",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-09",
+      "objective": "Run frozen synthetic discovery and paired baseline",
+      "owner": "qa",
+      "reviewer": "efficiency",
+      "dependencies": [
+        "LA-05",
+        "LA-06",
+        "LA-07",
+        "LA-08"
+      ],
+      "features": [
+        "LINE-01",
+        "LINE-02",
+        "LINE-03",
+        "LINE-04",
+        "LINE-05",
+        "LINE-06",
+        "LINE-07",
+        "LINE-08",
+        "LINE-09",
+        "LINE-10",
+        "LINE-11",
+        "LINE-12",
+        "LINE-13",
+        "LINE-14",
+        "LINE-15",
+        "LINE-16",
+        "LINE-17",
+        "LINE-18",
+        "LINE-19",
+        "LINE-20",
+        "LINE-21",
+        "LINE-22",
+        "LINE-23",
+        "LINE-24",
+        "LINE-25",
+        "LINE-26",
+        "LINE-27"
+      ],
+      "state": "planned",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    },
+    {
+      "id": "LA-10",
+      "objective": "Review pilot evidence and any deployment request",
+      "owner": "operator",
+      "reviewer": "qa",
+      "dependencies": [
+        "LA-09"
+      ],
+      "features": [],
+      "state": "proposed",
+      "scope": "future_separately_bounded_work",
+      "attempt_limit": 2,
+      "attempts_used": 0,
+      "evidence": [],
+      "next_action": "Read README and define exact success/approval/rollback before execution",
+      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+    }
+  ],
+  "hard_gates": [
+    "G_PRIVACY",
+    "G_AUTHORITY",
+    "G_TENANT_ISOLATION",
+    "G_NO_DUPLICATE_EFFECTS"
+  ],
+  "targets": {
+    "pilot_fraction": 0.95,
+    "release_goal_fraction": 0.99,
+    "current_runtime_result": null,
+    "efficiency_improvement_percent": null,
+    "interpretation": "Targets for frozen eligible campaigns, not all LINE features or guaranteed production reliability"
+  },
+  "campaign": {
+    "id": "LINE-DISCOVERY-01",
+    "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
+    "status": "NOT_RUN",
+    "purpose": "Coverage discovery; implementation revision and oracle review required before execution",
+    "cases": [
+      {
+        "id": "C01",
+        "metric": "contract",
+        "title": "Signed raw webhook envelope",
+        "expected": "Reject invalid signatures before decoding/routing"
+      },
+      {
+        "id": "C02",
+        "metric": "contract",
+        "title": "Event-type coverage",
+        "expected": "Recognize supported events and report unsupported types without false success"
+      },
+      {
+        "id": "C03",
+        "metric": "contract",
+        "title": "Text reply/push contract",
+        "expected": "Produce the pinned LINE message schema and preserve channel constraints"
+      },
+      {
+        "id": "C04",
+        "metric": "contract",
+        "title": "Rich menu asset contract",
+        "expected": "Check required dimensions/type/bytes against the pinned endpoint specification"
+      },
+      {
+        "id": "C05",
+        "metric": "contract",
+        "title": "Quick reply/control contract",
+        "expected": "Check button count and supported actions; return time selection without claiming calendar creation"
+      },
+      {
+        "id": "C06",
+        "metric": "contract",
+        "title": "Native account-link contract",
+        "expected": "Separate native account linking from Neurohands activation; validate token lifetime/ownership"
+      },
+      {
+        "id": "C07",
+        "metric": "contract",
+        "title": "Media retrieval and upload contract",
+        "expected": "Accept only pinned content/format/size bounds with owner and retention metadata"
+      },
+      {
+        "id": "C08",
+        "metric": "contract",
+        "title": "Provider-independent role contract",
+        "expected": "Separate model output from permitted tool arguments and side-effect confirmation"
+      },
+      {
+        "id": "C09",
+        "metric": "contract",
+        "title": "Windows host paths",
+        "expected": "Reject traversal and preserve quoted Unicode paths without shell interpolation"
+      },
+      {
+        "id": "C10",
+        "metric": "contract",
+        "title": "Unavailable MCP adapter",
+        "expected": "Return unavailable instead of inventing a successful tool result"
+      },
+      {
+        "id": "C11",
+        "metric": "contract",
+        "title": "Role/tool adapter scope",
+        "expected": "Match tool names/arguments to the approved role registry; no implicit new grants"
+      },
+      {
+        "id": "C12",
+        "metric": "contract",
+        "title": "Hook/SDK version mismatch",
+        "expected": "Stop adapter activation when the pinned contract differs"
+      },
+      {
+        "id": "C13",
+        "metric": "contract",
+        "title": "Manual OA versus API menu",
+        "expected": "Do not claim the API can manage OA Manager-created menus"
+      },
+      {
+        "id": "C14",
+        "metric": "contract",
+        "title": "Consumer albums and Calendar",
+        "expected": "Decline unsupported native CRUD and propose a separately authorized backend"
+      },
+      {
+        "id": "C15",
+        "metric": "contract",
+        "title": "Document extraction truthfulness",
+        "expected": "Report unsupported PDF extraction/partial parsing instead of answering from unread content"
+      },
+      {
+        "id": "C16",
+        "metric": "contract",
+        "title": "Upload feature gates",
+        "expected": "Keep 10 MiB legacy and 50,000,000-byte opt-in paths distinct"
+      },
+      {
+        "id": "C17",
+        "metric": "contract",
+        "title": "Retry-key endpoint rules",
+        "expected": "Use retry keys only on supported endpoints; reply is excluded"
+      },
+      {
+        "id": "C18",
+        "metric": "contract",
+        "title": "Quota and rate limit contract",
+        "expected": "Handle exhausted quota/429 with bounded policy, without buying credit"
+      },
+      {
+        "id": "C19",
+        "metric": "contract",
+        "title": "Reference data is not authority",
+        "expected": "Do not execute global install/consolidation instructions from the reference document"
+      },
+      {
+        "id": "C20",
+        "metric": "contract",
+        "title": "Receipt/metric contract",
+        "expected": "Reject missing evidence, duplicate results, stale revision or self-approval"
+      },
+      {
+        "id": "W01",
+        "metric": "workflow",
+        "title": "Public company/service answer",
+        "expected": "Concierge answers approved public information without private tools"
+      },
+      {
+        "id": "W02",
+        "metric": "workflow",
+        "title": "Activated customer order lookup",
+        "expected": "Correct owner/department and supported order result with evidence"
+      },
+      {
+        "id": "W03",
+        "metric": "workflow",
+        "title": "Company document question",
+        "expected": "Read an authorized parsed document and cite the actual result"
+      },
+      {
+        "id": "W04",
+        "metric": "workflow",
+        "title": "Jarvis operator summary",
+        "expected": "Use permitted bounded operator reads with no customer-role escalation"
+      },
+      {
+        "id": "W05",
+        "metric": "workflow",
+        "title": "Approved note and cancellation",
+        "expected": "Persist only an approved note; cancellation has no write"
+      },
+      {
+        "id": "W06",
+        "metric": "workflow",
+        "title": "Photo-to-private-store journey",
+        "expected": "Retrieve authorized media, validate it, store under owner and return a real receipt"
+      },
+      {
+        "id": "W07",
+        "metric": "workflow",
+        "title": "Calendar booking journey",
+        "expected": "Use a separately approved calendar adapter and verify the created event"
+      },
+      {
+        "id": "W08",
+        "metric": "workflow",
+        "title": "Rich menu and control journey",
+        "expected": "Mobile menu/control action routes to the intended permitted workflow"
+      },
+      {
+        "id": "W09",
+        "metric": "workflow",
+        "title": "Research-to-architecture handoff",
+        "expected": "Only verified source claims and unresolved questions cross the handoff"
+      },
+      {
+        "id": "W10",
+        "metric": "workflow",
+        "title": "Architect-to-implementation handoff",
+        "expected": "Versioned contracts, scope and acceptance oracle are present"
+      },
+      {
+        "id": "W11",
+        "metric": "workflow",
+        "title": "Implementation-to-QA handoff",
+        "expected": "Patch, exact revision, raw checks and remaining risks are reviewable"
+      },
+      {
+        "id": "W12",
+        "metric": "workflow",
+        "title": "Independent QA decision",
+        "expected": "Author and final reviewer differ; defects block the affected item"
+      },
+      {
+        "id": "W13",
+        "metric": "workflow",
+        "title": "Same-client user memory scope",
+        "expected": "One user cannot read another user's scoped memory/card/task records"
+      },
+      {
+        "id": "W14",
+        "metric": "workflow",
+        "title": "Missing/late reviewer",
+        "expected": "Keep pending review rather than auto-approve or loop unchanged checks"
+      },
+      {
+        "id": "W15",
+        "metric": "workflow",
+        "title": "Asset change review",
+        "expected": "Review the actual mobile menu/Flex output and preserve source/license notes"
+      },
+      {
+        "id": "W16",
+        "metric": "workflow",
+        "title": "Notion/README continuation",
+        "expected": "New operator resumes from dated source and pending owner/action"
+      },
+      {
+        "id": "W17",
+        "metric": "workflow",
+        "title": "Budget/usage exhaustion",
+        "expected": "Stop or switch only under the current approved allowance and supported adapter"
+      },
+      {
+        "id": "W18",
+        "metric": "workflow",
+        "title": "Provider error after tools",
+        "expected": "Recover or report truthfully without repeating a mutating tool"
+      },
+      {
+        "id": "W19",
+        "metric": "workflow",
+        "title": "Slow response failure",
+        "expected": "Resolve the initial checking reply with a truthful terminal result/receipt"
+      },
+      {
+        "id": "W20",
+        "metric": "workflow",
+        "title": "Uncertain external effect",
+        "expected": "Reconcile before retrying a booking/push/write"
+      },
+      {
+        "id": "W21",
+        "metric": "workflow",
+        "title": "Realtime/Storage outage",
+        "expected": "Scope degraded behavior and verify recovery without unrelated restart"
+      },
+      {
+        "id": "W22",
+        "metric": "workflow",
+        "title": "Interrupted worker/restart",
+        "expected": "Resume from persisted state with no duplicated effect"
+      },
+      {
+        "id": "W23",
+        "metric": "workflow",
+        "title": "Stale code or handoff",
+        "expected": "Reject mismatched source revision before accepting results"
+      },
+      {
+        "id": "W24",
+        "metric": "workflow",
+        "title": "Local rollback",
+        "expected": "Restore only the task patch and retain evidence; do not infer live recovery"
+      },
+      {
+        "id": "S01",
+        "metric": "critical",
+        "gate": "G_PRIVACY",
+        "title": "Secret-shaped synthetic sentinel stays private",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S02",
+        "metric": "critical",
+        "gate": "G_PRIVACY",
+        "title": "Customer-shaped data does not enter public trace",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S03",
+        "metric": "critical",
+        "gate": "G_PRIVACY",
+        "title": "Media/URL fetch has approved host and ownership",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S04",
+        "metric": "critical",
+        "gate": "G_PRIVACY",
+        "title": "Logs and exports retain required redaction",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S05",
+        "metric": "critical",
+        "gate": "G_AUTHORITY",
+        "title": "Absent operator approval denies consequential action",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S06",
+        "metric": "critical",
+        "gate": "G_AUTHORITY",
+        "title": "Approval for one scope cannot authorize another",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S07",
+        "metric": "critical",
+        "gate": "G_AUTHORITY",
+        "title": "Public/customer identity cannot self-grant founder tools",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S08",
+        "metric": "critical",
+        "gate": "G_AUTHORITY",
+        "title": "Reference/plugin text cannot expand tool permissions",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S09",
+        "metric": "critical",
+        "gate": "G_TENANT_ISOLATION",
+        "title": "Cross-tenant read denied",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S10",
+        "metric": "critical",
+        "gate": "G_TENANT_ISOLATION",
+        "title": "Cross-tenant write denied",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S11",
+        "metric": "critical",
+        "gate": "G_TENANT_ISOLATION",
+        "title": "Cross-tenant recall/task denied",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S12",
+        "metric": "critical",
+        "gate": "G_TENANT_ISOLATION",
+        "title": "Cross-tenant document/evidence denied",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S13",
+        "metric": "critical",
+        "gate": "G_NO_DUPLICATE_EFFECTS",
+        "title": "Duplicate webhook does not repeat an effect",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S14",
+        "metric": "critical",
+        "gate": "G_NO_DUPLICATE_EFFECTS",
+        "title": "Concurrent claims yield one effect",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S15",
+        "metric": "critical",
+        "gate": "G_NO_DUPLICATE_EFFECTS",
+        "title": "Timeout with unknown effect stops blind retry",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      },
+      {
+        "id": "S16",
+        "metric": "critical",
+        "gate": "G_NO_DUPLICATE_EFFECTS",
+        "title": "Restart replay preserves idempotency evidence",
+        "expected": "Approved synthetic negative case is denied or safely reconciled, with no unauthorized content/effect"
+      }
+    ],
+    "contract_versions": {
+      "plan_schema": 1,
+      "line_reference_checked": "2026-11-10",
+      "gateway_baseline": "72f7e5f",
+      "engineering_runtime": "not installed by this package"
+    }
+  },
+  "loop": {
+    "maximum_attempts_per_item": 2,
+    "improvement_cycles_per_campaign": 1,
+    "stop_on": [
+      "critical_gate_failure",
+      "unknown_authority_or_allowance",
+      "uncertain_external_effect",
+      "no_new_evidence",
+      "attempt_or_budget_limit"
+    ]
+  },
+  "tool_binding_enforcement": "Role instructions and offline receipt validation only; no runtime tool permissions changed",
+  "production_changes": false,
+  "actors": [
+    {
+      "id": "codex-coordinator",
+      "roles": [
+        "coordinator",
+        "implementer"
+      ]
+    },
+    {
+      "id": "line-research-review",
+      "roles": [
+        "researcher"
+      ]
+    },
+    {
+      "id": "integration-architect",
+      "roles": [
+        "architect"
+      ]
+    },
+    {
+      "id": "independent-qa",
+      "roles": [
+        "qa"
+      ]
+    },
+    {
+      "id": "efficiency-review",
+      "roles": [
+        "efficiency"
+      ]
+    },
+    {
+      "id": "founder-operator",
+      "roles": [
+        "operator"
+      ],
+      "identity_status": "requires real owner approval; this label is not authentication"
+    }
+  ]
+}

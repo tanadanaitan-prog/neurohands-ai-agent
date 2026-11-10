@@ -1,5 +1,9 @@
 # Neurohands — AI agents for business
 
+**New planning package:** [LINE capability adaptation and agent work plan](docs/line-adaptation/README.md)
+maps the supplied reference to code/assets, delegated roles, a scoped skill,
+tracker and evidence-based measurements. Its 95–99% targets are unverified.
+
 **Browse the [documentation by topic](docs/README.md)** for current status, operating guides, laboratory work, acceptance controls and preserved source records.
 
 **Continue work with the [process README](docs/PROCESS_README.md):** all 26 package

@@ -1,0 +1,760 @@
+{
+  "schema_version": "1.0",
+  "checked_date": "2026-11-10",
+  "scope": "Attached document LINE section P0718-P0839, with media/calendar/album/reliability clarifications requested by the parent task. This is a feasibility matrix, not live acceptance evidence.",
+  "source_document": "outputs/line-adaptation-20261110/intake/SOURCE_TEXT.txt",
+  "recorded_code_baseline": {
+    "commit": "889c8a4dd86c5dd615e60bc3f0a9e5b428851acf",
+    "evidence": "outputs/line-capability-audit-20261110/CAPABILITY_REPORT.md",
+    "qualification": "Implementation statements below come from this dated source audit, not fresh runtime tests by the researcher. Candidate revisions and draft PRs are not deployment evidence."
+  },
+  "status_meaning": {
+    "supported_api": "A documented public Messaging API primitive exists; this does not mean Neurohands implements or has enabled it.",
+    "manual_oa": "An Official Account Manager setup or operator workflow; no general API-control equivalence is established.",
+    "consumer_only": "Documented consumer-app feature; no public Messaging API operation for this feature was found in the checked reference.",
+    "external_integration": "Neurohands or a separate backend must supply the business logic, storage, scheduler, or destination service.",
+    "unverified": "Evidence does not establish the supplied claim."
+  },
+  "source_clusters": [
+    {
+      "id": "S1",
+      "topic": "Public endpoint inventory, message objects, quotas, profiles and groups",
+      "urls": [
+        "https://developers.line.biz/en/reference/messaging-api/"
+      ],
+      "checked_date": "2026-11-10"
+    },
+    {
+      "id": "S2",
+      "topic": "Bot setup, inbound webhooks/content, redelivery and outbound retry semantics",
+      "urls": [
+        "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "https://developers.line.biz/en/docs/messaging-api/retrying-api-request/"
+      ],
+      "checked_date": "2026-11-10"
+    },
+    {
+      "id": "S3",
+      "topic": "Outbound message types, controls and sending",
+      "urls": [
+        "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "https://developers.line.biz/en/docs/messaging-api/using-quick-reply/",
+        "https://developers.line.biz/en/docs/messaging-api/actions/"
+      ],
+      "checked_date": "2026-11-10"
+    },
+    {
+      "id": "S4",
+      "topic": "Official Account Manager versus API rich menus",
+      "urls": [
+        "https://developers.line.biz/en/docs/messaging-api/rich-menus-overview/",
+        "https://developers.line.biz/en/docs/messaging-api/using-rich-menus/"
+      ],
+      "checked_date": "2026-11-10"
+    },
+    {
+      "id": "S5",
+      "topic": "Native account-link flow",
+      "urls": [
+        "https://developers.line.biz/en/docs/messaging-api/linking-accounts/"
+      ],
+      "checked_date": "2026-11-10"
+    },
+    {
+      "id": "S6",
+      "topic": "Consumer LINE albums and calendar",
+      "urls": [
+        "https://help.line.me/line/smartphone?contentId=20000248&ctype=article&lang=en",
+        "https://help.line.me/line/smartphone?contentId=200002132&lang=en"
+      ],
+      "checked_date": "2026-11-10"
+    }
+  ],
+  "features": [
+    {
+      "id": "LINE-01",
+      "source_paragraph_ids": [
+        "P0719",
+        "P0721",
+        "P0722"
+      ],
+      "capability": "Configure Official Account, channel and webhook",
+      "status": "manual_oa",
+      "platform_fact": "The documented setup uses a Messaging API channel, channel access token, HTTPS webhook URL and Use webhook setting. Exact supplied Bot/Hybrid labels are not established by the checked guide.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Node/Express /webhook exists in the baseline audit; current account settings were not read.",
+      "privacy_limits": "Keep channel credentials server-side. A channel has one webhook endpoint; gateway routing must preserve role and tenant checks.",
+      "next_test": "Read nonsecret channel configuration, verify endpoint separately, then check authorized synthetic event receipt."
+    },
+    {
+      "id": "LINE-02",
+      "source_paragraph_ids": [
+        "P0722",
+        "P0790",
+        "P0791"
+      ],
+      "capability": "Receive and authenticate supported webhook events",
+      "status": "supported_api",
+      "platform_fact": "Verify webhook signatures before processing. Documented events include message, follow and postback; 'every message' is overbroad because event/content exceptions exist.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline has signature verification and a persistent encrypted inbox; actual handler coverage is narrower than platform event coverage.",
+      "privacy_limits": "Reject unauthenticated bodies; acknowledge after durable intake; bound payloads and avoid logging secrets/customer bodies unnecessarily.",
+      "next_test": "Offline fixtures: valid/invalid signature, empty events, unsupported event, mixed batch, crash after intake; inspect durable receipts."
+    },
+    {
+      "id": "LINE-03",
+      "source_paragraph_ids": [
+        "P0736",
+        "P0741",
+        "P0743",
+        "P0750",
+        "P0755",
+        "P0775",
+        "P0836"
+      ],
+      "capability": "Send text replies and delayed push answers",
+      "status": "supported_api",
+      "platform_fact": "Reply and push methods carry text or other supported message objects; one request can contain up to five message objects.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline replyToLine/pushToLine emit text. Delayed model answers use push; role-specific business content is supplied by Neurohands.",
+      "privacy_limits": "Recipient eligibility, reply-token constraints, quotas and message validation still apply. API acceptance is not proof the user read or received the answer.",
+      "next_test": "Offline validate type/length/role routing, then separately authorized reply and delayed-push receipt tests on a test account."
+    },
+    {
+      "id": "LINE-04",
+      "source_paragraph_ids": [
+        "P0723",
+        "P0724",
+        "P0725",
+        "P0726",
+        "P0735",
+        "P0740",
+        "P0749",
+        "P0750",
+        "P0751",
+        "P0752",
+        "P0753",
+        "P0754",
+        "P0755"
+      ],
+      "capability": "Create default/per-user rich menus and handle postbacks",
+      "status": "supported_api",
+      "platform_fact": "Messaging API supports menu creation, image upload, default assignment and per-user assignment; per-user assignment requires the documented friendship condition.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/rich-menus-overview/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline setup script and activation linking exist. The two six-button layouts are project choices, not LINE limits or verified live menus.",
+      "privacy_limits": "A menu is navigation, not authorization. Postbacks must recheck binding and allowed action; menus are not displayed in LINE for PC.",
+      "next_test": "Offline verify all twelve routes and forbidden tenant switches; approved inventory/visual tests must check both mobile layouts and text-command fallback."
+    },
+    {
+      "id": "LINE-05",
+      "source_paragraph_ids": [
+        "P0719",
+        "P0723",
+        "P0728"
+      ],
+      "capability": "Manage menus made in Official Account Manager",
+      "status": "manual_oa",
+      "platform_fact": "An OA Manager-created menu can be retrieved/edited only in OA Manager; an API-created menu cannot be edited there. Per-user menus are API-only.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/rich-menus-overview/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Existing provisioning controls API-created menus. No general manager.line.biz console-control adapter is established.",
+      "privacy_limits": "Do not interpret Messaging API credentials as permission or capability to control every OA Manager screen. Avoid creating conflicting defaults.",
+      "next_test": "Owner records which tool created each menu; compare menu inventory and precedence before any approved change."
+    },
+    {
+      "id": "LINE-06",
+      "source_paragraph_ids": [
+        "P0728"
+      ],
+      "capability": "Authenticate or automate the account.line.biz login screen",
+      "status": "unverified",
+      "platform_fact": "The checked bot setup documents an API/server route, not the supplied universal anti-bot or never-automate-login assertion.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "checked_date": "2026-11-10",
+        "supports": "Documented API alternative only; it does not substantiate the supplied login-screen assertion."
+      },
+      "recorded_implementation": "No login screen was accessed in this research.",
+      "privacy_limits": "Treat the attached paragraph as reference prose, not authorization or controlling instructions.",
+      "next_test": "No login test needed for the adaptation; retain ordinary operator account setup and official API integration."
+    },
+    {
+      "id": "LINE-07",
+      "source_paragraph_ids": [
+        "P0755"
+      ],
+      "capability": "Flex cards, buttons and templates",
+      "status": "supported_api",
+      "platform_fact": "Messaging API offers template and Flex messages. The source phrase 'agent card' does not establish that a structured card is sent.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline helpers emit text only; typed builders and presentation payloads would be new gateway work.",
+      "privacy_limits": "Validate payloads; provide useful alternate text and text fallback; restrict links and client-specific fields.",
+      "next_test": "Offline schema/length/link tests and account isolation; later validate payloads with the official validation endpoint and inspect mobile rendering."
+    },
+    {
+      "id": "LINE-08",
+      "source_paragraph_ids": [],
+      "capability": "Quick replies and camera/location/date controls",
+      "status": "supported_api",
+      "platform_fact": "Quick replies support up to thirteen buttons on iOS/Android. Camera, camera-roll and location actions are quick-reply-only; a date picker returns a postback selection.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/using-quick-reply/",
+        "checked_date": "2026-11-10"
+      },
+      "additional_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/actions/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "No quickReply/datetimepicker builder or location handler in the baseline audit.",
+      "privacy_limits": "User selection is not consent to create a calendar event or share location with another client. Enforce action allowlists and timezones server-side.",
+      "next_test": "Offline action round-trip and tampered postback tests; approved iOS/Android flow tests and text fallback."
+    },
+    {
+      "id": "LINE-09",
+      "source_paragraph_ids": [],
+      "capability": "Send images, video, audio and location messages",
+      "status": "supported_api",
+      "platform_fact": "These message types are documented. Image/video/audio messages reference HTTPS asset URLs rather than arbitrary server-local files.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline outbound helpers are text-only. Add typed, role-scoped gateway adapters and suitable asset hosting.",
+      "privacy_limits": "Do not expose private objects through public/long-lived asset URLs; check current per-type format/size specifications before implementation.",
+      "next_test": "Offline asset-URL, MIME, size and authorization fixtures; approved delivery/render tests on synthetic media."
+    },
+    {
+      "id": "LINE-10",
+      "source_paragraph_ids": [
+        "P0738",
+        "P0739",
+        "P0748",
+        "P0766",
+        "P0808",
+        "P0809",
+        "P0812",
+        "P0815"
+      ],
+      "capability": "Receive chat images, video, audio and files",
+      "status": "supported_api",
+      "platform_fact": "Webhook message IDs allow downloading images, videos, audio and files. LINE deletes user content after a period; it is not permanent storage.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline acknowledges a file name and directs users to the portal; no attachment-content download or photo/audio/video interpretation is implemented there.",
+      "privacy_limits": "Authenticate event, bind sender before content retrieval/storage, bound bytes and parser work, quarantine unsafe inputs, define retention/unsend handling.",
+      "next_test": "Offline binary download/error fixtures, client isolation, malicious file and duplicate-message tests; later verify download/storage/parse receipts separately."
+    },
+    {
+      "id": "LINE-11",
+      "source_paragraph_ids": [
+        "P0748",
+        "P0766",
+        "P0808",
+        "P0809",
+        "P0812",
+        "P0815"
+      ],
+      "capability": "Outbound documents and signed portal downloads",
+      "status": "external_integration",
+      "platform_fact": "The checked outbound message-type list contains no generic document/file message type. A controlled download-link workflow requires a hosted backend.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/message-types/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Source claims a seven-day, 50 MB upload portal and six formats. These are Neurohands settings, not Messaging API guarantees; validate against the exact deployed revision.",
+      "privacy_limits": "Treat signed URLs as bearer credentials; avoid broad forwarding, redact logs, check expiry and client/department scope at use time.",
+      "next_test": "Offline valid/expired/tampered/cross-client URL tests, configured size and format boundaries, storage receipt and parse-status verification."
+    },
+    {
+      "id": "LINE-12",
+      "source_paragraph_ids": [
+        "P0748",
+        "P0766",
+        "P0812",
+        "P0815"
+      ],
+      "capability": "Durable media/document storage and gallery",
+      "status": "external_integration",
+      "platform_fact": "Persistent storage and a gallery must be supplied by the service; temporary content retrieval does not create a LINE album.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline portal accepts xlsx/xls/csv/txt/docx/pdf, not photo extensions. New media storage/preview features require explicit implementation.",
+      "privacy_limits": "Use tenant-scoped storage paths and access checks; distinguish original file, parsed summary and model interpretation; define deletion/retention.",
+      "next_test": "Offline owner/read/delete/expiry tests with synthetic objects; approved storage integration must show scoped retrieval and deletion receipts."
+    },
+    {
+      "id": "LINE-13",
+      "source_paragraph_ids": [],
+      "capability": "Create, edit or enumerate native LINE albums",
+      "status": "consumer_only",
+      "platform_fact": "Consumer LINE documents albums in one-to-one/group chats. No public Messaging API album CRUD endpoint was found in the checked reference.",
+      "official_source": {
+        "url": "https://help.line.me/line/smartphone?contentId=20000248&ctype=article&lang=en",
+        "checked_date": "2026-11-10"
+      },
+      "additional_source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "No album adapter in the baseline audit. A service-hosted gallery is a different deliverable.",
+      "privacy_limits": "This is a bounded public-API finding, not a claim about every LINE product/private partner API. Do not imply an OA token reads consumer albums.",
+      "next_test": "Mark native album automation unavailable in the public-API scope; test a separately approved gallery requirement instead."
+    },
+    {
+      "id": "LINE-14",
+      "source_paragraph_ids": [
+        "P0765",
+        "P0767",
+        "P0832",
+        "P0833"
+      ],
+      "capability": "Create native LINE Calendar events",
+      "status": "consumer_only",
+      "platform_fact": "Consumer LINE Calendar provides chat/personal calendars. No public Messaging API calendar CRUD endpoint was found in the checked reference.",
+      "official_source": {
+        "url": "https://help.line.me/line/smartphone?contentId=200002132&lang=en",
+        "checked_date": "2026-11-10"
+      },
+      "additional_source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline tasks/checklists are database records, not calendar events. Native calendar access is not established.",
+      "privacy_limits": "A selected datetime or saved task must not be reported as a created/synced calendar event.",
+      "next_test": "Exclude native calendar CRUD from public-API acceptance; require a chosen authorized external calendar integration for event receipts."
+    },
+    {
+      "id": "LINE-15",
+      "source_paragraph_ids": [
+        "P0765",
+        "P0767",
+        "P0779",
+        "P0832",
+        "P0833"
+      ],
+      "capability": "Booking, external calendar and timed reminders",
+      "status": "external_integration",
+      "platform_fact": "A datetime-picker action returns selected values; a scheduler and calendar/booking backend must create and track any real event or reminder.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/actions/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline /cron/daily can send a digest when externally invoked; no autonomous calendar/reminder adapter or verified cron schedule was established.",
+      "privacy_limits": "Resolve timezone, conflicts, consent, cancellation, duplicate jobs and recipient eligibility; distinguish scheduled job, provider acceptance and delivery.",
+      "next_test": "Offline fake-clock tests for due/cancel/reschedule/restart/timezone cases; later authorize external calendar writes and synthetic delivery receipts."
+    },
+    {
+      "id": "LINE-16",
+      "source_paragraph_ids": [
+        "P0734",
+        "P0735",
+        "P0758",
+        "P0802",
+        "P0803",
+        "P0805",
+        "P0806"
+      ],
+      "capability": "Use native Messaging API account linking",
+      "status": "supported_api",
+      "platform_fact": "Native linking uses a single-use link token valid for ten minutes, authenticated service login, a nonce and an account-link webhook; users must be able to unlink.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/linking-accounts/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline NH-code binding is custom Neurohands logic; it does not call the native link-token endpoint.",
+      "privacy_limits": "Do not equate possession of an NH code with LINE's native verified linking sequence. Prevent replay, cross-account binding and nonce leakage.",
+      "next_test": "Design migration/optional native flow; offline nonce/token expiry/replay/wrong-owner/unlink cases before any authorized integration test."
+    },
+    {
+      "id": "LINE-17",
+      "source_paragraph_ids": [
+        "P0734",
+        "P0735",
+        "P0802",
+        "P0803",
+        "P0805",
+        "P0806"
+      ],
+      "capability": "Custom NH activation and tenant/department binding",
+      "status": "external_integration",
+      "platform_fact": "LINE transports the chat/postback; Neurohands must implement issuance, identity checks, expiry, single-use binding and authorization.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/linking-accounts/",
+        "checked_date": "2026-11-10",
+        "supports": "Distinguishes a custom linking implementation from LINE's native protected account-link flow."
+      },
+      "recorded_implementation": "Activation and menu switch exist in the baseline audit. Source seven-day/single-use claims require exact revision and database behavior checks.",
+      "privacy_limits": "Activation must not bypass tenant permissions; redact codes and link tokens; permit revocation/rebinding under an explicit policy.",
+      "next_test": "Offline valid/expired/used/concurrent/wrong-department/revoked binding cases, plus menu-link failure without granting excess access."
+    },
+    {
+      "id": "LINE-18",
+      "source_paragraph_ids": [
+        "P0730",
+        "P0731",
+        "P0736",
+        "P0737",
+        "P0738",
+        "P0739",
+        "P0740",
+        "P0741",
+        "P0742",
+        "P0743"
+      ],
+      "capability": "Public bilingual Concierge, demo intake and activation guidance",
+      "status": "external_integration",
+      "platform_fact": "Webhook/text primitives can carry this workflow; company knowledge, bilingual quality, sales tickets and private-data exclusion are backend behavior.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10",
+        "supports": "LINE transport only; does not verify Neurohands company facts or ticket creation."
+      },
+      "recorded_implementation": "Baseline has a no-business-tools public model route, demo support-case creation and activation guidance.",
+      "privacy_limits": "Do not disclose client catalog/order/document data to public users; a saved demo case is not confirmed sales follow-up.",
+      "next_test": "Frozen EN/TH public answers, prompt injection, attempted private lookup, duplicate demo and failed DB-write fixtures; live follow-up needs its own receipt."
+    },
+    {
+      "id": "LINE-19",
+      "source_paragraph_ids": [
+        "P0745",
+        "P0746",
+        "P0750",
+        "P0751",
+        "P0752",
+        "P0753",
+        "P0754",
+        "P0755",
+        "P0756",
+        "P0757",
+        "P0758",
+        "P0759",
+        "P0760",
+        "P0761",
+        "P0762",
+        "P0763",
+        "P0764",
+        "P0765",
+        "P0766",
+        "P0767"
+      ],
+      "capability": "Activated customer/department business tools",
+      "status": "external_integration",
+      "platform_fact": "Orders, quotes, memory, tasks, documents, support and escalation are Neurohands business services; LINE messaging does not provide those records or certify their accuracy.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10",
+        "supports": "Transport only; the listed business-tool semantics require source and integration evidence."
+      },
+      "recorded_implementation": "Baseline source audit lists fourteen customer handlers/seeds, not thirteen; active runtime registry/allowed_tools and outcomes were not queried.",
+      "privacy_limits": "Check user+client+department on every tool; enforce catalog freshness; separate deterministic quote math from availability/promised-date evidence. Escalation row is not human contact.",
+      "next_test": "Per-tool synthetic success/failure and tenant-denial cases; verify exact runtime allowlist separately, then scoped end-to-end receipts with authorization."
+    },
+    {
+      "id": "LINE-20",
+      "source_paragraph_ids": [
+        "P0769",
+        "P0770",
+        "P0775",
+        "P0776",
+        "P0778",
+        "P0779",
+        "P0781",
+        "P0782",
+        "P0784",
+        "P0785",
+        "P0787",
+        "P0788",
+        "P0790",
+        "P0791",
+        "P0793",
+        "P0794",
+        "P0796",
+        "P0797",
+        "P0799",
+        "P0800",
+        "P0802",
+        "P0803",
+        "P0805",
+        "P0806",
+        "P0808",
+        "P0809",
+        "P0811",
+        "P0812",
+        "P0814",
+        "P0815",
+        "P0816",
+        "P0817",
+        "P0818",
+        "P0820",
+        "P0821",
+        "P0823",
+        "P0824",
+        "P0826",
+        "P0827",
+        "P0829",
+        "P0830",
+        "P0831",
+        "P0832",
+        "P0833",
+        "P0834",
+        "P0835",
+        "P0836"
+      ],
+      "capability": "Jarvis staff reads, proposals, yes/no confirmation and checklist",
+      "status": "external_integration",
+      "platform_fact": "Operator commands and approvals are Neurohands application logic carried by ordinary LINE messages, not special LINE platform privileges.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10",
+        "supports": "Transport only; does not substantiate staff identity, stored metrics, atomic claims or write execution."
+      },
+      "recorded_implementation": "Baseline has configured founder/admin routing, thirteen model tools and command-specific paths. Proposal/yes gates do not imply every direct command is gated.",
+      "privacy_limits": "Authenticate operator identity on every command; redact traces and memory; scope yes/no to actor/proposal/version and execute once. Health configuration is not provider availability or a zero-cost guarantee.",
+      "next_test": "Offline nonstaff-denial, proposal/confirm/cancel/replay/concurrency and stale-proposal cases; distinguish staged, claimed, executed and failed receipts."
+    },
+    {
+      "id": "LINE-21",
+      "source_paragraph_ids": [
+        "P0838",
+        "P0839"
+      ],
+      "capability": "Named local specialists and team workflows",
+      "status": "external_integration",
+      "platform_fact": "A local multi-agent workflow does not become a LINE-routable agent merely because LINE messaging is available.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/building-bot/",
+        "checked_date": "2026-11-10",
+        "supports": "A deployed bot server/channel connection is required; the source's local specialist inventory is not official LINE functionality."
+      },
+      "recorded_implementation": "Source describes five local specialists, nine local tools and three workflow templates. This research does not establish runtime registration, deployment or adoption.",
+      "privacy_limits": "Maintain lab/production separation; delegation must not enlarge customer permissions or enable code/browser tools implicitly.",
+      "next_test": "Parent verifies exact local inventories and deterministic workflow receipts; production binding remains a separate release gate."
+    },
+    {
+      "id": "LINE-22",
+      "source_paragraph_ids": [
+        "P0758",
+        "P0799",
+        "P0800"
+      ],
+      "capability": "Get LINE user profile",
+      "status": "supported_api",
+      "platform_fact": "A documented profile endpoint exists. A Neurohands client-profile database read is a separate operation.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline get_client_profile reads internal client records; no native LINE profile call is established.",
+      "privacy_limits": "Collect only required profile fields and satisfy documented eligibility/consent conditions; do not treat display name as authorization.",
+      "next_test": "Offline profile error/minimal-field fixtures and spoofed-name denial; approved native call only if a concrete business need exists."
+    },
+    {
+      "id": "LINE-23",
+      "source_paragraph_ids": [
+        "P0722",
+        "P0731",
+        "P0746",
+        "P0770"
+      ],
+      "capability": "Group and multi-person-chat transport",
+      "status": "supported_api",
+      "platform_fact": "Public API reference lists group/room operations; their existence does not authorize sharing client information in a group.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline intentionally rejects non-user sources before business routing. Current channel group setting was not checked.",
+      "privacy_limits": "Preserve the private-chat restriction unless a separate group identity, membership and data-sharing design is approved.",
+      "next_test": "Offline group/room source rejection and no business-tool execution; do not enable groups as part of this adaptation."
+    },
+    {
+      "id": "LINE-24",
+      "source_paragraph_ids": [
+        "P0779",
+        "P0788"
+      ],
+      "capability": "Message quota, consumption, API rate/error controls",
+      "status": "supported_api",
+      "platform_fact": "Public quota/consumption endpoints exist; monthly messaging limits and endpoint-specific rate limits constrain sends. The live account's plan, remaining quota and prices were not checked.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/reference/messaging-api/",
+        "checked_date": "2026-11-10"
+      },
+      "additional_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/sending-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline has no quota/analytics agent wrapper. An LLM token count is not a LINE message-quota reading.",
+      "privacy_limits": "Use bounded queues and cost controls; do not silently turn a delayed reply into unlimited paid push retries.",
+      "next_test": "Offline quota-exhausted, rate-limited, malformed request and timeout fixtures; later read nonsecret quota with authorization and report timestamp."
+    },
+    {
+      "id": "LINE-25",
+      "source_paragraph_ids": [
+        "P0722",
+        "P0790",
+        "P0791",
+        "P0827"
+      ],
+      "capability": "Inbound deduplication and idempotent business effects",
+      "status": "supported_api",
+      "platform_fact": "Duplicate webhooks can occur; deduplicate with webhookEventId and consider timestamps for reordering. Redelivery is disabled by default and does not guarantee delivery.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline has a persistent inbox; current database uniqueness, effect atomicity, lease recovery and actual redelivery setting require parent verification.",
+      "privacy_limits": "A successful HTTP acknowledgment is not successful business execution. Persist deduplication/effect status without exposing message bodies in metrics.",
+      "next_test": "Offline duplicate/reordered/concurrent/crash-between-write-and-reply cases; assert exactly one business effect, recoverable failure and accurate status."
+    },
+    {
+      "id": "LINE-26",
+      "source_paragraph_ids": [
+        "P0722",
+        "P0790",
+        "P0791"
+      ],
+      "capability": "Outbound retry keys and uncertain delivery handling",
+      "status": "supported_api",
+      "platform_fact": "X-Line-Retry-Key supports push/multicast/narrowcast/broadcast, not reply. Reuse the original key/payload within twenty-four hours; duplicate acceptance returns 409. Acceptance does not guarantee delivery.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/retrying-api-request/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "No outbound reliability upgrade is asserted by this research; parent must inspect exact source and tests.",
+      "privacy_limits": "Add key on first attempt, use bounded backoff for transient failure, never apply unsupported retry headers to reply, preserve unknown delivery state.",
+      "next_test": "Offline timeout-after-acceptance, 409 accepted-request reconciliation, transient 5xx, permanent 4xx and retry-window expiry fixtures."
+    },
+    {
+      "id": "LINE-27",
+      "source_paragraph_ids": [
+        "P0722",
+        "P0764",
+        "P0796",
+        "P0797",
+        "P0799",
+        "P0800"
+      ],
+      "capability": "Unsend/unfollow lifecycle and retained data",
+      "status": "supported_api",
+      "platform_fact": "Unsend and unfollow webhooks exist. LINE recommends handling unsent messages so their content is no longer displayed or used.",
+      "official_source": {
+        "url": "https://developers.line.biz/en/docs/messaging-api/receiving-messages/",
+        "checked_date": "2026-11-10"
+      },
+      "recorded_implementation": "Baseline has no explicit unsend/unfollow handler in the recorded audit.",
+      "privacy_limits": "Define how deletion affects inbox, chat views, derived memory, stored media, summaries and audit retention; do not keep using unsent content silently.",
+      "next_test": "Offline unsend-before/after-parse, repeated unsend, blocked-recipient and derived-memory tombstone fixtures; document retention exceptions explicitly."
+    }
+  ],
+  "corrections": [
+    {
+      "source_paragraph_ids": [
+        "P0721",
+        "P0722"
+      ],
+      "correction": "Use current documented Use webhook setup and qualify event coverage; exact Bot/Hybrid labels and every-message delivery are not established."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0728"
+      ],
+      "correction": "Treat the login assertion as unverified reference prose; API operation is not equivalent to full OA Manager control."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0755"
+      ],
+      "correction": "Agent card may be text; baseline outbound helpers do not establish Flex/card payloads."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0746",
+        "P0756",
+        "P0757",
+        "P0766",
+        "P0767"
+      ],
+      "correction": "Counting list_documents and read_document separately gives ten read handlers plus four write handlers: fourteen customer tools, not thirteen."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0748",
+        "P0803",
+        "P0809"
+      ],
+      "correction": "Seven-day expiry and 50 MB portal limits are project configuration claims; they are not native LINE file/link limits."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0767"
+      ],
+      "correction": "Creating escalation/support/task rows does not establish human notification, calendar scheduling or external completion."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0782"
+      ],
+      "correction": "A configuration health check does not demonstrate provider availability, successful inference or no cost across the entire request."
+    },
+    {
+      "source_paragraph_ids": [
+        "P0839"
+      ],
+      "correction": "Local specialist profiles/workflows are not evidence of active LINE routing or deployed capability."
+    }
+  ],
+  "measurement_contract": {
+    "target_status": "Proposed acceptance targets only; no 95-99% result was measured in this research.",
+    "denominator": "Predeclared eligible test attempts for approved, implemented API/backend workflows; count each initiated attempt, including retries/failures. Report separately by role, language, feature and offline versus live environment.",
+    "success": "Correct authorized result plus appropriate durable business receipt and truthful response within a predefined latency budget; API 2xx alone is insufficient. Duplicate suppression must not duplicate business effects.",
+    "proposed_thresholds": {
+      "pilot_success_rate_minimum": 0.95,
+      "release_goal_success_rate": 0.99,
+      "tenant_or_role_leak_tolerance": 0,
+      "duplicate_business_effect_tolerance": 0
+    },
+    "honesty_rule": "Publish numerator, denominator, case inventory, exact revision, environment, failures and uncertainty. Native consumer album/calendar automation and unavailable integrations remain explicit exclusions, not silently successful tests. Do not claim 99% of everything in LINE.",
+    "evidence_levels": [
+      "official platform support",
+      "exact source implementation",
+      "offline fixture outcome",
+      "authorized live integration receipt",
+      "production observation"
+    ],
+    "current_levels": "This researcher checked official support and read the dated source audit only. No LINE send, model call, credentials, account settings, customer data, external write or acceptance run occurred."
+  },
+  "confidence": {
+    "documented_platform_primitives": "high",
+    "public_reference_absence_of_album_calendar_crud": "medium; bounded inventory finding",
+    "current_live_Neurohands_functionality": "unverified by this research"
+  },
+  "retrieval_limits": [
+    "The web reader returned matching official page contents but did not expose raw HTTP status; no independent HTTP-200 assertion is made.",
+    "A guessed handling-errors URL failed retrieval and was discarded; the official retry guide linked from the account-linking page was used instead.",
+    "Official reference and help content can change; checked date is 2026-11-10 and should be refreshed before implementation/release."
+  ]
+}

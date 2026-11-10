@@ -28,6 +28,7 @@ registered evidence and recovered-source paths retain their existing locations.
 
 | Document | Use it for |
 | --- | --- |
+| [LINE adaptation plan](line-adaptation/README.md) | Verified feature/code/asset mapping, roles, skill, tracker and separate measurement targets. |
 | [Goal acceptance](GOAL_ACCEPTANCE.md) | Required customer proof and the Phase 1/Phase 2 boundary. |
 | [Project plan](PROJECT_PLAN.md) | Longer-term milestones; planned capabilities are not completion claims. |
 | [Goal continuity plan](GOAL_CONTINUITY_PLAN.md) | Proposed continuity deliverables and their recorded stop conditions. |
