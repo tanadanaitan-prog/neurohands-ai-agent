@@ -4,6 +4,10 @@
 
 See the [ordered project and platform map](docs/architecture/PROJECT_STRUCTURE.md) for folder ownership, languages, database groups and the offline Python structure check.
 
+Use the [central knowledge and capability register](docs/KNOWLEDGE_INDEX.md) to
+open the saved Notion record, distinguish engineering connectors from agent
+tools, and follow the dated update/read-back procedure.
+
 **Verified 10 November 2026:** [current integration audit and next steps](docs/INTEGRATION_AUDIT_2026-11-10.md).
 GitHub CI is repaired; the tested application revision passes 539 local tests.
 Railway serves main commit `889c8a4` and both public readiness checks pass.
