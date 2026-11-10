@@ -46,6 +46,7 @@ jobs:
             docker volume rm --force "$c10_volume" >/dev/null 2>&1 || true
           }
           trap cleanup_c10_volume EXIT
+          mkdir -- node_modules
           docker pull "$c10_image"
           docker volume create "$c10_volume" >/dev/null
           docker run --rm \
