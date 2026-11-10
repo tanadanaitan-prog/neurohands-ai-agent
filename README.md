@@ -1,5 +1,16 @@
 # Neurohands — AI agents for business
 
+**Browse the [documentation by topic](docs/README.md)** for current status, operating guides, laboratory work, acceptance controls and preserved source records.
+
+**Continue work with the [process README](docs/PROCESS_README.md):** all 26 package
+commands, prerequisites, expected evidence, local start/stop and platform handoffs.
+
+See the [ordered project and platform map](docs/architecture/PROJECT_STRUCTURE.md) for folder ownership, languages, database groups and the offline Python structure check.
+
+Use the [central knowledge and capability register](docs/KNOWLEDGE_INDEX.md) to
+open the saved Notion record, distinguish engineering connectors from agent
+tools, and follow the dated update/read-back procedure.
+
 **Verified 10 November 2026:** [current integration audit and next steps](docs/INTEGRATION_AUDIT_2026-11-10.md).
 GitHub CI is repaired; the tested application revision passes 539 local tests.
 Railway serves main commit `889c8a4` and both public readiness checks pass.
@@ -18,9 +29,9 @@ work in one evidence-based file.
 `neurohands_aria` or `neurohands_jarvis`, and open **Chat**. These roles use the
 same local Qwen model with permitted tools for fictional company information,
 orders, documents, calculation, local tasks, memory and team delegation.
-Follow [the agent test guide](docs/LOCAL_AGENT_LAB.md) for examples and the
+Follow [the agent test guide](docs/guides/lab/LOCAL_AGENT_LAB.md) for examples and the
 18-scenario before-and-after benchmark. `neurohands_chat` remains the plain-chat
-baseline; `neurohands_test` remains the echo check. The [original setup guide](docs/LANGGRAPH_LOCAL_TEST.md)
+baseline; `neurohands_test` remains the echo check. The [original setup guide](docs/guides/lab/LANGGRAPH_LOCAL_TEST.md)
 explains installation and private settings. This lab is separate from production
 LINE; Gemini takeover is not connected.
 
@@ -79,7 +90,7 @@ These are **three application roles using AI models**. We have not trained three
 
 The first September 16 repair set `GEMINI_ENABLED=true` and cleared `FALLBACK_PROVIDER` and `FALLBACK_BASE_URL` to remove the broken fallback route, without changing existing secrets. After that deployment's math test failed, [PR #14](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/14) corrected the Gemini request adapter and deployed as `a315fdd0cad03a5339abb87440c83061fc401dbe`. Its release version, readiness and later provider/delivery path checks pass. Neither repair deploys the local agent lab or connects automatic Ollama-to-Gemini takeover. OpenRouter remains a separate optional route requiring its own key and verified allowance.
 
-The owner selected **Inkling Small (free)** as a third configuration for synthetic tests only. Its separate harness checks a fictional order and tool call. It never receives LINE conversations, KNC documents or memories. See [third-model setup](docs/PUBLIC_MODEL_TEST.md). A successful synthetic test will not replace the real Aria customer proof.
+The owner selected **Inkling Small (free)** as a third configuration for synthetic tests only. Its separate harness checks a fictional order and tool call. It never receives LINE conversations, KNC documents or memories. See [third-model setup](docs/guides/lab/PUBLIC_MODEL_TEST.md). A successful synthetic test will not replace the real Aria customer proof.
 
 Jarvis currently provides an operator interface. Fixed one-, two- and five-role workflows are available only in the isolated local named-agent laboratory. Automatic delegation among independent agents, departments and managers in production is part of the future platform.
 

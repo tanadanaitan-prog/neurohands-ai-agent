@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "updated_on": "2026-11-10",
+  "purpose": "Offline reading order and structural validation; not a runtime controller or release approval",
+  "source_baseline": "52bfc191093dde6064b1827aa28421ca37160c6b",
+  "categories": [
+    {
+      "id": "01_start_and_plan",
+      "order": 10,
+      "prefixes": [
+        "README.md",
+        "docs/"
+      ]
+    },
+    {
+      "id": "02_configuration",
+      "order": 20,
+      "prefixes": [
+        "config/",
+        ".env.example",
+        ".env.langgraph.example",
+        "langgraph.json",
+        "package.json",
+        "package-lock.json",
+        ".gitattributes",
+        ".gitignore"
+      ]
+    },
+    {
+      "id": "03_application",
+      "order": 30,
+      "prefixes": [
+        "src/"
+      ]
+    },
+    {
+      "id": "04_web_and_assets",
+      "order": 40,
+      "prefixes": [
+        "web/",
+        "assets/"
+      ]
+    },
+    {
+      "id": "05_database",
+      "order": 50,
+      "prefixes": [
+        "supabase/"
+      ]
+    },
+    {
+      "id": "06_deployment_and_ci",
+      "order": 60,
+      "prefixes": [
+        "infrastructure/",
+        "railway.json",
+        ".github/"
+      ]
+    },
+    {
+      "id": "07_maintenance",
+      "order": 70,
+      "prefixes": [
+        "scripts/"
+      ]
+    },
+    {
+      "id": "08_tests",
+      "order": 80,
+      "prefixes": [
+        "test/",
+        "scripts/tests/"
+      ]
+    },
+    {
+      "id": "09_recorded_evidence",
+      "order": 90,
+      "prefixes": [
+        "artifacts/",
+        "reviews/"
+      ]
+    },
+    {
+      "id": "10_preserved_provenance",
+      "order": 100,
+      "prefixes": [
+        "docs/originals/",
+        "docs/import-manifest.json",
+        "docs/recovery-manifest.json"
+      ]
+    }
+  ],
+  "critical_paths": [
+    "README.md",
+    "docs/README.md",
+    "docs/CONTINUATION_STATE.json",
+    "docs/architecture/PROJECT_STRUCTURE.md",
+    "src/server.js",
+    "src/agent/graph.mjs",
+    "src/platform/router.js",
+    "web/src/main.js",
+    "package.json",
+    "package-lock.json",
+    "langgraph.json",
+    "railway.json",
+    "supabase/README.md",
+    "supabase/check-readiness.sql",
+    ".github/workflows/untrusted-pr.yml",
+    "scripts/check_project_structure.py",
+    "scripts/tests/test_project_structure.py"
+  ],
+  "protected_paths": [
+    "src/",
+    "web/",
+    "assets/",
+    "supabase/migrations/",
+    "test/",
+    "artifacts/",
+    "reviews/",
+    "docs/originals/",
+    "docs/import-manifest.json",
+    "docs/recovery-manifest.json",
+    "config/release-controls.v1.json",
+    "config/software-passports.v1.json",
+    "docs/SOFTWARE_PASSPORTS.md",
+    "docs/UNTRUSTED_EXECUTION_BOUNDARY.md",
+    "docs/NAMED_AGENT_WORKFLOW.md",
+    "docs/LIVE_STATUS.md",
+    "docs/AGENT_BENCHMARK_RESULTS.md",
+    "docs/AGENT_BENCHMARK_RUBRIC.md",
+    "package.json",
+    "package-lock.json",
+    "langgraph.json",
+    "railway.json",
+    ".github/"
+  ],
+  "moves": [
+    {
+      "from": "docs/LANGGRAPH_LOCAL_TEST.md",
+      "to": "docs/guides/lab/LANGGRAPH_LOCAL_TEST.md",
+      "required_anchors": ["1-find-the-project-folder","2-check-the-private-settings-file","3-start-studio-and-chat-with-the-model","4-measure-a-repeatable-model-test","5-save-one-model-test-to-langsmith","6-understand-the-studio-warnings","choose-the-right-test","current-primary-model-smoke-test-18-september-2026","neurohands-local-model-chat-and-langgraph-test","official-references","previous-verified-local-model-baseline-16-september-2026","previously-verified-connection-only-lab-16-september-2026","what-is-still-outside-this-lab","where-everything-belongs"]
+    },
+    {
+      "from": "docs/LOCAL_AGENT_LAB.md",
+      "to": "docs/guides/lab/LOCAL_AGENT_LAB.md",
+      "required_anchors": ["connection-and-state-details","remaining-limits","repeat-the-before-and-after-test","start-and-choose-an-agent","test-concierge-aria-and-jarvis-locally"]
+    },
+    {
+      "from": "docs/PUBLIC_MODEL_TEST.md",
+      "to": "docs/guides/lab/PUBLIC_MODEL_TEST.md",
+      "required_anchors": ["railway-variables","third-model-inkling-synthetic-test","what-the-test-proves"]
+    }
+  ],
+  "platforms": {
+    "github": {
+      "repository": "tanadanaitan-prog/neurohands-ai-agent",
+      "candidate_branch": "codex/langgraph-local-test",
+      "candidate_pr": 13,
+      "merge_approved": false
+    },
+    "railway": {
+      "observed_on": "2026-11-10",
+      "configuration_authority": "dashboard",
+      "catalog": "infrastructure/railway/observed-production.json"
+    },
+    "supabase": {
+      "observed_on": "2026-11-10",
+      "project_ref": "darxiaearohhnxiwhcbs",
+      "catalog": "supabase/catalog/observed-public-schema.json",
+      "railway_variable_match": "FOUNDER_CONFIRMED_IDENTICAL_2026-11-10"
+    }
+  },
+  "external_catalogs": [
+    "infrastructure/railway/observed-production.json",
+    "supabase/catalog/observed-public-schema.json"
+  ],
+  "limits": [
+    "Git-indexed files only; untracked experiments and private files are outside the inventory.",
+    "Protected paths are checked for existence; byte preservation requires a separate baseline comparison.",
+    "External links, live platforms, model quality and release acceptance are not tested by the structure checker."
+  ]
+}
