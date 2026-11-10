@@ -1,5 +1,9 @@
 # LA-04 response, ownership and document repair
 
+Continue with the [ENG/QA handover](ENG_QA_HANDOVER_PR23.md),
+[owner verification](CATALOG_OWNER_VERIFICATION.md) and
+[draft LINE test steps](LINE_ACCEPTANCE_PR23.md). Review/adoption remains pending.
+
 Draft for ENG/QA review. Baseline: `7b686696121b1930619183bd4ace5894b1912609`
 (PR22). This is an isolated follow-on patch; neither PR21 nor PR22 has been
 adopted by this work. No production configuration, migration, model/LINE call or

@@ -10,7 +10,7 @@ does not mean a customer workflow was accepted or deployed.
 | LA-02: map LINE, code and assets | Architect / QA | Verified locally; 27 features mapped; mobile appearance still untested. |
 | LA-03: initial scorecard prototype | Implementer / QA | Superseded after two bounded attempts; preserve failed probes. |
 | LA-03B: freeze targets and feature scope | Implementer / QA | Verified locally by targeted recheck; 17 safeguard tests pass. |
-| LA-04: reproduce and draft P0 repairs | Implementer / QA | In review: [repair and comparison](LA04_REPAIR.md); 56 synthetic focused checks pass. No adoption or live acceptance. |
+| LA-04: reproduce and draft P0 repairs | Implementer / QA | In review: [repair and comparison](LA04_REPAIR.md), [ENG/QA handover](ENG_QA_HANDOVER_PR23.md); 56 synthetic focused checks pass. No adoption or live acceptance. |
 | LA-05: outbound messages and controls | Implementer / QA | Proposed after LA-04; typed builders, permitted actions and mobile review. |
 | LA-06: inbound media and private gallery | Implementer / QA | Proposed after LA-04; owner, format, quota, retention and real storage receipt. |
 | LA-07: calendar/booking backend | Architect / operator | Blocked on a service/account and approved scopes/cost boundary; no native LINE Calendar CRUD established. |

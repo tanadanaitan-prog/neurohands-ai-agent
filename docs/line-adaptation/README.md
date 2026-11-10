@@ -10,6 +10,9 @@ records actual synthetic failures, minimal gateway/parser fixes, independent rev
 and before/after results. The planning-package statement above refers to its
 original delivery; the follow-on changes application source in draft only.
 
+**Review packet:** [ENG/QA handover for PR23](ENG_QA_HANDOVER_PR23.md) links the
+catalog owner procedure, conditional LINE test plan and blank decision record.
+
 ## Source and architecture decision
 
 Application baseline: `72f7e5f40a9a1e9930d9d099efb891f306bcffa2`; recorded deployed
