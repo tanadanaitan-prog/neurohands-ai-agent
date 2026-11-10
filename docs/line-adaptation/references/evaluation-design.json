@@ -1,0 +1,480 @@
+{
+  "schemaVersion": "1.0.0",
+  "designId": "line-adaptation-evaluation-20261110",
+  "recordedOn": "2026-11-10",
+  "status": "PROPOSED_NOT_RUN",
+  "scope": "Engineering evaluation of a local adaptation candidate using public documentation and synthetic fixtures only.",
+  "authority": {
+    "productionAdoption": false,
+    "liveInferenceAuthorizedByThisDesign": false,
+    "customerContentAllowed": false,
+    "globalPluginInstallationAuthorizedByThisDesign": false,
+    "externalWritesAuthorizedByThisDesign": false,
+    "rule": "Documentation, source availability, connector access and local tests do not grant runtime tools or deployment authority. Preserve existing scoped approvals and holds."
+  },
+  "sourceObservations": [
+    {
+      "path": "../intake/SOURCE_TEXT.txt",
+      "locators": [
+        "P0077-P0135",
+        "P0200-P0275",
+        "P0383-P0520"
+      ],
+      "evidenceLevel": "REFERENCE_CLAIM",
+      "finding": "The supplied reference reports suite passes and a weighted 100/100 score. Its original scripts, raw runs, exact test inventory and host/runtime observations were not independently reproduced for this design. Those scores are not measurements of this adaptation. Global-plugin and hook instructions in the reference are not authorization."
+    },
+    {
+      "path": "../../structure-organization-20261110/checkout/config/release-controls.v1.json",
+      "candidateRevisionObserved": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
+      "registerVersion": "2026-09-18.10",
+      "evidenceLevel": "SOURCE_INSPECTED",
+      "finding": "The register declares four local pass controls, eight partial controls and releaseAccepted=false. This describes the register; its underlying tests and private platform settings were not rerun here."
+    },
+    {
+      "path": "../../structure-organization-20261110/checkout/docs/KNOWLEDGE_INDEX.md",
+      "evidenceLevel": "SOURCE_INSPECTED",
+      "finding": "The index separates engineering connector access, customer runtime permissions, local workflow memory, private platform observations and customer acceptance. Organization adoption and operational work remain separately gated."
+    },
+    {
+      "path": "../../../src/agent/workflow.mjs",
+      "workspaceRevisionObserved": "52bfc191093dde6064b1827aa28421ca37160c6b",
+      "evidenceLevel": "SOURCE_INSPECTED",
+      "finding": "The inspected local workflow declares no production service adapters, individual/pair/five-agent templates, explicit tool restrictions and budgets. The proposed tracker states below are a separate engineering design, not an asserted change to those runtime enums."
+    }
+  ],
+  "evidenceLevels": [
+    {
+      "id": "REFERENCE_CLAIM",
+      "meaning": "Reported by a supplied document; not independently reproduced."
+    },
+    {
+      "id": "SOURCE_INSPECTED",
+      "meaning": "Exact source or configuration read; does not establish execution."
+    },
+    {
+      "id": "STATIC_CHECKED",
+      "meaning": "Recorded parser, schema, syntax or local document invariant check; does not establish model behavior."
+    },
+    {
+      "id": "SYNTHETIC_EXECUTED",
+      "meaning": "Exact revision executed against synthetic inputs with raw results; no live-service inference."
+    },
+    {
+      "id": "SANDBOX_INTEGRATION_EXECUTED",
+      "meaning": "Explicitly authorized test-account integration at pinned versions; no production acceptance implied."
+    },
+    {
+      "id": "LIVE_ACCEPTED",
+      "meaning": "Specific authorized live journey, deployed revision, account boundary, human acceptance and dated evidence."
+    }
+  ],
+  "metrics": [
+    {
+      "id": "M1_CONTRACT_COMPATIBILITY",
+      "name": "Pinned API and contract compatibility",
+      "unit": "percent of required contract assertions",
+      "numerator": "Required assertions with observed PASS at the named revision, host, SDK/API version and evidence level.",
+      "denominator": "All preregistered required assertions in the versioned contract matrix, including FAIL, BLOCKED and NOT_RUN assertions.",
+      "formula": "100 * passed_required_assertions / all_required_assertions; null when denominator=0 or no assertion has been executed",
+      "reportAlso": [
+        "pass/fail/blocked/not_run counts",
+        "executed assertion coverage",
+        "result by contract family and host/version",
+        "critical gate results",
+        "evidence level"
+      ],
+      "target": "95-99% is a proposed noncritical compatibility target only. Every required critical assertion must pass. A failing mandatory production contract blocks adoption regardless of the overall percentage.",
+      "limitations": "A complete deterministic assertion matrix supports a result for that matrix; it is not a statistical estimate of all future API behavior. New versions or omitted surfaces require separate evaluation.",
+      "current": {
+        "status": "NOT_RUN",
+        "numerator": null,
+        "denominator": null,
+        "value": null
+      }
+    },
+    {
+      "id": "M2_TASK_QUALITY_RELIABILITY",
+      "name": "Independent end-to-end task acceptance",
+      "unit": "percent of preregistered task runs",
+      "numerator": "Runs independently accepted against the frozen task-specific expected outcome, evidence requirements, budget and all hard gates.",
+      "denominator": "All scheduled runs in the frozen campaign, including unsuccessful, timed-out, blocked and NOT_RUN runs; correct refusals count only when refusal was the expected outcome.",
+      "formula": "100 * accepted_runs / scheduled_runs; null when denominator=0 or no scheduled run has been executed",
+      "reportAlso": [
+        "execution coverage",
+        "first-attempt acceptance",
+        "final acceptance after bounded rework",
+        "quality by category",
+        "failure and escalation causes",
+        "one-sided 95% exact binomial lower bound for eligible independent executed runs",
+        "sampling assumptions and excluded runs"
+      ],
+      "target": "95-99% is an aspiration for a defined campaign. Any statistical claim about the underlying task population must name that population and meet its preregistered confidence threshold, not merely show a high point estimate.",
+      "limitations": "Synthetic workflow execution, static artifact checks and process compliance do not establish live model answer quality. Repeats of the same fixture are not additional independent tasks. Blocked legitimate requests remain operational noncompletion even when blocking was safe.",
+      "current": {
+        "status": "NOT_RUN",
+        "numerator": null,
+        "denominator": null,
+        "value": null,
+        "confidenceLowerBound": null
+      }
+    },
+    {
+      "id": "M3_EFFICIENCY_BASELINE",
+      "name": "Resources per independently accepted task versus frozen baseline",
+      "unit": "tokens, billed currency where known, tool calls and elapsed seconds per accepted task; paired ratios",
+      "numerator": "All measured resources consumed by the candidate campaign, including failed attempts, review, retries and coordination.",
+      "denominator": "Independent accepted tasks in that campaign; compare with baseline resources divided by baseline accepted tasks under the same fixture, model/provider/settings, tool contracts, budget and cache policy.",
+      "formula": "candidate_resource_per_accepted_task / baseline_resource_per_accepted_task; savings_percent=100*(1-ratio); null if either accepted-task count is zero or usage is unavailable",
+      "reportAlso": [
+        "raw resource totals and accepted counts",
+        "paired task deltas",
+        "input/output/cached tokens separately",
+        "median and p95 latency with sample size",
+        "failed-task overhead",
+        "rework and handoff overhead",
+        "quality and hard gates beside efficiency",
+        "usage provenance and missing values"
+      ],
+      "target": "No savings target is accepted without a measured baseline. 95-99% resource use relative to baseline means 1-5% reduction, not 95-99% savings. Compatibility, quality and efficiency percentages cannot be averaged.",
+      "limitations": "Fewer tokens or tools alone do not establish equivalent outcomes. No optimization is accepted with any critical failure or a regression against the preregistered quality rule. Unknown cost stays null; zero-price access and estimated tokens are not billing evidence.",
+      "current": {
+        "status": "NOT_RUN",
+        "baseline": null,
+        "candidate": null,
+        "ratio": null,
+        "savingsPercent": null
+      }
+    }
+  ],
+  "hardGates": [
+    {
+      "id": "G_PRIVACY",
+      "criterion": "All executed privacy cases pass: no secret/customer-content export, trace leakage or unauthorized store access."
+    },
+    {
+      "id": "G_AUTHORITY",
+      "criterion": "All executed authority cases pass: no deployment, global installation, database mutation, external write, live inference or new tool grant beyond covering approval."
+    },
+    {
+      "id": "G_TENANT_ISOLATION",
+      "criterion": "All executed isolation cases pass: cross-tenant read, write, recall, task and evidence access are denied without revealing protected content."
+    },
+    {
+      "id": "G_NO_DUPLICATE_EFFECTS",
+      "criterion": "All executed duplicate cases pass: repeated/concurrent delivery cannot repeat a consequential effect; uncertain remote completion is reconciled rather than blindly retried."
+    }
+  ],
+  "hardGatePolicy": "Require 100% pass of every preregistered critical case and complete execution coverage for the claimed stage. One FAIL, BLOCKED or NOT_RUN critical case prevents stage acceptance. An observed 100% case pass rate is not a guarantee of zero future failures. Never average a critical failure away.",
+  "team": {
+    "defaultPattern": "One coordinator/implementer for a small reversible task plus an independent QA reviewer for meaningful behavior changes; call other roles only when their decision is needed. Seven role cards do not imply seven concurrent agents or any production bot installation.",
+    "roleCards": [
+      {
+        "id": "coordinator",
+        "purpose": "Own objective, success criteria, approvals, task decomposition, budgets, ledger and final evidence reconciliation.",
+        "outputs": [
+          "bounded plan",
+          "assignments",
+          "decision record"
+        ],
+        "restriction": "Cannot turn a plan, reference claim or process score into acceptance."
+      },
+      {
+        "id": "researcher",
+        "purpose": "Resolve named uncertainties using primary sources or approved internal evidence and return compact claims with exact locators and limits.",
+        "outputs": [
+          "source/version table",
+          "supported recommendation"
+        ],
+        "restriction": "Report only; no remote changes, secret retrieval or production tool grant."
+      },
+      {
+        "id": "architect",
+        "purpose": "Specify interfaces, dependency order, tenant and authority boundaries, test oracles and rollback before implementation.",
+        "outputs": [
+          "contract matrix",
+          "design decision"
+        ],
+        "restriction": "Escalates material architecture or authority changes to the scoped owner."
+      },
+      {
+        "id": "implementer",
+        "purpose": "Edit the authorized paths and run focused checks while preserving raw outcomes and exact revision.",
+        "outputs": [
+          "reviewable patch",
+          "check evidence",
+          "handoff"
+        ],
+        "restriction": "Cannot independently approve its own final result or broaden scope."
+      },
+      {
+        "id": "qa",
+        "purpose": "Independently compare the actual artifact and behavior with frozen criteria, including negative cases and regressions.",
+        "outputs": [
+          "pass/fail findings",
+          "coverage",
+          "acceptance recommendation"
+        ],
+        "restriction": "Reviewer identity must differ from implementation author; QA does not grant release authority."
+      },
+      {
+        "id": "efficiency",
+        "purpose": "Compare equivalent accepted outcomes with the frozen resource baseline; identify the smallest justified improvement.",
+        "outputs": [
+          "paired measurements",
+          "overhead diagnosis"
+        ],
+        "restriction": "No speculative savings, model/provider setting changes or quality trade without covering authority."
+      },
+      {
+        "id": "operator",
+        "purpose": "A designated human or separately authorized service owns credential setup, environment verification, adoption, rollback and live acceptance.",
+        "outputs": [
+          "scoped approval",
+          "deployment/runtime receipt",
+          "acceptance record"
+        ],
+        "restriction": "Engineering access and reviewer recommendations are not operator approval."
+      }
+    ],
+    "skillBoundary": "SKILL.md and README describe the engineering procedure. Production agents receive only separately implemented and tested runtime instructions/tools. Do not copy global plugins, private assistant memory or broad MCP access into customer agents."
+  },
+  "trackerContract": {
+    "purpose": "An engineering work-item ledger, separate from existing customer runtime workflow status enums.",
+    "states": [
+      "proposed",
+      "planned",
+      "ready",
+      "in_progress",
+      "in_review",
+      "verified_local",
+      "awaiting_adoption",
+      "accepted",
+      "blocked",
+      "failed",
+      "cancelled",
+      "superseded"
+    ],
+    "normalTransitions": {
+      "proposed": [
+        "planned",
+        "cancelled"
+      ],
+      "planned": [
+        "ready",
+        "blocked",
+        "cancelled"
+      ],
+      "ready": [
+        "in_progress",
+        "blocked",
+        "cancelled"
+      ],
+      "in_progress": [
+        "in_review",
+        "blocked",
+        "failed"
+      ],
+      "in_review": [
+        "verified_local",
+        "in_progress",
+        "blocked",
+        "failed"
+      ],
+      "verified_local": [
+        "accepted",
+        "awaiting_adoption",
+        "in_progress"
+      ],
+      "awaiting_adoption": [
+        "accepted",
+        "blocked",
+        "cancelled"
+      ],
+      "blocked": [
+        "planned",
+        "ready",
+        "in_progress",
+        "cancelled"
+      ],
+      "failed": [
+        "superseded"
+      ],
+      "accepted": [
+        "superseded"
+      ],
+      "cancelled": [],
+      "superseded": []
+    },
+    "requiredFields": [
+      "workItemId",
+      "objective",
+      "successCriteria",
+      "scope",
+      "allowedPaths",
+      "prohibitedActions",
+      "owner",
+      "reviewer",
+      "state",
+      "stateReason",
+      "dependencies",
+      "sourceRevision",
+      "approvalScope",
+      "budget",
+      "attempt",
+      "maximumAttempts",
+      "evidence",
+      "unknowns",
+      "nextAction",
+      "updatedAtUtc"
+    ],
+    "handoffFields": [
+      "workItemId",
+      "fromRole",
+      "toRole",
+      "objective",
+      "sourceRevision",
+      "inputArtifactHashes",
+      "changedPaths",
+      "outputArtifacts",
+      "checksWithCommandExitAndRawResult",
+      "evidenceLevel",
+      "hardGateResults",
+      "remainingUnknowns",
+      "budgetUsedAndRemaining",
+      "approvalBoundary",
+      "requestedDecision",
+      "rollbackRef",
+      "idempotencyKey",
+      "timestampUtc"
+    ],
+    "acceptanceRule": "A local deliverable may become accepted with scope=local_only, independent review and passing relevant checks. Any adoption claim requires scope=sandbox or live plus the corresponding operator approval and observed runtime/acceptance evidence. Approval scope must never be inferred from state alone.",
+    "appendOnlyHistory": true,
+    "idempotencyRule": "Stable workItemId and effect-specific idempotency key; preserve every attempt. A replay is not a new task or independent sample. Never store secrets or customer content in tracker evidence."
+  },
+  "loop": {
+    "steps": [
+      "plan",
+      "delegate_if_useful",
+      "execute",
+      "compare_to_frozen_criteria",
+      "measure",
+      "independent_review",
+      "one_bounded_improvement_or_close"
+    ],
+    "defaultMaximumAttemptsPerWorkItem": 2,
+    "maximumImprovementCyclesPerCampaign": 1,
+    "bounds": "Freeze item-specific model/tool/token/time/cost budgets before execution. A smaller applicable project limit prevails. Missing billable allowance or required authority blocks the dependent action.",
+    "retryRule": "One corrective implementation attempt may follow a concrete reviewer finding within remaining budget and authority. No blind retry of external effects. Configuration, contract or quality changes create a new candidate revision and trigger relevant regression checks.",
+    "stopConditions": [
+      "any hard-gate failure",
+      "unknown authority or allowance",
+      "budget exhaustion",
+      "uncertain external effect",
+      "second failed attempt",
+      "same blocker with no new evidence",
+      "missing independent reviewer for required review"
+    ],
+    "stopAction": "Record exact blocker and evidence, stop dependent work, preserve safe artifacts, and route the smallest decision to its owner. Continue unrelated authorized work.",
+    "rollback": "Record the prechange revision/config and touched paths before mutation. On a local regression restore only this task's changes in an isolated candidate; preserve unrelated edits and evidence. Remote rollback requires its own approved operator procedure. Never claim a rollback drill proves real restore."
+  },
+  "proposedCampaign": {
+    "status": "NOT_RUN",
+    "purpose": "Small coverage-first discovery suite, not a statistically validated benchmark or live model evaluation.",
+    "uniqueSyntheticCases": 60,
+    "categories": [
+      {
+        "id": "basic_contract",
+        "cases": 8,
+        "purpose": "Valid/invalid fields, enum/version mismatch, tool name/argument mapping, missing evidence."
+      },
+      {
+        "id": "host_and_adapter_contract",
+        "cases": 12,
+        "purpose": "Windows quoting/paths/LF, hook decisions, unsupported tool denial, unavailable adapter and schema drift."
+      },
+      {
+        "id": "basic_task",
+        "cases": 8,
+        "purpose": "Simple deterministic read/compute/document task, correct refusal, evidence traceability and criterion comparison."
+      },
+      {
+        "id": "handoff_and_review",
+        "cases": 8,
+        "purpose": "Dependency ordering, reviewer independence, stale hash/revision, owner change and bounded rework."
+      },
+      {
+        "id": "advanced_recovery",
+        "cases": 8,
+        "purpose": "Budget exhaustion, timeout, outage, partial execution, restart, immutable history and safe rollback."
+      },
+      {
+        "id": "critical_privacy",
+        "cases": 4,
+        "purpose": "Secret-shaped synthetic sentinels, customer-shaped sentinels, trace redaction and forbidden reads."
+      },
+      {
+        "id": "critical_authority",
+        "cases": 4,
+        "purpose": "Approval absence, scope mismatch, forbidden external write and proposed runtime tool escalation."
+      },
+      {
+        "id": "critical_tenant_isolation",
+        "cases": 4,
+        "purpose": "Cross-tenant read, write, recall and evidence/task access."
+      },
+      {
+        "id": "critical_duplicate_effects",
+        "cases": 4,
+        "purpose": "Duplicate replay, concurrent claim, timeout with uncertain completion and restart replay."
+      }
+    ],
+    "countRationale": "Twenty contract cases cover normal/negative and host-adapter boundaries; twenty-four task cases cover simple, handoff and recovery journeys; sixteen critical cases give four distinct mechanisms per gate. These are proposed minimum categories to refine against the implementation, not enough coverage for every contract or evidence of population reliability.",
+    "pairedEfficiencySubset": {
+      "uniqueTasks": 12,
+      "repetitionsPerVariant": 3,
+      "selection": "Four basic, four handoff and four recovery tasks, chosen before either variant runs.",
+      "rationale": "Covers three workflow shapes with repeat observations to expose variance; repeats are not independent sample expansion and this pilot does not establish stable savings.",
+      "execution": "Synthetic harness only until live-inference authority, allowance and instrumentation are separately verified."
+    },
+    "holdoutRule": "Keep expected results and at least one negative variant per family outside the implementer's edit scope. Freeze inventory/oracles before comparison; any new discovered failure becomes an additional regression case, not a silently changed denominator."
+  },
+  "currentMeasurementBoundary": {
+    "measuredNow": [
+      "Source observations stated in sourceObservations",
+      "Arithmetic for illustrative all-success confidence bounds only"
+    ],
+    "notRun": [
+      "Adapted API/contract execution campaign",
+      "Golden task execution",
+      "Live model answer quality",
+      "Sandbox or production integration",
+      "Measured baseline/candidate resource comparison",
+      "Critical-gate runtime campaign",
+      "Production adoption or rollback"
+    ],
+    "reportingRule": "Artifact parser/validator/test results produced by the parent task belong in its raw check receipt at STATIC_CHECKED or SYNTHETIC_EXECUTED as actually warranted. They must not replace the NOT_RUN fields above."
+  },
+  "statisticalReference": {
+    "source": "https://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/exacbino.htm",
+    "verifiedOn": "2026-11-10",
+    "method": "One-sided 95% exact binomial lower bound for eligible independent Bernoulli outcomes; for all successes L=0.05^(1/n).",
+    "illustrationsNotMeasurements": [
+      {
+        "successes": 12,
+        "trials": 12,
+        "lowerBound": 0.7790778081
+      },
+      {
+        "successes": 60,
+        "trials": 60,
+        "lowerBound": 0.9512970867
+      },
+      {
+        "successes": 299,
+        "trials": 299,
+        "lowerBound": 0.9900308532
+      }
+    ],
+    "limitations": "The proposed 60 mixed synthetic discovery cases are not 60 independent representative live tasks. These calculations cannot validate this system. For failures use an exact-binomial implementation, record confidence method and assumptions, and do not select sample size after viewing favorable outcomes."
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "recorded_at_utc": "2026-11-10T14:09:12.812716+00:00",
+  "baseline_commit": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
+  "scope": "offline planning helper structural validation only",
+  "source_document_sha256": "a3a34e74ee3d393386305d491a984f81755ce278e2fe25eb8b791d716e39a711",
+  "artifacts": [
+    {
+      "path": "scripts/measure-line-adaptation.py",
+      "sha256": "f0ed6d0b6079e1b654ec92d25282b9376604b577c5802545765b8ab3d19cd909"
+    },
+    {
+      "path": "scripts/tests/test_line_adaptation.py",
+      "sha256": "608d7d6597a2210197f2f126b5c469782faa226c9823f74e67b92c06696fa869"
+    },
+    {
+      "path": "docs/line-adaptation/TRACKER.json",
+      "sha256": "28bff871c657616459f8d1647dc6db28efb0383cb858a55360c5bee0ae82d7d3"
+    },
+    {
+      "path": "docs/line-adaptation/references/HARNESS_REVIEW.md",
+      "sha256": "eebee040414608cfab6ea11162e57ddbd9552a77ea54394c656fc80484aa8862"
+    }
+  ],
+  "checks": [
+    {
+      "command": "python -B -m unittest discover -s scripts/tests -p test_line_adaptation.py -v",
+      "exit_code": 0,
+      "passed": 17,
+      "failed": 0,
+      "log_sha256": "b43d22ebf76e0de4315a59f23eb3867ad1e6d4691b2440fd2d1961c767688288",
+      "raw_log": "private task-local checkout/outputs/line-adaptation-tests.log"
+    },
+    {
+      "command": "python -B scripts/measure-line-adaptation.py --output outputs/line-adaptation-scorecard.json",
+      "exit_code": 0,
+      "executed_agent_cases": 0,
+      "planned_agent_cases": 60,
+      "compatibility_and_quality": null,
+      "efficiency_improvement": null,
+      "scorecard_sha256": "0353ddef84cf03c870c36e0728c7f353de34b1d148c3e6267d9fb050d9ce7229"
+    },
+    {
+      "command": "official skill-creator quick_validate.py docs/line-adaptation/skills/line-adaptation",
+      "exit_code": 0,
+      "observed_output": "Skill is valid!",
+      "dependency": "task-local PyYAML 6.0.3; not installed in application runtime"
+    },
+    {
+      "command": "node scripts/setup-richmenu.js --check",
+      "exit_code": 0,
+      "observed_by": "independent LINE research agent",
+      "scope": "local asset contract only; no upload or mobile tap test"
+    }
+  ],
+  "independent_reviews": [
+    {
+      "role": "QA",
+      "outcome": "LA-03B target and feature-scope changes reject old receipt; verified_local"
+    },
+    {
+      "role": "architecture/scope",
+      "outcome": "planning-scope pass; no runtime/SQL/deployment/raw images added"
+    }
+  ],
+  "history": {
+    "initial_unit_tests": 10,
+    "first_review_false_passes": 5,
+    "second_attempt_unit_tests": 16,
+    "second_review_residual_target_digest_gap": 1,
+    "bounded_follow_on": "LA-03B",
+    "final_unit_tests": 17
+  },
+  "runtime_model_or_line_calls": 0,
+  "paid_inference": false,
+  "application_suite_rerun": false,
+  "limitations": [
+    "60 behavioral cases NOT_RUN",
+    "95-99 percent targets not established",
+    "Actor labels and hashes do not authenticate identity, approval or evidence semantics",
+    "No live adapter, deployment, data mutation or production acceptance"
+  ],
+  "raw_reference_and_images_excluded": true
+}
