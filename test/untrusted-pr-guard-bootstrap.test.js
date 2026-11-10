@@ -11,6 +11,7 @@ const {
   PINNED_NODE_IMAGE,
   REVIEWED_WORKFLOW_SHA256,
   checkUntrustedPrWorkflow,
+  extractRunBlocks,
   validateUntrustedPrWorkflowSource,
   workflowHash,
 } = require("../scripts/check-untrusted-pr-workflow");
@@ -89,6 +90,42 @@ test("C10 checker rejects privileged triggers, missing timeout, and credential p
 test("C10 checker rejects mutable container tags and lifecycle scripts", () => {
   assert.match(errorsFor(mutate(PINNED_NODE_IMAGE, "node:24-bookworm-slim")), /container image must be pinned/);
   assert.match(errorsFor(mutate("npm ci --ignore-scripts --no-audit --no-fund", "npm ci")), /installed without lifecycle scripts/);
+});
+
+test("C10 reviewed fixture creates the dependency mountpoint after the trap and before Docker starts", () => {
+  const commands = extractRunBlocks(WORKFLOW)[1].split("\n").map((line) => line.trim());
+  const trapIndex = commands.indexOf("trap cleanup_c10_volume EXIT");
+  assert.notEqual(trapIndex, -1);
+  assert.deepEqual(commands.slice(trapIndex, trapIndex + 3), [
+    "trap cleanup_c10_volume EXIT",
+    "mkdir -- node_modules",
+    'docker pull "$c10_image"',
+  ]);
+});
+
+test("C10 mountpoint rule rejects missing or permissive setup without relying on the fingerprint", () => {
+  for (const replacement of ["", "          mkdir -p -- node_modules\n"]) {
+    const source = mutate("          mkdir -- node_modules\n", replacement);
+    const result = validateUntrustedPrWorkflowSource(source, { enforceFingerprint: false });
+    assert.equal(result.valid, false);
+    assert.match(result.errors.join("\n"), /mountpoint must be created with fail-closed mkdir/);
+  }
+});
+
+test("C10 mountpoint rule rejects reordered setup without relying on the fingerprint", () => {
+  const beforeTrap = mutate(
+    "          trap cleanup_c10_volume EXIT\n          mkdir -- node_modules\n",
+    "          mkdir -- node_modules\n          trap cleanup_c10_volume EXIT\n",
+  );
+  const afterDocker = mutate(
+    '          mkdir -- node_modules\n          docker pull "$c10_image"\n',
+    '          docker pull "$c10_image"\n          mkdir -- node_modules\n',
+  );
+  for (const source of [beforeTrap, afterDocker]) {
+    const result = validateUntrustedPrWorkflowSource(source, { enforceFingerprint: false });
+    assert.equal(result.valid, false);
+    assert.match(result.errors.join("\n"), /mountpoint must be created with fail-closed mkdir/);
+  }
 });
 
 test("C10 fingerprint rejects any unreviewed drift even when an individual rule still looks safe", () => {
