@@ -10,7 +10,7 @@ does not mean a customer workflow was accepted or deployed.
 | LA-02: map LINE, code and assets | Architect / QA | Verified locally; 27 features mapped; mobile appearance still untested. |
 | LA-03: initial scorecard prototype | Implementer / QA | Superseded after two bounded attempts; preserve failed probes. |
 | LA-03B: freeze targets and feature scope | Implementer / QA | Verified locally by targeted recheck; 17 safeguard tests pass. |
-| LA-04: reproduce P0 behavior | Implementer / QA | Next: synthetic provider-after-tool/slow-answer, ownership and extraction reproductions. Freeze exact source and oracles first. |
+| LA-04: reproduce and draft P0 repairs | Implementer / QA | In review: [repair and comparison](LA04_REPAIR.md), [final-response correction](FINAL_RESPONSE_VALIDATION_PR23.md), [ENG/QA handover](ENG_QA_HANDOVER_PR23.md); full suite 623/623 including 84 new cases. No adoption or live acceptance. |
 | LA-05: outbound messages and controls | Implementer / QA | Proposed after LA-04; typed builders, permitted actions and mobile review. |
 | LA-06: inbound media and private gallery | Implementer / QA | Proposed after LA-04; owner, format, quota, retention and real storage receipt. |
 | LA-07: calendar/booking backend | Architect / operator | Blocked on a service/account and approved scopes/cost boundary; no native LINE Calendar CRUD established. |
@@ -34,9 +34,8 @@ does not mean a customer workflow was accepted or deployed.
 
 ## Resume without repeating exploration
 
-Use the [roles and return packet](ROLES.md), then assign only LA-04 with the
-exact allowed files, deterministic fixtures, expected failure, budget and
-independent reviewer. Avoid a multi-feature implementation until the P0 evidence
-is reviewed. Update the tracker with real receipts, preserve failed attempts and
+Use the [roles and return packet](ROLES.md), then review the exact LA-04 draft
+and [evidence](LA04_REPAIR.md). Avoid a multi-feature implementation until the P0
+evidence is reviewed. Update the tracker with real receipts, preserve failed attempts and
 replan only the affected unit. Existing PR21/main/production and Sineid holds
 remain in force. This plan does not authorize a live test, new account or spend.

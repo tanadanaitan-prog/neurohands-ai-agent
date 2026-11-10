@@ -1,0 +1,351 @@
+{
+  "recorded_at_utc": "2026-11-10T14:52:47.530109+00:00",
+  "baseline_commit": "7b686696121b1930619183bd4ace5894b1912609",
+  "branch": "codex/la04-repair-20261110",
+  "adoption_status": "DRAFT_PENDING_ENG_QA",
+  "scope": "synthetic/local source and regression tests; no production or live outcome claim",
+  "environment": {
+    "node": "v24.15.0",
+    "python": "3.14.4",
+    "dependencies": "existing pinned workspace node_modules, linked only into isolated checkouts",
+    "early_baseline_environment_failures_retained": true,
+    "localhost_test_servers": "allowed for full Node suite only"
+  },
+  "full_baseline": {
+    "tests": 539,
+    "pass": 539,
+    "fail": 0,
+    "exit_code": 0,
+    "log": "BASELINE_NPM_TEST_READY.log"
+  },
+  "full_repaired": {
+    "tests": 595,
+    "pass": 595,
+    "fail": 0,
+    "exit_code": 0,
+    "log": "FINAL_NPM_TEST.log"
+  },
+  "focused_repaired": {
+    "tests": 56,
+    "pass": 56,
+    "fail": 0,
+    "exit_code": 0,
+    "log": "LA04_FOCUSED_AFTER.log"
+  },
+  "other_checks": {
+    "npm_run_check": {
+      "exit_code": 0
+    },
+    "planning_guard_tests": {
+      "passed": 17,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "git_diff_check": {
+      "exit_code": 0
+    }
+  },
+  "paired_cases": [
+    {
+      "area": "original response",
+      "cases": 6,
+      "before_pass": 1,
+      "before_fail": 5,
+      "after_pass": 6,
+      "after_fail": 0,
+      "added_negative_cases_without_original_baseline": 11
+    },
+    {
+      "area": "catalog",
+      "cases": 13,
+      "before_pass": 4,
+      "before_fail": 9,
+      "after_pass": 13,
+      "after_fail": 0
+    },
+    {
+      "area": "original profile account scope",
+      "cases": 2,
+      "before_pass": 1,
+      "before_fail": 1,
+      "after_pass": 2,
+      "after_fail": 0
+    },
+    {
+      "area": "document parser and gateway",
+      "cases": 11,
+      "before_pass": 4,
+      "before_fail": 7,
+      "after_pass": 11,
+      "after_fail": 0
+    },
+    {
+      "area": "separate document access",
+      "cases": 6,
+      "before_pass": 3,
+      "before_fail": 3,
+      "after_pass": 6,
+      "after_fail": 0
+    },
+    {
+      "area": "inflight Checking",
+      "cases": 4,
+      "before_state": "initial repair, before LA04-R2",
+      "before_pass": 0,
+      "before_fail": 4,
+      "after_pass": 4,
+      "after_fail": 0
+    },
+    {
+      "area": "profile account existence/identity/active",
+      "cases": 3,
+      "before_state": "initial account-scope guard",
+      "before_pass": 0,
+      "before_fail": 3,
+      "after_pass": 3,
+      "after_fail": 0
+    }
+  ],
+  "independent_review": {
+    "response_and_ordering": {
+      "passed": 21,
+      "failed": 0,
+      "original_probe_resolved": true
+    },
+    "data_and_profile": {
+      "passed": 18,
+      "failed": 0
+    },
+    "documents": {
+      "passed": 17,
+      "failed": 0
+    },
+    "interpretation": "Repeat checks of the same cases, not additional benchmark samples. Technical review does not approve adoption."
+  },
+  "resources": {
+    "actual_model_requests": 0,
+    "actual_LINE_sends": 0,
+    "model_tokens": null,
+    "billed_cost_measurement": null,
+    "CPU_RAM_measurement": null,
+    "real_model_latency": null,
+    "efficiency_savings": null,
+    "successful_recovery_fixture": {
+      "simulated_model_requests": 3,
+      "tool_executions": 1,
+      "maximum_extra_synthesis_requests": 1
+    }
+  },
+  "required_configuration": {
+    "LEGACY_CATALOG_OWNER_CLIENT_ACCOUNT_ID": "UNASSIGNED; blocks catalog until operator verifies one owner for all legacy rows"
+  },
+  "limitations": [
+    "No per-row multi-client catalog support; no migration added/applied",
+    "PDF/OCR/DOCX images/layout/formula recalculation unsupported",
+    "XLSX signature check is not full format/archive security validation; legacy XLS format authenticity unverified",
+    "Real provider authentication/allowance/answer quality and LINE delivery untested",
+    "Separate 60-case agent campaign NOT_RUN; 95-99% target unestablished"
+  ],
+  "artifacts": [
+    {
+      "path": ".env.example",
+      "raw_working_sha256": "a4af8b55374e96d4a625c88f402f073ffc7dd05e336ce610d969cd5500a9e31e"
+    },
+    {
+      "path": "src/server.js",
+      "raw_working_sha256": "19499cf5e2f95a25df1b2556e144416443cf4a418907dcc39f039607d39e1a28"
+    },
+    {
+      "path": "src/lib/catalog-access.js",
+      "raw_working_sha256": "021d0d548d136a0f26c2cf00a1b5e3af0dd5f04718b0f464a0fb4c6cf0282db3"
+    },
+    {
+      "path": "src/lib/document-parser.js",
+      "raw_working_sha256": "be4b2da4e8e296ecb952a0ccdb34218d7733572935c67b29dd1cd66d77d52c12"
+    },
+    {
+      "path": "src/lib/post-tool-response.js",
+      "raw_working_sha256": "e5c20a4fccde0dabb199b77d9ae4d16224e6877b082c3d77ada0505bcd18aded"
+    },
+    {
+      "path": "test/aria-sourcing.test.js",
+      "raw_working_sha256": "7f38786a4bf85ec26b69bad6bd7ae8429b2326996fc4275d6bde4dfaca69e678"
+    },
+    {
+      "path": "test/la04-data-access.test.js",
+      "raw_working_sha256": "ae4c4762de3d0e3f26a0c266d030a35fc2f61de3b0227a8ef7f0865d6fc691b8"
+    },
+    {
+      "path": "test/la04-delivery-order.test.js",
+      "raw_working_sha256": "a314c731e3aa8b387159bb0a5bc0f8f3e5b2b57cf023c06b2a4eac3a379be599"
+    },
+    {
+      "path": "test/la04-document-access.test.js",
+      "raw_working_sha256": "66b2bce3c97ea9397f147f245bd8141a60a59f7fa04afe631dd81518903a15e0"
+    },
+    {
+      "path": "test/la04-documents.test.js",
+      "raw_working_sha256": "7f11b02f18d13d05e5f6a3c4d9d419486b8ecf22e2282758146406a3bd79b588"
+    },
+    {
+      "path": "test/la04-profile-access.test.js",
+      "raw_working_sha256": "c036d1f8af67af5f79efa986cbd9cfd529ce86f012f6d4ef3de6d4f315c35b13"
+    },
+    {
+      "path": "test/la04-response.test.js",
+      "raw_working_sha256": "eba05366798074e1285d67dabedf27b021bc63d71ddc900b0e9c87330e8652ac"
+    }
+  ],
+  "raw_log_manifest": [
+    {
+      "private_task_relative_path": "BASELINE_NPM_TEST.log",
+      "sha256": "bfcfd451a163227a0df70f86c3281897f68b7cb3a52d8ae92cf828dbd11167f2"
+    },
+    {
+      "private_task_relative_path": "BASELINE_NPM_TEST_LOOPBACK.log",
+      "sha256": "e585a7ab549216d4ce9b205d569ea3b13b260bc3b4990c0307e0b7324fe9a286"
+    },
+    {
+      "private_task_relative_path": "BASELINE_NPM_TEST_READY.log",
+      "sha256": "13603a4ea36f813b879d65dc978788eade87888d21a9b8564a80aaa8f19e0337"
+    },
+    {
+      "private_task_relative_path": "data-access/AFTER_CATALOG.log",
+      "sha256": "39911f6aeba271bfc24bfa910a989d466d05a36504554355cccaa9353713b6dc"
+    },
+    {
+      "private_task_relative_path": "data-access/ARIA_FIXTURE_AFTER.log",
+      "sha256": "19c17663651214a967c78d4e704a9de1adc5a3bc1d005945f79b2ee13c32aa2d"
+    },
+    {
+      "private_task_relative_path": "data-access/BASELINE.log",
+      "sha256": "55704f9c3b3e135db782c570182a64cc58e2b82a67bfa8945bf426660701a312"
+    },
+    {
+      "private_task_relative_path": "data-access/DOCUMENT_REVIEW_TESTS.log",
+      "sha256": "2535d9d46b7374c816a5f317911c516945553cca1961967b3a9bd19f393a12a6"
+    },
+    {
+      "private_task_relative_path": "data-access/FINAL_DATA_ACCESS.log",
+      "sha256": "b88b8f5d8fd000757e5b803b7982d4c1f12e892d1171f2956b4a9fa8d353dd2b"
+    },
+    {
+      "private_task_relative_path": "data-access/PROFILE_AFTER.log",
+      "sha256": "1e2aa35e893c19f1d5cda8729b01eb26e0d71d7ab3cade14b184bd8b627beda9"
+    },
+    {
+      "private_task_relative_path": "data-access/PROFILE_BASELINE.log",
+      "sha256": "1ff057ac80b9984d4a281c7b2e0385ae7a4ae58523f1caf03845bbf2c2ea5e85"
+    },
+    {
+      "private_task_relative_path": "DELIVERY_ORDER_AFTER.log",
+      "sha256": "52743ba61de4da4cc3a5a91be4cc8434599948984a36ef9c545a582a41a0df86"
+    },
+    {
+      "private_task_relative_path": "DELIVERY_ORDER_BEFORE.log",
+      "sha256": "6da8c41fd919ffdd5e375fa78418b49af84d85540456f762f8cb8a8377f80104"
+    },
+    {
+      "private_task_relative_path": "DIFF_CHECK_BEFORE_NORMALIZATION.log",
+      "sha256": "b5aa5fb48018857ba345c93722623ba0f66f71277711d82627e6fb1db6c22d7c"
+    },
+    {
+      "private_task_relative_path": "DOCUMENT_TOOL_BASELINE.log",
+      "sha256": "cce26d7fca9ec94c0d9a81b78f258b92f32e8f68433f8e9a3c63f0b63f886586"
+    },
+    {
+      "private_task_relative_path": "DOCUMENT_TOOL_BASELINE_VALID_FIXTURE.log",
+      "sha256": "fe6fe79a3e5df3453e3456f6f0eabcb0e168d249a9b927dd562b2313c88e056d"
+    },
+    {
+      "private_task_relative_path": "documents/after-parser-correction-tests.log",
+      "sha256": "325148070ad5ea75cdefe7f0bcf024c1cf71d631cebe6adf95e7315f47fe6dd6"
+    },
+    {
+      "private_task_relative_path": "documents/after-parser-tests.log",
+      "sha256": "fcb22d28c32d005cbc850a810296ac98ce6861982070e2dfe5c0791c15bd8eef"
+    },
+    {
+      "private_task_relative_path": "documents/baseline-tests.log",
+      "sha256": "671e18386965904cb651155a291170e20feacfb45d69f5bff0851af488754ec4"
+    },
+    {
+      "private_task_relative_path": "documents/existing-parser-regression.log",
+      "sha256": "e6e8962d2be414f136f403e788c9368cb7491876cc2e48341d0e28beef025fe5"
+    },
+    {
+      "private_task_relative_path": "documents/independent-response-order-tests.log",
+      "sha256": "6fc53e12b1f775b25e74dbca0b1a0157c3cca24571028b40cace1de93fb84c7f"
+    },
+    {
+      "private_task_relative_path": "documents/independent-response-tests.log",
+      "sha256": "f1e894bcbc6be7d86a22f5ae0641e006aaf4877520941fa4eecdcf75c50ebe1e"
+    },
+    {
+      "private_task_relative_path": "documents/integrated-documents-tests.log",
+      "sha256": "15291053ae95164dc409532727b2b9bcb18fcebd684014273963936c813ee5c1"
+    },
+    {
+      "private_task_relative_path": "FINAL_NPM_CHECK.log",
+      "sha256": "08a120f3b10838c7020c70df55387752e6e2804a222a696696ac58dfda91d935"
+    },
+    {
+      "private_task_relative_path": "FINAL_NPM_TEST.log",
+      "sha256": "22e30f016f19fb94ed04462c90585cbd6af64fee4fcea2934c6bcd1ac07a0dcc"
+    },
+    {
+      "private_task_relative_path": "LA04_FOCUSED_AFTER.log",
+      "sha256": "e2f47d57e814c6d4dcdb201a4a0539d470668c11cbd8834dd81b81bff520c151"
+    },
+    {
+      "private_task_relative_path": "PLANNING_GUARDS_TEST.log",
+      "sha256": "3780e99db6c97665c66bcfb98c9da50b75959326aac95ac2d1b55dd8cc3da59b"
+    },
+    {
+      "private_task_relative_path": "PROFILE_QA_AFTER.log",
+      "sha256": "633b58c426843cb8a9171b28116b8dd0a0ef5921c0f314a5c6e213b9a58b37c8"
+    },
+    {
+      "private_task_relative_path": "PROFILE_QA_BEFORE.log",
+      "sha256": "920761be89753f25e81162347506abc302b5d8ed15d685423cd8acdaccc0536d"
+    },
+    {
+      "private_task_relative_path": "response/after-attempt1.log",
+      "sha256": "021642903b03e531c6bcde55b640288de891682ac59527aba3ca5c699002e20e"
+    },
+    {
+      "private_task_relative_path": "response/after-final.log",
+      "sha256": "321064b1212c60aa361c1ebbe0be27fc104132edc37ab7a14ef65907dfce8772"
+    },
+    {
+      "private_task_relative_path": "response/after-negative-coverage.log",
+      "sha256": "dea22bbb79ffc0448c475dc3ec3e0503dd7255345f0acd6ea7b1cd1da7cdc924"
+    },
+    {
+      "private_task_relative_path": "response/before.log",
+      "sha256": "93268b19b6d5da68973cc1a803af57621f45f08e64d0d42e159ce729f269fb7c"
+    },
+    {
+      "private_task_relative_path": "response/data-final-independent-tests.log",
+      "sha256": "b1c09c5c0e6c25f52bc15548619d3140cf7cafc190123eab5335731cfc6d3d38"
+    },
+    {
+      "private_task_relative_path": "response/data-independent-probes.log",
+      "sha256": "5dc6bf4fc0af034f39b16f205bb0b66078799a6e6bc9ec1ee691e24fba2769ce"
+    },
+    {
+      "private_task_relative_path": "response/data-independent-tests.log",
+      "sha256": "b5826b8152b79afb09c4d765164b0f644d0f0814fb17a824d4cd6240315dc6df"
+    },
+    {
+      "private_task_relative_path": "response/regression-attempt1.log",
+      "sha256": "a59d16a780aa8570cdc2c9845429807edcdfb29f01fa08ef4f1c4b54709cc5dc"
+    }
+  ],
+  "hash_representation": "Raw task working-file bytes; Git can normalize text newlines. Delivered commit separately identifies canonical source.",
+  "raw_logs_published": false,
+  "production_changes": false,
+  "customer_data_used": false,
+  "Sineid_hold_preserved": true,
+  "releaseAccepted": false
+}

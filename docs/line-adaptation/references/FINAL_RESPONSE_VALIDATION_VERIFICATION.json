@@ -1,0 +1,126 @@
+{
+  "recorded_at_utc": "2026-11-10T16:23:36.525138+00:00",
+  "status": "LOCAL_P2_CORRECTION_DRAFT_PENDING_ENG_QA",
+  "baseline_commit": "857a9d546f8fa9a845999228d80dbdcdfef4ff4b",
+  "tested_application_commit": "8de7c61f2c22699d9dec0dfe9a64ef2557984f13",
+  "scope": "ordinary final text from Gemini and OpenAI-compatible loops; two production expressions; no helper/routing change",
+  "before": {
+    "tests": 28,
+    "pass": 10,
+    "fail": 18,
+    "exit_code": 1
+  },
+  "after": {
+    "tests": 28,
+    "pass": 28,
+    "fail": 0,
+    "exit_code": 0
+  },
+  "full_suite": {
+    "tests": 623,
+    "pass": 623,
+    "fail": 0,
+    "exit_code": 0
+  },
+  "relevant_regressions": {
+    "tests": 116,
+    "pass": 116,
+    "fail": 0,
+    "exit_code": 0
+  },
+  "independent_replay": {
+    "tests": 116,
+    "pass": 116,
+    "fail": 0,
+    "exit_code": 0
+  },
+  "independent_probes": {
+    "scenario_count": 13,
+    "passed": 13,
+    "exit_code": 0,
+    "note": "Separate probe scenarios, not additional unique suite cases"
+  },
+  "source_check": {
+    "command": "npm run check",
+    "exit_code": 0,
+    "releaseAccepted": false
+  },
+  "diff_check": {
+    "initial_formatting_exit": 2,
+    "final_exit": 0,
+    "changed_lines_only_normalization": true
+  },
+  "implementation_attempts": 1,
+  "attempt_limit": 2,
+  "artifacts": [
+    {
+      "path": "src/server.js",
+      "raw_working_sha256": "49e58463511b3acf3174364bab215879e9a18d294c69b14f94561d192bad8cc4"
+    },
+    {
+      "path": "src/lib/post-tool-response.js",
+      "raw_working_sha256": "e5c20a4fccde0dabb199b77d9ae4d16224e6877b082c3d77ada0505bcd18aded"
+    },
+    {
+      "path": "test/pr23-final-validation.test.js",
+      "raw_working_sha256": "d81c334c5756395be0a4dc92f498cd0a714800983f955900001e20faec82b406"
+    }
+  ],
+  "private_logs": [
+    {
+      "path": "DIFF_CHECK_BEFORE_NORMALIZATION.log",
+      "sha256": "a388b29d7f5429c8af9283af2c7d581079082f9c1daf0962cd09cfe03d718d57"
+    },
+    {
+      "path": "FINAL_VALIDATION_AFTER.log",
+      "sha256": "237636d3517bf9cd000c257190c648d725a4f1f45a561b399bf5de671be8a27c"
+    },
+    {
+      "path": "FINAL_VALIDATION_BEFORE.log",
+      "sha256": "df97fe9fd482d1a1c8d710f02e05500b7946ccf267816568f9d308986c5d90df"
+    },
+    {
+      "path": "FINAL_VALIDATION_REGRESSIONS.log",
+      "sha256": "a973d40786421ecab545e3b3a2979c3972d35f8614157be3d81a9af52608f945"
+    },
+    {
+      "path": "FULL_SUITE_AFTER.log",
+      "sha256": "f945e7c9ecc6d320e71112294080221f4f5e6e4fd95de4e6dc5d637fcc87db78"
+    },
+    {
+      "path": "INDEPENDENT_FINAL_CHECK.log",
+      "sha256": "ce590a67954ddf8f7a66ff9053c451d3cd21b3b126f6b343226f0947a4ec1fc4"
+    },
+    {
+      "path": "INDEPENDENT_FOCUSED.log",
+      "sha256": "2cd7b93fa11428e061925c65a897166e6a5e1b2ef09aabd679e37688d21c5135"
+    },
+    {
+      "path": "INDEPENDENT_PROBES.log",
+      "sha256": "3bcae27760fb88afb2e0609bc9fb34dcbbd03b98356d6fb5c8afe6c029e2f4ae"
+    },
+    {
+      "path": "SOURCE_CHECK.log",
+      "sha256": "08a120f3b10838c7020c70df55387752e6e2804a222a696696ac58dfda91d935"
+    }
+  ],
+  "hash_representation": "Raw checked working bytes; Git may normalize text line endings. Canonical application is identified by commit.",
+  "limitations": [
+    "Missing finish metadata remains accepted for legacy compatibility, not evidence of completion",
+    "Existing wrapper fallback before any tool execution unchanged; no wrapper restart after completed tools",
+    "No new moderation claim for all tool-call envelopes",
+    "Live model/LINE behavior and quality untested",
+    "Catalog ownership, configuration, test setup/allowance and formal ENG/QA approval remain pending",
+    "Separate 60-case campaign and 95-99 percent goal remain unestablished"
+  ],
+  "actual_model_requests": 0,
+  "actual_LINE_sends": 0,
+  "database_changes": false,
+  "configuration_changes": false,
+  "real_tokens_cost_CPU_RAM_latency": "NOT_MEASURED",
+  "formal_ENG_QA_approval": false,
+  "primary_sources_checked_20261110": [
+    "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create",
+    "https://googleapis.github.io/js-genai/release_docs/enums/types.FinishReason.html"
+  ]
+}
