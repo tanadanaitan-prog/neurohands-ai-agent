@@ -901,7 +901,7 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
         console.error("Gemini request failed", "invalid_response");
         return { text: null, iterations: iteration, apiFailed: true };
       }
-      return { text, iterations: iteration + 1 };
+      return { text: postToolText("gemini", data), iterations: iteration + 1 };
     }
 
     contents.push({ role: "model", parts });
@@ -960,7 +960,7 @@ async function runOpenAIToolLoop(systemContext, userMessage, toolSchemas, ctx, r
             executionId: admissionContext.executionId ?? runId });
         return { text: postToolText("openai", summary), iterations: iteration + 2 };
       }
-      return { text: (msg.content || "").trim(), iterations: iteration + 1 };
+      return { text: postToolText("openai", data), iterations: iteration + 1 };
     }
     messages.push(msg);
     for (const tc of toolCalls) {
