@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-11-10",
+  "timezone": "Asia/Bangkok",
+  "kind": "static_reviewed_handoff_not_runtime_enforcement",
+  "objective": "Analyze and support continued Neurohands work across GitHub, local folders, Railway, Supabase, APIs, MCP, skills, memory and documentation.",
+  "status": "OPEN_VERIFICATION",
+  "tested_code_commit": "a5693f9efdff63bfffb46cd805e519c583258da1",
+  "live_main_commit": "889c8a4dd86c5dd615e60bc3f0a9e5b428851acf",
+  "candidate_pr": 13,
+  "candidate_merge_approved": false,
+  "approved_guard_prs_merged": [19, 20],
+  "checks": {
+    "local_full_tests": { "passed": 539, "failed": 0, "skipped": 0 },
+    "syntax_and_contracts": "PASS",
+    "web_build": "PASS",
+    "offline_lab": "PASS",
+    "github_isolation_ci": "PASS",
+    "public_version_and_readiness": "PASS_ON_BOTH_RECORDED_DOMAINS",
+    "supabase_metadata_and_health": "PASS_WITH_DOCUMENTED_INFORMATIONAL_ADVISORIES",
+    "railway_to_supabase_exact_url_comparison": "AWAITING_CONFIRMATION",
+    "live_model_and_line_customer_acceptance": "NOT_RUN_BY_THIS_AUDIT",
+    "strict_release_gate": "FAIL_EXPECTED_INCOMPLETE_ACCEPTANCE"
+  },
+  "release_register": { "version": "2026-09-18.10", "pass": 4, "partial": 8, "releaseAccepted": false },
+  "supabase": {
+    "project_ref": "darxiaearohhnxiwhcbs",
+    "expected_base_url": "https://darxiaearohhnxiwhcbs.supabase.co",
+    "applied_versions": ["20260907123525", "20260907130303", "20260908142249", "20260909155146"],
+    "candidate_versions_absent_from_history": ["20260907112335", "20260917103000", "20260917174745", "20260918022110", "20260918161500", "20260918163000"],
+    "document_bucket_public": false,
+    "document_bucket_file_size_limit_bytes": 10485760
+  },
+  "authority": {
+    "read_only_audit_and_branch_repairs": "authorized",
+    "main_merge": "requires_specific_founder_approval",
+    "production_configuration_or_database_mutation": "not_authorized_by_this_audit",
+    "new_spend_or_provider_changes": "not_authorized",
+    "sineid": "on_hold",
+    "grok_communication": "manual_folder_relay_no_computer_chat"
+  },
+  "next_actions": [
+    { "id": "VERIFY_URL", "owner": "Founder/ENG", "state": "pending", "done_when": "Railway SUPABASE_URL is compared with the audited project reference without disclosing keys." },
+    { "id": "REVIEW_SCHEMA", "owner": "Backend/Database", "state": "pending", "done_when": "The candidate's migration/RPC prerequisites have an isolated test and approved rollout sequence." },
+    { "id": "VERIFY_ALLOWANCE", "owner": "ENG/founder", "state": "pending", "done_when": "Current approved model allowance is verified before any live model test; intended automatic-deployment policy is confirmed." },
+    { "id": "PILOT_PROOF", "owner": "QA & Safety", "state": "pending", "depends_on": ["VERIFY_ALLOWANCE"], "done_when": "The reviewed customer checklist proves correct document answers, permitted tools, tenant denial and persisted delivery evidence." },
+    { "id": "RELEASE_REVIEW", "owner": "ENG/founder", "state": "pending", "done_when": "Required acceptance and allowance evidence are reviewed; a specific release is approved." }
+  ],
+  "evidence_directory": "outputs/repo-integrity-20261110",
+  "audit_document": "docs/INTEGRATION_AUDIT_2026-11-10.md",
+  "limitations": [
+    "A static handoff does not implement autonomous continuity, training, tool access or deployment control.",
+    "This audit did not inspect customer content, disclose secrets, run model inference or perform model training.",
+    "Local test success and database health do not prove live customer outcomes.",
+    "All remote observations are dated and must be refreshed before consequential changes."
+  ]
+}

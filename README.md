@@ -1,5 +1,14 @@
 # Neurohands — AI agents for business
 
+**Verified 10 November 2026:** [current integration audit and next steps](docs/INTEGRATION_AUDIT_2026-11-10.md).
+GitHub CI is repaired; the tested application revision passes 539 local tests.
+Railway serves main commit `889c8a4` and both public readiness checks pass.
+Supabase is healthy, but six candidate migrations are absent from its migration
+history. PR #13 remains unmerged. These checks do not prove live AI answers or
+approve the larger platform release. The [continuation snapshot](docs/CONTINUATION_STATE.json)
+records the remaining evidence and approval boundaries; it is a static handoff,
+not an autonomous controller. Older results below retain their original dates.
+
 **Start with the [complete project history and technical map](docs/NEUROHANDS_PROJECT_HISTORY_AND_TECHNICAL_MAP.md).**
 It records the chronology, coding languages, platform ownership, production and
 local data flows, verified tests, limits, incidents, completed work, and open
