@@ -13,6 +13,10 @@ original delivery; the follow-on changes application source in draft only.
 **Review packet:** [ENG/QA handover for PR23](ENG_QA_HANDOVER_PR23.md) links the
 catalog owner procedure, conditional LINE test plan and blank decision record.
 
+**Latest local correction:** [ordinary final-response validation](FINAL_RESPONSE_VALIDATION_PR23.md)
+closes the inherited P2 in draft; 623/623 full tests pass. ENG/QA and live acceptance
+remain pending.
+
 ## Source and architecture decision
 
 Application baseline: `72f7e5f40a9a1e9930d9d099efb891f306bcffa2`; recorded deployed

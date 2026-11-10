@@ -1,11 +1,12 @@
 # PR23 ENG/QA handover — DRAFT
 
-**Latest read-only review:** [2026-11-10 findings and catalog counts](review/PR23_READONLY_REVIEW_20261110.md).
-An inherited P2 ordinary-final validation gap needs ENG/QA disposition; catalog
-ownership and formal approval remain unverified. This update changes no source.
+**Latest draft correction:** [ordinary final-response validation](FINAL_RESPONSE_VALIDATION_PR23.md)
+locally closes the inherited P2, with 623 full-suite tests passing. The earlier
+[read-only review and catalog counts](review/PR23_READONLY_REVIEW_20261110.md)
+remain historical evidence. Catalog ownership and formal approval are unverified.
 
 Review [PR23](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/23).
-Tested application commit: `13d33051bd6d7f72e9a204097f72b1588734d542`.
+Tested application commit: `8de7c61f2c22699d9dec0dfe9a64ef2557984f13`.
 Base: PR22 / `7b686696121b1930619183bd4ace5894b1912609`. This stacked PR is
 not a standalone approved change to main. Review its unadopted base and database
 prerequisites too. No merge, configuration, deployment, live test or spending is
@@ -57,15 +58,16 @@ pass/fail/skipped counts and raw log hash.
 git status --short
 git rev-parse HEAD
 node --version
-node --test test/la04-response.test.js test/la04-delivery-order.test.js test/la04-data-access.test.js test/la04-profile-access.test.js test/la04-documents.test.js test/la04-document-access.test.js
+node --test test/pr23-final-validation.test.js test/la04-response.test.js test/la04-delivery-order.test.js test/la04-data-access.test.js test/la04-profile-access.test.js test/la04-documents.test.js test/la04-document-access.test.js
 npm test
 npm run check
 python -B -m unittest discover -s scripts/tests -p test_line_adaptation.py -v
 python -B scripts/check_project_structure.py --output outputs/pr23-review-structure.json
 ```
 
-Recorded at the tested application revision: **56/56 focused**, **595/595 full**,
-source check exit 0 and **17/17 planning guards**. Baseline was 539/539. Refresh
+Recorded at the tested application revision: **623/623 full**, including all
+**84 new LA-04/final-validation cases**, and source check exit 0. The unchanged
+planning guards previously passed 17/17; original baseline was 539/539. Refresh
 structure/link checks and CI after documentation updates; runtime/test/config
 changes need new relevant verification. Source checking permits inspection of an
 incomplete release register; it does not set `releaseAccepted=true`.

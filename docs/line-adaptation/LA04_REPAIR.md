@@ -1,5 +1,9 @@
 # LA-04 response, ownership and document repair
 
+Later [ordinary final-response correction](FINAL_RESPONSE_VALIDATION_PR23.md)
+closes the review's inherited P2 in draft. The counts and application revision
+below remain the original LA-04 evidence.
+
 Continue with the [ENG/QA handover](ENG_QA_HANDOVER_PR23.md),
 [owner verification](CATALOG_OWNER_VERIFICATION.md) and
 [draft LINE test steps](LINE_ACCEPTANCE_PR23.md). Review/adoption remains pending.

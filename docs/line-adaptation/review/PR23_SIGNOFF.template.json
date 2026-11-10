@@ -2,7 +2,7 @@
   "schema_version": 1,
   "status": "DRAFT_PENDING_ENG_QA",
   "pr": 23,
-  "tested_application_commit": "13d33051bd6d7f72e9a204097f72b1588734d542",
+  "tested_application_commit": "8de7c61f2c22699d9dec0dfe9a64ef2557984f13",
   "reviewed_pr_head": null,
   "ENG": {"reviewer": null, "decision": "PENDING", "at_utc": null, "evidence_reference": null, "conditions": []},
   "QA": {"reviewer": null, "decision": "PENDING", "at_utc": null, "evidence_reference": null, "conditions": []},

@@ -1,5 +1,9 @@
 # PR23 technical review and read-only catalog checks — DRAFT
 
+**Subsequent draft correction:** [final-response validation](../FINAL_RESPONSE_VALIDATION_PR23.md)
+locally closes the inherited P2 described below. This review remains the
+pre-fix record; formal approval and catalog ownership remain unverified.
+
 Reviewed source head: `27f09acd4533d09709e57b0126af502191aab737`.
 Tested application reference: `13d33051bd6d7f72e9a204097f72b1588734d542`.
 PR23 was open, unmerged and draft; GitHub had no formal reviews. The isolation

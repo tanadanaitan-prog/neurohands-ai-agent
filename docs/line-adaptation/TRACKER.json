@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "LINE-ADAPTATION-20261110",
-  "recorded_at_utc": "2026-11-10T14:52:45.298030+00:00",
+  "recorded_at_utc": "2026-11-10T16:23:36.524292+00:00",
   "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
   "source_document_sha256": "a3a34e74ee3d393386305d491a984f81755ce278e2fe25eb8b791d716e39a711",
   "status": "LA04_draft_local_checks_passed_pending_ENG_QA",
@@ -482,9 +482,10 @@
       "attempts_used": 2,
       "evidence": [
         "LA04_REPAIR.md",
-        "references/LA04_VERIFICATION.json"
+        "references/LA04_VERIFICATION.json",
+        "FINAL_RESPONSE_VALIDATION_PR23.md"
       ],
-      "next_action": "ENG/QA review exact draft and unassigned legacy catalog owner; no adoption or live test granted",
+      "next_action": "ENG/QA review updated exact draft and owner/test prerequisites; no automatic adoption or live testing",
       "source_revision": "7b686696121b1930619183bd4ace5894b1912609",
       "iteration_accounting": {
         "scope": "bounded domain units; preserve all earlier failures",
@@ -493,6 +494,17 @@
         "data_attempts_including_profile_QA_correction": 2,
         "follow_on": "LA04-R2: one coordinator ordering correction after response unit stopped",
         "independent_review": "different specialist per implementation domain; technical local review only"
+      },
+      "latest_tested_application_commit": "8de7c61f2c22699d9dec0dfe9a64ef2557984f13",
+      "ordinary_final_validation_followup": {
+        "baseline": "857a9d546f8fa9a845999228d80dbdcdfef4ff4b",
+        "application_commit": "8de7c61f2c22699d9dec0dfe9a64ef2557984f13",
+        "implementation_attempt_limit": 2,
+        "implementation_attempts_used": 1,
+        "technical_result": "local repair and independent QA pass; formal approval pending",
+        "focused_cases": 28,
+        "full_suite_passed": 623,
+        "evidence": "FINAL_RESPONSE_VALIDATION_PR23.md"
       }
     },
     {
