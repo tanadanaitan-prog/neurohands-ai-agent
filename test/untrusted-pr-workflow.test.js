@@ -16,7 +16,7 @@ const {
   workflowHash,
 } = require("../scripts/check-untrusted-pr-workflow");
 
-const WORKFLOW = readFileSync(DEFAULT_WORKFLOW_PATH, "utf8");
+const WORKFLOW = readFileSync(DEFAULT_WORKFLOW_PATH, "utf8").replace(/\r\n?/g, "\n");
 
 function mutate(from, to) {
   assert.equal(WORKFLOW.includes(from), true, `fixture is missing: ${from}`);

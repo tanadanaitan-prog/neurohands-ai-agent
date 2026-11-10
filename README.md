@@ -233,14 +233,61 @@ Useful founder commands are `help`, `brief`, `agents`, `runs`, `events`, `trace:
 Use **Node.js 24** in the repository root:
 
 ```powershell
-npm ci
-Copy-Item .env.example .env
+npm ci --ignore-scripts --no-audit --no-fund
+if (-not (Test-Path -LiteralPath .env)) {
+  Copy-Item -LiteralPath .env.example -Destination .env
+}
 npm run check
 npm test
 npm run build
+npm run lab:check
 ```
 
 Checks and automated tests use simulated external services and can run without real credentials. To run the application, configure `.env` privately, keep `ENABLE_STUDIO=false` for the pilot, then run `npm start`. Observe the spending requirement before enabling live provider calls.
+
+## Repository integrity and work cycle
+
+GitHub records shared commits and reviews; each local folder is a separate working
+copy. Check its branch, commit and unfinished changes before comparing it with
+GitHub. An old local branch is not proof that remote work is missing.
+
+```powershell
+git status --short
+git branch --show-current
+git rev-parse HEAD
+git fetch origin
+```
+
+Preserve unfinished changes. Use an isolated checkout when they overlap a repair;
+do not reset, clean, or overwrite private configuration to force synchronization.
+Local reports and repair checkouts belong under ignored `outputs/`; archived
+handover copies belong under ignored `archivedhandovers/`. Exclusions do not
+remove files already tracked by Git. Keep secrets and customer data out of commits
+and shared reports.
+
+Use this cycle for each bounded task:
+
+1. **Plan:** record the objective, owner, allowed files and measurable acceptance
+   criteria. Identify dependencies and approvals before editing.
+2. **Research and compare:** inspect the current base and candidate, reproduce the
+   issue, and consult version-specific official documentation when needed.
+3. **Implement:** make the smallest repair on a task branch. Preserve unrelated
+   work and keep production changes under the existing approval rules.
+4. **Measure and test:** run the relevant tests first, then the quickstart checks
+   for changes affecting shared runtime behavior. Record the tested commit, exact
+   commands, exit codes, pass/fail/skip counts and any untested paths.
+5. **Review:** compare the diff against the acceptance criteria and have the owning
+   engineer/QA review it. A green isolation probe does not prove the full test
+   suite, web build, live providers or LINE customer workflow passed.
+6. **Release and follow up:** obtain the required approval, verify the actual
+   merged/deployed revision, and check the affected behavior. Never substitute a
+   readiness response or a local mock for a live acceptance test.
+7. **Replan:** record remaining failures and unknowns with a next action and owner.
+   Reuse valid evidence; rerun checks when code, dependencies or environment change.
+
+`lab:check` verifies the offline graph connection without an LLM. Model benchmarks,
+live account checks and production deployment remain separate activities with
+their own data, usage and approval boundaries.
 
 The isolated named-agent workflow laboratory has four package commands:
 

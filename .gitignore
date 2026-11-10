@@ -5,6 +5,8 @@ node_modules/
 !.env.langgraph.example
 .langgraph_api/
 .tmp/
+/outputs/
+/archivedhandovers/
 dist/
 web/dist/
 supabase/.temp/
