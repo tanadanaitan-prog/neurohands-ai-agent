@@ -1,5 +1,26 @@
 # Supabase Phase 1 readiness
 
+## Continue from the current state — 10 November 2026
+
+Start with the [process README](../docs/PROCESS_README.md),
+[current integration audit](../docs/INTEGRATION_AUDIT_2026-11-10.md) and
+[observed schema catalog](catalog/observed-public-schema.json). The sections below
+retain their historical observations; do not treat their row counts or client
+activation state as a fresh query.
+
+The migration history was rechecked on 10 November and still lists exactly
+`20260907123525`, `20260907130303`, `20260908142249`, `20260909155146`.
+Six candidate versions are absent from that history; use the audit's complete
+inventory. A missing history entry does not rule out manual DDL. Do not blanket
+push the migration directory.
+
+For a new database task: record the project/revision and expected result; inspect
+metadata and relevant logs; test the exact change in isolation; obtain the
+applicable approval; verify the result and preserve the evidence. Keep secrets
+and customer records out of README/Notion exports. A saved documentation notebook
+does not apply SQL or approve a migration. The private bucket's recorded limit
+remains 10 MiB unless a later verified approved change supersedes it.
+
 Project `darxiaearohhnxiwhcbs` (`Neurohands - AI Agent`) belongs to the verified destination account's organization. On 2026-09-07 it initially contained eight legacy tables and 131 records, with no agent/document tables or Storage buckets.
 
 ## Applied and verified

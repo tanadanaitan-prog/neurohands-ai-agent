@@ -2,6 +2,9 @@
 
 **Browse the [documentation by topic](docs/README.md)** for current status, operating guides, laboratory work, acceptance controls and preserved source records.
 
+**Continue work with the [process README](docs/PROCESS_README.md):** all 26 package
+commands, prerequisites, expected evidence, local start/stop and platform handoffs.
+
 See the [ordered project and platform map](docs/architecture/PROJECT_STRUCTURE.md) for folder ownership, languages, database groups and the offline Python structure check.
 
 Use the [central knowledge and capability register](docs/KNOWLEDGE_INDEX.md) to

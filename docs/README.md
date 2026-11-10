@@ -15,6 +15,7 @@ registered evidence and recovered-source paths retain their existing locations.
 | Document | Use it for |
 | --- | --- |
 | [Ordered project structure](architecture/PROJECT_STRUCTURE.md) | Folder reading order, platform flow, data catalog and Python checks. |
+| [Process README](PROCESS_README.md) | Every package command, inputs, success evidence, local start/stop and cloud handoffs. |
 | [Central knowledge and capability register](KNOWLEDGE_INDEX.md) | Saved Notion record, plugin/API/skill/memory boundaries and explicit-request updates. |
 | [Integration audit — 10 November 2026](INTEGRATION_AUDIT_2026-11-10.md) | Dated platform checks, boundaries and next actions. |
 | [Continuation snapshot](CONTINUATION_STATE.json) | Recorded revision, pending evidence, owners and approval boundaries. |
