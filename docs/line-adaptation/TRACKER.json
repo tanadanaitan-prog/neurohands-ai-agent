@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "id": "LINE-ADAPTATION-20261110",
-  "recorded_at_utc": "2026-11-10T14:08:39.407597+00:00",
+  "recorded_at_utc": "2026-11-10T14:52:45.298030+00:00",
   "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2",
   "source_document_sha256": "a3a34e74ee3d393386305d491a984f81755ce278e2fe25eb8b791d716e39a711",
-  "status": "planning_and_offline_harness",
+  "status": "LA04_draft_local_checks_passed_pending_ENG_QA",
   "roles": [
     {
       "id": "coordinator",
@@ -465,7 +465,7 @@
     },
     {
       "id": "LA-04",
-      "objective": "Reproduce data-scope and truthful-extraction risks",
+      "objective": "Reproduce and draft response, ownership and document repairs",
       "owner": "implementer",
       "reviewer": "qa",
       "dependencies": [
@@ -476,13 +476,24 @@
         "LINE-19",
         "LINE-20"
       ],
-      "state": "planned",
-      "scope": "future_separately_bounded_work",
+      "state": "in_review",
+      "scope": "draft_code_and_synthetic_tests_only",
       "attempt_limit": 2,
-      "attempts_used": 0,
-      "evidence": [],
-      "next_action": "Read README and define exact success/approval/rollback before execution",
-      "source_revision": "72f7e5f40a9a1e9930d9d099efb891f306bcffa2"
+      "attempts_used": 2,
+      "evidence": [
+        "LA04_REPAIR.md",
+        "references/LA04_VERIFICATION.json"
+      ],
+      "next_action": "ENG/QA review exact draft and unassigned legacy catalog owner; no adoption or live test granted",
+      "source_revision": "7b686696121b1930619183bd4ace5894b1912609",
+      "iteration_accounting": {
+        "scope": "bounded domain units; preserve all earlier failures",
+        "response_attempts": 2,
+        "document_attempts": 2,
+        "data_attempts_including_profile_QA_correction": 2,
+        "follow_on": "LA04-R2: one coordinator ordering correction after response unit stopped",
+        "independent_review": "different specialist per implementation domain; technical local review only"
+      }
     },
     {
       "id": "LA-05",

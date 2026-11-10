@@ -12,6 +12,7 @@ function loadGateway(t) {
   const values = {
     FOUNDER_LINE_ID: "Ufixturefounder", LINE_CHANNEL_ACCESS_TOKEN: "fixture-token", GEMINI_API_KEY: "fixture-key", GEMINI_ENABLED: "true", GEMINI_MODEL: "fixture-gemini",
     FALLBACK_API_KEY: "", SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture", ENABLE_STUDIO: "false",
+    LEGACY_CATALOG_OWNER_CLIENT_ACCOUNT_ID: "1",
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
   for (const [key, value] of Object.entries(values)) process.env[key] = value;

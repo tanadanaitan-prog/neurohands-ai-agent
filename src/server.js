@@ -8,7 +8,9 @@ const crypto = require("crypto");
 const { equalSecret, supabaseHeaders } = require("./lib/security");
 const { createStudioRouter } = require("./platform/router");
 const path = require("node:path");
-const { parseDocument } = require("./lib/document-parser");
+const { parseDocument, documentReadResult } = require("./lib/document-parser");
+const { createLegacyCatalogAccess } = require("./lib/catalog-access");
+const { emptyGeminiFinal, emptyOpenAIFinal, postToolText, POST_TOOL_SYNTHESIS_INSTRUCTION } = require("./lib/post-tool-response");
 const { createWebhookInbox, currentWebhookEventId, encryptionKey } = require("./lib/webhook-inbox");
 const { createRunMetrics, withRunMetrics, beginModelAttempt, finishModelAttempt, finalizeRunMetrics, formatRunMetrics, recordProviderBlocked } = require("./lib/model-metrics");
 const { readProviderFailure, createProviderFailures } = require("./lib/provider-failures");
@@ -346,8 +348,9 @@ async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.to
     const request = buildOpenAICompatibleRequest({ baseUrl: base, model, body: bodyExtra });
     const data = await requestModelJson("Fallback LLM", request.url,
       { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` },
-      request.body, model, (data) => usableFallbackMessage(data, allowToolCalls), context);
-    if (usableFallbackMessage(data, allowToolCalls)) {
+      request.body, model, (data) => usableFallbackMessage(data, allowToolCalls) ||
+        (context.recoverEmptyFinal === true && emptyOpenAIFinal(data)), context);
+    if (usableFallbackMessage(data, allowToolCalls) || (context.recoverEmptyFinal === true && emptyOpenAIFinal(data))) {
       cachedFallbackModel = model;
       return data;
     }
@@ -567,6 +570,10 @@ async function getAgent(department) {
   };
 }
 
+// The legacy catalog has no row-level tenant column. Its single owner must be
+// explicitly configured; an unset owner denies catalog access by default.
+const catalogAccess = createLegacyCatalogAccess({ db, ownerAccountId: process.env.LEGACY_CATALOG_OWNER_CLIENT_ACCOUNT_ID });
+
 // ---------- TOOLS ----------
 const TOOL_SCHEMAS = {
   get_client_profile: { name: "get_client_profile", description: "Get current client profile and company info.", parameters: { type: "object", properties: {} } },
@@ -605,8 +612,12 @@ const TOOL_HANDLERS = {
   async get_client_profile(ctx) {
     if (!ctx.clientAccountId) return { found: false, message: "No client account linked." };
     const acc = (await db(`client_accounts?id=eq.${encodeURIComponent(ctx.clientAccountId)}&select=*`))?.[0];
+    if (!acc || String(acc.id) !== String(ctx.clientAccountId) || acc.active === false) {
+      return { found: false, message: "Active client account was not found." };
+    }
     const client = await findClient(ctx.lineUserId);
-    return { found: true, client_account: acc || null, line_client: client };
+    const scopedClient = client && String(client.client_account_id) === String(ctx.clientAccountId) ? client : null;
+    return { found: true, client_account: acc || null, line_client: scopedClient };
   },
   async get_recent_orders(ctx) {
     const orders = await getClientOrders(ctx, 5);
@@ -620,14 +631,10 @@ const TOOL_HANDLERS = {
     return matched.length ? { found: true, orders: matched } : { found: false, recent_orders: orders.slice(0, 5) };
   },
   async get_product_info(ctx, args) {
-    let rows = await db("glass_types?active=eq.true&select=product_code,glass_name,thickness_mm,price_per_sqft&order=product_code&limit=100");
-    const q = String(args?.query || "").toLowerCase().trim();
-    if (q) rows = (rows || []).filter((r) => String(r.product_code || "").toLowerCase().includes(q) || String(r.glass_name || "").toLowerCase().includes(q));
-    return { found: Boolean(rows?.length), products: rows || [] };
+    return catalogAccess.products(ctx, args);
   },
-  async get_edging_info() {
-    const rows = await db("edging_services?active=eq.true&select=service_code,service_name,price_per_sqft,price_rule");
-    return { found: Boolean(rows?.length), services: rows || [] };
+  async get_edging_info(ctx) {
+    return catalogAccess.edging(ctx);
   },
   async get_lead_time(ctx, args) {
     const defaultLead = await getSetting("default_lead_time_days", "7");
@@ -693,10 +700,7 @@ const TOOL_HANDLERS = {
     const code = String(args?.doc_code || "").toUpperCase().trim();
     if (!code || !ctx.clientAccountId) return { found: false, error: "Document not found." };
     const rows = await db(`client_documents?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&department=eq.${encodeURIComponent(ctx.department)}&doc_code=eq.${encodeURIComponent(code)}&select=*`);
-    const doc = rows?.[0];
-    if (!doc) return { found: false, error: "Document not found." };
-    if (!["parsed", "partial"].includes(doc.parsed_status)) return { found: true, readable: false, doc_code: doc.doc_code, parsed_status: doc.parsed_status, error: "Document content has not been successfully extracted." };
-    return { found: true, readable: true, doc_code: doc.doc_code, file_name: doc.file_name, parsed_status: doc.parsed_status, extraction_complete: doc.parsed_summary?.extraction_complete === true, content: doc.parsed_summary };
+    return documentReadResult(rows?.[0]);
   },
 };
 
@@ -863,7 +867,8 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
     const data = await requestModelJson("Gemini", request.url,
       { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL, (data) => {
         const parts = geminiParts(data);
-        return parts && parts.some((part) => part.functionCall || part.text?.trim());
+        return parts && (parts.some((part) => part.functionCall || part.text?.trim()) ||
+          (iteration > 0 && !ctx.toolFailed && emptyGeminiFinal(data)));
       }, {
         ...admissionContext,
         lane: admissionContext.lane || "frontline",
@@ -881,6 +886,18 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
     if (!functionCalls.length) {
       const text = parts.map((p) => p.text).filter(Boolean).join("\n").trim();
       if (!text) {
+        if (iteration > 0 && !ctx.toolFailed && emptyGeminiFinal(data)) {
+          const summaryRequest = buildGeminiRequest({ model: GEMINI_MODEL, systemInstruction: systemContext,
+            contents: contents.concat({ role: "user", parts: [{ text: POST_TOOL_SYNTHESIS_INSTRUCTION }] }),
+            generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }, tools: [] });
+          const summary = await requestModelJson("Gemini", summaryRequest.url,
+            { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, summaryRequest.body, GEMINI_MODEL,
+            data => Boolean(postToolText("gemini", data)),
+            { ...admissionContext, lane: admissionContext.lane || "frontline", phase: "plain", step: iteration,
+              executionId: admissionContext.executionId ?? runId });
+          const summaryText = postToolText("gemini", summary);
+          return { text: summaryText, iterations: iteration + 2, apiFailed: !summaryText };
+        }
         console.error("Gemini request failed", "invalid_response");
         return { text: null, iterations: iteration, apiFailed: true };
       }
@@ -924,12 +941,27 @@ async function runOpenAIToolLoop(systemContext, userMessage, toolSchemas, ctx, r
       phase: "tool",
       step: iteration,
       executionId: admissionContext.executionId ?? runId,
+      recoverEmptyFinal: iteration > 0 && !ctx.toolFailed,
     });
     if (!data) return { text: null, iterations: iteration };
     const msg = data?.choices?.[0]?.message;
     if (!msg) return { text: null, iterations: iteration };
     const toolCalls = msg.tool_calls || [];
-    if (!toolCalls.length) return { text: (msg.content || "").trim(), iterations: iteration + 1 };
+    if (!toolCalls.length) {
+      if (iteration > 0 && !ctx.toolFailed && emptyOpenAIFinal(data)) {
+        const model = cachedFallbackModel;
+        const summaryRequest = buildOpenAICompatibleRequest({ baseUrl: fallbackBase(), model,
+          body: { temperature: 0.2, max_tokens: 1024,
+            messages: messages.concat({ role: "user", content: POST_TOOL_SYNTHESIS_INSTRUCTION }) } });
+        const summary = await requestModelJson("Fallback LLM", summaryRequest.url,
+          { "Content-Type": "application/json", Authorization: `Bearer ${FALLBACK_API_KEY}` }, summaryRequest.body,
+          model, value => Boolean(postToolText("openai", value)),
+          { ...admissionContext, lane: admissionContext.lane || "frontline", phase: "plain", step: iteration,
+            executionId: admissionContext.executionId ?? runId });
+        return { text: postToolText("openai", summary), iterations: iteration + 2 };
+      }
+      return { text: (msg.content || "").trim(), iterations: iteration + 1 };
+    }
     messages.push(msg);
     for (const tc of toolCalls) {
       const name = tc.function?.name;
@@ -1044,9 +1076,16 @@ async function getOrderStatusText(lineUserId) {
   return `📦 Recent orders\n\n${formatOrders(orders)}`;
 }
 
-async function getProductText() {
-  const glass = await db("glass_types?active=eq.true&select=product_code,glass_name,thickness_mm,price_per_sqft&order=product_code&limit=30");
-  const edging = await db("edging_services?active=eq.true&select=service_code,service_name,price_per_sqft&limit=20");
+async function getProductText(lineUserId) {
+  const bindings = await getBindings(lineUserId);
+  const binding = bindings[0];
+  if (!binding) return "Please activate first.\n\nTap GET STARTED or send your activation code.";
+  const ctx = { clientAccountId: binding.client_account_id, lineUserId, department: binding.department };
+  const productResult = await catalogAccess.products(ctx, {}, 30);
+  if (productResult.error) return productResult.error;
+  const edgingResult = await catalogAccess.edging(ctx, 20);
+  if (edgingResult.error) return edgingResult.error;
+  const glass = productResult.products, edging = edgingResult.services;
   const g = (glass || []).map((x) => `${x.product_code} | ${x.glass_name} ${x.thickness_mm || ""}mm | ${x.price_per_sqft} THB/sqft`).join("\n");
   const e = (edging || []).map((x) => `${x.service_code} | ${x.service_name} | ${x.price_per_sqft ?? "quote"} THB/sqft`).join("\n");
   return `🧾 Products\n\n${g || "No products loaded."}\n\nEdging\n\n${e || "No edging services loaded."}`;
@@ -1071,7 +1110,7 @@ async function handlePostback(event) {
 
   if (menu === "updates") return send(await getSetting("public_updates", "No public updates yet."));
   if (menu === "order_status") return send(await getOrderStatusText(userId));
-  if (menu === "products") return send(await getProductText());
+  if (menu === "products") return send(await getProductText(userId));
   if (menu === "lead_time") return send(`⏱ Lead time\n\nDefault lead time: ${await getSetting("default_lead_time_days", "7")} days.\n\nFor order-specific lead time, ask with your order number.\n\nExample:\nCheck order PO12345`);
   if (menu === "quote") return send("📐 Quotation\n\nPlease send: product, size (W × H cm), quantity.\n\nAria will provide standard rates; the sales team confirms the formal quote.");
   if (menu === "support") return send("🛠 Support\n\nDescribe your issue and include the order number if possible.\n\nExample:\nOrder PO12345 glass cracked on delivery.");
@@ -1094,15 +1133,25 @@ async function generalConcierge(text, admissionContext = {}) {
 
 async function respondAgentWithRace(event, ctx, userText, agent, runner = runAgent) {
   let replied = false;
+  let runnerCompleted = false;
+  let checkingDelivery = Promise.resolve();
   const timeout = setTimeout(async () => {
-    if (!replied) { replied = true; try { await replyToLine(event.replyToken, "⏳ Checking..."); } catch { console.error("Checking reply was not delivered"); } }
+    if (!replied) {
+      replied = true;
+      checkingDelivery = (async () => {
+        try { await replyToLine(event.replyToken, "⏳ Checking..."); }
+        catch { console.error("Checking reply was not delivered"); }
+      })();
+      await checkingDelivery;
+    }
   }, 2500);
 
   try {
     const finalText = await runner(ctx, userText, agent);
+    runnerCompleted = true;
     clearTimeout(timeout);
     if (!replied) { replied = true; await replyToLine(event.replyToken, finalText); }
-    else await pushToLine(event.source.userId, finalText);
+    else { await checkingDelivery; await pushToLine(event.source.userId, finalText); }
 
     await logMessage({ line_user_id: event.source.userId, direction: "out", text_content: finalText, answered_by: ctx.answeredBy || `agent:${ctx.agentCode || ctx.department}`, status: "sent" });
     if (ctx.answeredBy === "jarvis" && ctx.runId && ctx.runStatus === "completed") {
@@ -1116,6 +1165,19 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
       throw error;
     }
   } catch (error) {
+    // Only a runner failure before the final send gets a terminal notice. A
+    // failed/uncertain final delivery must never cause an automatic second send.
+    if (!runnerCompleted) {
+      clearTimeout(timeout);
+      ctx.runStatus = "error";
+      try {
+        const terminalText = C06_DATABASE_DEGRADED_RESPONSE;
+        if (!replied) { replied = true; await replyToLine(event.replyToken, terminalText); }
+        else { await checkingDelivery; await pushToLine(event.source.userId, terminalText); }
+        await logMessage({ line_user_id: event.source.userId, direction: "out", text_content: terminalText,
+          answered_by: ctx.answeredBy || `agent:${ctx.agentCode || ctx.department}`, status: "sent" });
+      } catch { console.error("Terminal failure notice delivery or evidence was not confirmed"); }
+    }
     // An undelivered operator answer must not be replayed as successful conversation history.
     if (ctx.answeredBy === "jarvis" && ctx.runId && ctx.runStatus === "completed") {
       try {
