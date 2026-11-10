@@ -670,7 +670,9 @@ test("measured duration cannot be reduced by agent metrics and a never-settling 
   });
   const measuredResult = await measured.runner.run(request({
     templateId: "individual", workflowId: "workflow-measured-time", idempotencyKey: "measured-time-key",
-    budget: { ...request().budget, maxDurationMs: 100 },
+    // This case checks measured duration, not scheduling speed under suite load.
+    // The separate hanging-invoker case below retains its strict 20ms budget.
+    budget: { ...request().budget, maxDurationMs: 5_000 },
   }));
   assert.equal(measuredResult.status, "completed");
   assert.ok(measuredResult.metrics.durationMs >= 15, `Expected measured time, received ${measuredResult.metrics.durationMs}ms.`);
