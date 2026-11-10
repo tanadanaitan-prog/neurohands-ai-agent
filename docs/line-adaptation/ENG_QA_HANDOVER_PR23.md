@@ -1,5 +1,9 @@
 # PR23 ENG/QA handover — DRAFT
 
+**Latest read-only review:** [2026-11-10 findings and catalog counts](review/PR23_READONLY_REVIEW_20261110.md).
+An inherited P2 ordinary-final validation gap needs ENG/QA disposition; catalog
+ownership and formal approval remain unverified. This update changes no source.
+
 Review [PR23](https://github.com/tanadanaitan-prog/neurohands-ai-agent/pull/23).
 Tested application commit: `13d33051bd6d7f72e9a204097f72b1588734d542`.
 Base: PR22 / `7b686696121b1930619183bd4ace5894b1912609`. This stacked PR is
