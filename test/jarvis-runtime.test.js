@@ -20,6 +20,8 @@ function fixture(t, overrides = {}) {
     WEBHOOK_ENCRYPTION_KEY: Buffer.alloc(32, 8).toString("base64"),
     SUPABASE_URL: "https://jarvis-database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture-only",
     GEMINI_ENABLED: "false", GEMINI_API_KEY: PRIVATE, GEMINI_MODEL: "fixture-gemini",
+    GEMINI_MODELS: "", GEMINI_FALLBACK_MODELS: "",
+    MODEL_TIMEOUT_MS: "", SUPABASE_TIMEOUT_MS: "", PROVIDER_FAILURE_TTL_MS: "",
     FALLBACK_PROVIDER: "openrouter", FALLBACK_API_KEY: PRIVATE,
     FALLBACK_BASE_URL: "https://jarvis-model.invalid", FALLBACK_MODELS: "fixture-model:free", FALLBACK_MODEL: "",
     FOUNDER_LINE_ID: "", JARVIS_ACTIVATION_CODE: "", NEUROHANDS_API_KEY: PRIVATE, CRON_SECRET: "",

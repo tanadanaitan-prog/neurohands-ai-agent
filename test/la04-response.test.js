@@ -10,6 +10,8 @@ const tool = { name: "fixture_write", parameters: { type: "object", properties: 
 
 function gatewayFixture(t, overrides = {}) {
   const values = { GEMINI_ENABLED: "true", GEMINI_MODEL: "fixture", GEMINI_API_KEY: "synthetic-key",
+    GEMINI_MODELS: "", GEMINI_FALLBACK_MODELS: "",
+    MODEL_TIMEOUT_MS: "", SUPABASE_TIMEOUT_MS: "", PROVIDER_FAILURE_TTL_MS: "",
     FALLBACK_API_KEY: "synthetic-key", FALLBACK_BASE_URL: "https://fixture-model.invalid",
     FALLBACK_MODELS: "fixture-one,fixture-two", FALLBACK_MODEL: "", ENABLE_STUDIO: "false",
     SOFTWARE_ADMISSION_ENABLED: "false", SUPABASE_URL: "https://fixture-db.invalid", SUPABASE_SERVICE_KEY: "synthetic-key", ...overrides };

@@ -162,13 +162,10 @@ function fallbackModels() {
 }
 
 function geminiModels() {
-  const primary = String(GEMINI_MODEL || "gemini-2.5-flash").split(",").map((s) => s.trim()).filter(Boolean);
-  const extras = `${GEMINI_MODELS || ""},${GEMINI_FALLBACK_MODELS || ""}`
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const combined = primary.concat(extras.filter((m) => !primary.includes(m)));
-  return combined.length ? combined : ["gemini-2.5-flash"];
+  const combined = [GEMINI_MODEL || "gemini-2.5-flash", GEMINI_MODELS, GEMINI_FALLBACK_MODELS]
+    .flatMap((raw) => String(raw || "").split(",").map((s) => s.trim()).filter(Boolean));
+  const unique = [...new Set(combined)];
+  return unique.length ? unique : ["gemini-2.5-flash"];
 }
 
 let cachedGeminiModel = null;
