@@ -16,8 +16,18 @@ function hasReadableContent(summary) {
     || (Array.isArray(summary.headers) && summary.headers.some(valueRead)) || rowsRead(summary.sample);
 }
 
+function isFreshRecord(row, nowMs = Date.now()) {
+  if (!row || row.expires_at == null) return true;
+  const ts = Date.parse(row.expires_at);
+  return Number.isNaN(ts) || ts > nowMs;
+}
+
 function documentReadResult(doc) {
   if (!doc) return { found: false, error: "Document not found." };
+  if (!isFreshRecord(doc) || !isFreshRecord(doc.parsed_summary)) {
+    return { found: true, readable: false, expired: true, doc_code: doc.doc_code,
+      error: "Document has expired and requires fresh confirmation from the team." };
+  }
   const summary = doc.parsed_summary;
   const extractionComplete = doc.parsed_status === "parsed" && summary?.extraction_complete === true;
   if (!["parsed", "partial"].includes(doc.parsed_status) || !hasReadableContent(summary)) {
@@ -111,4 +121,4 @@ async function parseDocument(fileName, mime, buffer) {
   }
 }
 
-module.exports = { parseDocument, documentReadResult };
+module.exports = { parseDocument, documentReadResult, isFreshRecord };

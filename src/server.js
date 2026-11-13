@@ -8,7 +8,7 @@ const crypto = require("crypto");
 const { equalSecret, supabaseHeaders } = require("./lib/security");
 const { createStudioRouter } = require("./platform/router");
 const path = require("node:path");
-const { parseDocument, documentReadResult } = require("./lib/document-parser");
+const { parseDocument, documentReadResult, isFreshRecord } = require("./lib/document-parser");
 const { createLegacyCatalogAccess } = require("./lib/catalog-access");
 const { emptyGeminiFinal, emptyOpenAIFinal, postToolText, POST_TOOL_SYNTHESIS_INSTRUCTION } = require("./lib/post-tool-response");
 const { createWebhookInbox, currentWebhookEventId, encryptionKey } = require("./lib/webhook-inbox");
@@ -41,6 +41,7 @@ const {
   issueMandatoryAgentRunAuditReceipt,
   scheduleOptionalTraceAfterAudit,
 } = require("./lib/optional-trace-runtime");
+const telemetry = require("./observability/sentry");
 
 const C06_DATABASE_DEGRADED_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
 const C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID).message;
@@ -54,6 +55,8 @@ const {
   GEMINI_API_KEY,
   GEMINI_ENABLED = "true",
   GEMINI_MODEL = "gemini-2.5-flash",
+  GEMINI_MODELS = "",
+  GEMINI_FALLBACK_MODELS = "",
   JARVIS_ACTIVATION_CODE = "",
   FOUNDER_LINE_ID = "",
   NEUROHANDS_API_KEY = "",
@@ -78,6 +81,7 @@ const productionAdmission = createProductionAdmission({
   principalResolver: modelAdmissionContexts.resolvePrincipal,
 });
 const agentApiIdempotency = createAgentApiIdempotency({ db });
+const sentry = telemetry.createSentry({ env: process.env });
 
 const app = express();
 app.use("/webhook", express.raw({ type: "*/*", limit: "1mb" }));
@@ -135,6 +139,17 @@ function fallbackModels() {
   ];
 }
 
+function geminiModels() {
+  const primary = String(GEMINI_MODEL || "gemini-2.5-flash").split(",").map((s) => s.trim()).filter(Boolean);
+  const extras = `${GEMINI_MODELS || ""},${GEMINI_FALLBACK_MODELS || ""}`
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const combined = primary.concat(extras.filter((m) => !primary.includes(m)));
+  return combined.length ? combined : ["gemini-2.5-flash"];
+}
+
+let cachedGeminiModel = null;
 let cachedFallbackModel = null;
 const providerFailures = createProviderFailures();
 
@@ -337,6 +352,40 @@ async function requestModelJson(provider, url, headers, body, model, usable = ()
     throw error;
   }
   return null;
+}
+
+async function callGeminiGenerateContent({
+  systemInstruction,
+  contents,
+  generationConfig,
+  tools,
+  usable = () => true,
+  context = {},
+}) {
+  const models = (cachedGeminiModel ? [cachedGeminiModel] : [])
+    .concat(geminiModels().filter((m) => m !== cachedGeminiModel));
+  let lastData = null;
+  for (const model of models) {
+    const reqOpts = { model, systemInstruction, contents, generationConfig };
+    if (tools !== undefined) reqOpts.tools = tools;
+    const request = buildGeminiRequest(reqOpts);
+    const data = await requestModelJson(
+      "Gemini",
+      request.url,
+      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+      request.body,
+      model,
+      usable,
+      context
+    );
+    lastData = data;
+    if (data !== null && usable(data)) {
+      cachedGeminiModel = model;
+      return data;
+    }
+    if (providerFailures.get("gemini")) return null;
+  }
+  return lastData;
 }
 
 async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.tools?.length), context = {}) {
@@ -693,8 +742,14 @@ const TOOL_HANDLERS = {
   },
   async list_documents(ctx) {
     if (!ctx.clientAccountId) return { documents: [] };
-    const rows = await db(`client_documents?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&department=eq.${encodeURIComponent(ctx.department)}&select=doc_code,department,file_name,parsed_status,row_count,created_at&order=created_at.desc&limit=10`);
-    return { documents: rows || [] };
+    const rows = await db(`client_documents?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&department=eq.${encodeURIComponent(ctx.department)}&select=*&order=created_at.desc&limit=10`);
+    const fresh = (r) => !r || r.expires_at == null || Number.isNaN(Date.parse(r.expires_at)) || Date.parse(r.expires_at) > Date.now();
+    const documents = (rows || [])
+      .filter((doc) => fresh(doc) && fresh(doc.parsed_summary))
+      .map(({ doc_code, department, file_name, parsed_status, row_count, created_at }) => ({
+        doc_code, department, file_name, parsed_status, row_count, created_at,
+      }));
+    return { documents };
   },
   async read_document(ctx, args) {
     const code = String(args?.doc_code || "").toUpperCase().trim();
@@ -712,7 +767,7 @@ async function executeToolWithLog(ctx, runId, toolName, args) {
   else if (!TOOL_HANDLERS[toolName]) { output = { error: `Tool ${toolName} not found.` }; status = "missing_tool"; }
   else {
     try {
-      const scopedTools = ["get_client_profile", "get_recent_orders", "get_order_status", "remember_customer", "recall_customer", "create_task", "list_tasks", "list_documents", "read_document"];
+      const scopedTools = ["get_client_profile", "get_recent_orders", "get_order_status", "get_product_info", "get_edging_info", "remember_customer", "recall_customer", "create_task", "list_tasks", "list_documents", "read_document"];
       if (scopedTools.includes(toolName) && (!ctx.clientAccountId || !ctx.lineUserId)) throw new Error("An activated client is required");
       output = await TOOL_HANDLERS[toolName](ctx, args || {});
       if (output?.error) status = "error";
@@ -771,19 +826,16 @@ async function askAI(systemContext, userMessage, admissionContext = {}) {
     authority: admissionContext.authority || null,
   };
   if (geminiConfigured()) {
-    const request = buildGeminiRequest({
-      model: GEMINI_MODEL,
+    const data = await callGeminiGenerateContent({
       systemInstruction: systemContext,
       contents: [{ role: "user", parts: [{ text: userMessage }] }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+      usable: (data) => {
+        const parts = geminiParts(data);
+        return parts && !parts.some((part) => part.functionCall) && parts.some((part) => part.text?.trim());
+      },
+      context,
     });
-    const data = await requestModelJson("Gemini", request.url,
-      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, {
-        ...request.body,
-      }, GEMINI_MODEL, (data) => {
-      const parts = geminiParts(data);
-      return parts && !parts.some((part) => part.functionCall) && parts.some((part) => part.text?.trim());
-    }, context);
     const parts = geminiParts(data);
     const text = parts?.map((part) => part.text).filter(Boolean).join("\n").trim();
     if (text && !parts.some((part) => part.functionCall)) return text;
@@ -794,7 +846,7 @@ async function askAI(systemContext, userMessage, admissionContext = {}) {
 
 // ---------- AGENT RUNTIME ----------
 async function loadMemories(ctx) {
-  if (!ctx.clientAccountId || !ctx.lineUserId) return [];
+  if (!ctx?.clientAccountId || !ctx?.lineUserId) return [];
   return (await db(`agent_memory?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&line_user_id=eq.${encodeURIComponent(ctx.lineUserId)}&active=eq.true&select=memory_type,content&order=created_at.desc&limit=5`)) || [];
 }
 
@@ -855,27 +907,24 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
   const maxIterations = 5;
 
   while (iteration < maxIterations) {
-    const request = buildGeminiRequest({
-      model: GEMINI_MODEL,
+    const data = await callGeminiGenerateContent({
       systemInstruction: systemContext,
       contents,
       generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
       tools,
-    });
-    const body = request.body;
-
-    const data = await requestModelJson("Gemini", request.url,
-      { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, body, GEMINI_MODEL, (data) => {
+      usable: (data) => {
         const parts = geminiParts(data);
         return parts && (parts.some((part) => part.functionCall || part.text?.trim()) ||
           (iteration > 0 && !ctx.toolFailed && emptyGeminiFinal(data)));
-      }, {
+      },
+      context: {
         ...admissionContext,
         lane: admissionContext.lane || "frontline",
         phase: "tool",
         step: iteration,
         executionId: admissionContext.executionId ?? runId,
-      });
+      },
+    });
     const parts = geminiParts(data);
     if (!parts) {
       if (data !== null) console.error("Gemini request failed", "invalid_response");
@@ -887,14 +936,15 @@ async function askGeminiWithTools(systemContext, userMessage, tools, ctx, runId,
       const text = parts.map((p) => p.text).filter(Boolean).join("\n").trim();
       if (!text) {
         if (iteration > 0 && !ctx.toolFailed && emptyGeminiFinal(data)) {
-          const summaryRequest = buildGeminiRequest({ model: GEMINI_MODEL, systemInstruction: systemContext,
+          const summary = await callGeminiGenerateContent({
+            systemInstruction: systemContext,
             contents: contents.concat({ role: "user", parts: [{ text: POST_TOOL_SYNTHESIS_INSTRUCTION }] }),
-            generationConfig: { temperature: 0.2, maxOutputTokens: 1024 }, tools: [] });
-          const summary = await requestModelJson("Gemini", summaryRequest.url,
-            { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY }, summaryRequest.body, GEMINI_MODEL,
-            data => Boolean(postToolText("gemini", data)),
-            { ...admissionContext, lane: admissionContext.lane || "frontline", phase: "plain", step: iteration,
-              executionId: admissionContext.executionId ?? runId });
+            generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+            tools: [],
+            usable: data => Boolean(postToolText("gemini", data)),
+            context: { ...admissionContext, lane: admissionContext.lane || "frontline", phase: "plain", step: iteration,
+              executionId: admissionContext.executionId ?? runId },
+          });
           const summaryText = postToolText("gemini", summary);
           return { text: summaryText, iterations: iteration + 2, apiFailed: !summaryText };
         }
@@ -1131,7 +1181,7 @@ async function generalConcierge(text, admissionContext = {}) {
   return reply || "Thank you for contacting Neurohands.\n\nIf you have an activation code, send it to activate your agent.";
 }
 
-async function respondAgentWithRace(event, ctx, userText, agent, runner = runAgent) {
+async function respondAgentWithRace(event, ctx, userText, agent, runner = runAgent, raceDelayMs = 2500) {
   let replied = false;
   let runnerCompleted = false;
   let checkingDelivery = Promise.resolve();
@@ -1144,7 +1194,7 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
       })();
       await checkingDelivery;
     }
-  }, 2500);
+  }, raceDelayMs);
 
   try {
     const finalText = await runner(ctx, userText, agent);
@@ -1153,7 +1203,15 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
     if (!replied) { replied = true; await replyToLine(event.replyToken, finalText); }
     else { await checkingDelivery; await pushToLine(event.source.userId, finalText); }
 
-    await logMessage({ line_user_id: event.source.userId, direction: "out", text_content: finalText, answered_by: ctx.answeredBy || `agent:${ctx.agentCode || ctx.department}`, status: "sent" });
+    await logMessage({
+      line_user_id: event.source.userId,
+      direction: "out",
+      text_content: finalText,
+      answered_by: ctx.answeredBy || `agent:${ctx.agentCode || ctx.department}`,
+      status: "sent",
+      ...(ctx.clientAccountId != null ? { client_account_id: ctx.clientAccountId } : {}),
+      ...(ctx.runId != null ? { run_id: ctx.runId } : {}),
+    });
     if (ctx.answeredBy === "jarvis" && ctx.runId && ctx.runStatus === "completed") {
       const delivered = await db(`agent_runs?id=eq.${ctx.runId}`, { method: "PATCH", headers: { Prefer: "return=representation" },
         body: { delivered_at: new Date().toISOString() } });
@@ -1258,7 +1316,7 @@ async function handleMessage(event) {
     const link = `${PUBLIC_BASE}/upload?t=${makeUploadToken(bindings[0].client_account_id, department, lineUserId)}`;
     const msg = `📤 Secure upload for your files (Excel, Word, CSV):\n${link}\n\nValid 7 days. Files are stored only under your company folder.`;
     await replyToLine(event.replyToken, msg);
-    await logMessage({ line_user_id: lineUserId, direction: "out", text_content: "upload link sent", answered_by: "portal", status: "sent" });
+    await logMessage({ line_user_id: lineUserId, direction: "out", text_content: "upload link sent", answered_by: "portal", status: "sent", ...(bindings[0]?.client_account_id != null ? { client_account_id: bindings[0].client_account_id } : {}) });
     return;
   }
 
@@ -2121,6 +2179,7 @@ app.get("/ready", asyncRoute(async (_, res) => {
   };
   res.status(ready ? 200 : 503).json(result);
 }));
+app.use(sentry.middleware);
 app.use((error, req, res, next) => {
   if (res.headersSent) return next(error);
   const status = error.type === "entity.too.large" ? 413 : error.type === "entity.parse.failed" ? 400 : 503;
@@ -2136,7 +2195,7 @@ if (require.main === module) {
     const deadline = setTimeout(() => process.exit(0), 20000); deadline.unref();
     const stopped = webhookInbox.stop();
     const closed = new Promise(resolve => server.close(resolve));
-    Promise.allSettled([stopped, closed]).then(() => process.exit(0));
+    Promise.allSettled([stopped, closed, sentry.close(2000)]).then(() => process.exit(0));
   });
 }
-module.exports = { loadMemories, getAgentCard, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, requestModelJson, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent, modelExecutionIdentity, modelPromptTimestamp };
+module.exports = { loadMemories, getAgentCard, getProductText, respondAgentWithRace, isFreshRecord, TOOL_HANDLERS, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, requestModelJson, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent, modelExecutionIdentity, modelPromptTimestamp };

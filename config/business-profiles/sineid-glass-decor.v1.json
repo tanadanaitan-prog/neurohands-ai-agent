@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "business_id": "sineid-glass-decor",
+  "display_name": "Sineid Glass Decor",
+  "profile_status": "unverified",
+  "research_checked_at": "2026-09-18",
+  "official_sources": [],
+  "business_facts": {
+    "legal_name": null,
+    "description": null,
+    "services": [],
+    "prices": [],
+    "business_hours": null,
+    "service_area": null,
+    "address": null,
+    "phone": null,
+    "email": null,
+    "website": null,
+    "policies": []
+  },
+  "deployment": {
+    "isolation_strategy": "dedicated_railway_service_and_supabase_project",
+    "railway_service_url": null,
+    "supabase_project_ref": null,
+    "line_provider_name": null,
+    "line_channel_id": null,
+    "line_official_account_id": null,
+    "webhook_url": null
+  },
+  "secret_environment_variables": [
+    "LINE_CHANNEL_SECRET",
+    "LINE_CHANNEL_ACCESS_TOKEN",
+    "WEBHOOK_ENCRYPTION_KEY",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_KEY",
+    "GEMINI_API_KEY"
+  ],
+  "reply_policy": {
+    "mode": "disabled_until_verified",
+    "answer_only_from_verified_sources": true,
+    "invent_missing_facts": false,
+    "unknown_answer_action": "human_handoff",
+    "price_or_order_commitment": "human_approval_required",
+    "private_data_requires_authorized_tenant": true
+  }
+}
