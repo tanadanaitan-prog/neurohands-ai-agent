@@ -10,6 +10,8 @@ const schema = { name: "request_human", parameters: { type: "object", properties
 function loadGateway(t, overrides = {}) {
   const values = {
     GEMINI_API_KEY: PRIVATE_MARKER, GEMINI_ENABLED: "true", GEMINI_MODEL: "fixture-gemini",
+    GEMINI_MODELS: "", GEMINI_FALLBACK_MODELS: "",
+    MODEL_TIMEOUT_MS: "", SUPABASE_TIMEOUT_MS: "", PROVIDER_FAILURE_TTL_MS: "",
     FALLBACK_API_KEY: PRIVATE_MARKER, FALLBACK_PROVIDER: "groq",
     FALLBACK_BASE_URL: "https://fallback.invalid", FALLBACK_MODELS: "first,second", FALLBACK_MODEL: "",
     SUPABASE_URL: "https://database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture",
@@ -559,6 +561,26 @@ test("LLM recovery uses mocked providers only", async (t) => {
       [input_tokens, output_tokens, total_tokens]), [[12, 7, 23], [15, 5, 20]]);
     assert.ok(metrics.every((metric) => Number.isInteger(metric.elapsed_ms) && metric.elapsed_ms >= 0));
     assert.equal(JSON.stringify(metrics).includes(PRIVATE_MARKER), false);
+  });
+
+  await t.test("geminiModels deduplicates overlapping entries across GEMINI_MODEL, GEMINI_MODELS, and GEMINI_FALLBACK_MODELS", async (t) => {
+    const { gateway } = loadGateway(t, {
+      GEMINI_MODEL: "gemini-primary",
+      GEMINI_MODELS: "gemini-primary, gemini-backup",
+      GEMINI_FALLBACK_MODELS: "gemini-backup, gemini-third",
+    });
+    const seenModels = [];
+    t.mock.method(globalThis, "fetch", async (url) => {
+      const address = new URL(url);
+      if (address.hostname === "generativelanguage.googleapis.com") {
+        const match = address.pathname.match(/\/models\/([^/:]+):generateContent$/);
+        seenModels.push(match?.[1]);
+        return json({ candidates: [] });
+      }
+      return answer("Fallback Final");
+    });
+    assert.equal(await gateway.askAI("Policy", "Question"), "Fallback Final");
+    assert.deepEqual(seenModels, ["gemini-primary", "gemini-backup", "gemini-third"]);
   });
 
   await t.test("missing or invalid provider usage remains unavailable rather than zero", async (t) => {
