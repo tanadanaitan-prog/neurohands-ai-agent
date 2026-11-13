@@ -441,6 +441,105 @@ test("LLM recovery uses mocked providers only", async (t) => {
     assert.equal(requests, 2);
   });
 
+  await t.test("MODEL_TIMEOUT_MS and SUPABASE_TIMEOUT_MS override default 15000ms deadlines within bounds", async (t) => {
+    const observedTimeouts = [];
+    t.mock.method(AbortSignal, "timeout", (milliseconds) => {
+      observedTimeouts.push(milliseconds);
+      return new AbortController().signal;
+    });
+    const { gateway } = loadGateway(t, { MODEL_TIMEOUT_MS: "35000", SUPABASE_TIMEOUT_MS: "22000" });
+    let modelTurn = 0;
+    t.mock.method(globalThis, "fetch", async (url) => {
+      if (new URL(url).hostname === "generativelanguage.googleapis.com") {
+        modelTurn++;
+        if (modelTurn === 1) {
+          return json({ candidates: [{ content: { parts: [{ functionCall: { name: "request_human", args: {} } }] } }] });
+        }
+        return json({ candidates: [{ content: { parts: [{ text: "Handled" }] } }] });
+      }
+      return json([{ id: 1 }]);
+    });
+    const reply = await gateway.askGeminiWithTools("Policy", "Question", [], { allowedTools: [] }, 1);
+    assert.equal(reply.text, "Handled");
+    assert.ok(observedTimeouts.includes(35000));
+    assert.ok(observedTimeouts.includes(22000));
+
+    const fallbackTimeouts = [];
+    t.mock.method(AbortSignal, "timeout", (milliseconds) => {
+      fallbackTimeouts.push(milliseconds);
+      return new AbortController().signal;
+    });
+    const invalidEnv = loadGateway(t, { MODEL_TIMEOUT_MS: "9999999", SUPABASE_TIMEOUT_MS: "abc" });
+    let invalidModelTurn = 0;
+    t.mock.method(globalThis, "fetch", async (url) => {
+      if (new URL(url).hostname === "generativelanguage.googleapis.com") {
+        invalidModelTurn++;
+        if (invalidModelTurn === 1) {
+          return json({ candidates: [{ content: { parts: [{ functionCall: { name: "request_human", args: {} } }] } }] });
+        }
+        return json({ candidates: [{ content: { parts: [{ text: "ok" }] } }] });
+      }
+      return json([{ id: 1 }]);
+    });
+    const invalidReply = await invalidEnv.gateway.askGeminiWithTools("Policy", "Question", [], { allowedTools: [] }, 1);
+    assert.equal(invalidReply.text, "ok");
+    assert.deepEqual(fallbackTimeouts, [15000, 15000, 15000]);
+
+    const invalidTtlEnv = loadGateway(t, { PROVIDER_FAILURE_TTL_MS: "0" });
+    let ttlClock = 20_000_000;
+    t.mock.method(Date, "now", () => ttlClock);
+    let geminiTtlCalls = 0;
+    t.mock.method(globalThis, "fetch", async (url) => {
+      if (new URL(url).hostname === "generativelanguage.googleapis.com") {
+        geminiTtlCalls++;
+        if (geminiTtlCalls === 1) return json({ error: { code: "credit_balance_exhausted" } }, 400);
+        return json({ candidates: [{ content: { parts: [{ text: "Recovered" }] } }] });
+      }
+      return json({ choices: [{ message: { content: "Fallback" } }] });
+    });
+    assert.equal(await invalidTtlEnv.gateway.askAI("Policy", "Question"), "Fallback");
+    ttlClock += 599_999;
+    assert.equal(await invalidTtlEnv.gateway.askAI("Policy", "Question"), "Fallback");
+    assert.equal(geminiTtlCalls, 1);
+    ttlClock += 1;
+    assert.equal(await invalidTtlEnv.gateway.askAI("Policy", "Question"), "Recovered");
+    assert.equal(geminiTtlCalls, 2);
+  });
+
+  await t.test("permanent provider failure latches self-heal after PROVIDER_FAILURE_TTL_MS", async (t) => {
+    let clock = 10_000_000;
+    t.mock.method(Date, "now", () => clock);
+    const { gateway } = loadGateway(t, { PROVIDER_FAILURE_TTL_MS: "5000" });
+    let geminiCalls = 0;
+    let fallbackCalls = 0;
+    let geminiHealthy = false;
+
+    t.mock.method(globalThis, "fetch", async (url) => {
+      if (new URL(url).hostname === "generativelanguage.googleapis.com") {
+        geminiCalls++;
+        if (!geminiHealthy) return json({ error: { code: "credit_balance_exhausted" } }, 400);
+        return json({ candidates: [{ content: { parts: [{ text: "Recovered Gemini" }] } }] });
+      }
+      fallbackCalls++;
+      return json({ choices: [{ message: { content: "Fallback Answer" } }] });
+    });
+
+    assert.equal(await gateway.askAI("Policy", "Question 1"), "Fallback Answer");
+    assert.equal(geminiCalls, 1);
+    assert.equal(fallbackCalls, 1);
+
+    clock += 4_000;
+    assert.equal(await gateway.askAI("Policy", "Question 2"), "Fallback Answer");
+    assert.equal(geminiCalls, 1, "Latched route stays skipped before TTL elapses");
+    assert.equal(fallbackCalls, 2);
+
+    geminiHealthy = true;
+    clock += 1_000;
+    assert.equal(await gateway.askAI("Policy", "Question 3"), "Recovered Gemini");
+    assert.equal(geminiCalls, 2, "Expired latch re-enables Gemini recovery");
+    assert.equal(fallbackCalls, 2);
+  });
+
   await t.test("model measurements contain numeric provider usage and elapsed time, never response content", async (t) => {
     const { gateway, metrics } = loadGateway(t);
     let primary = true;

@@ -3,10 +3,26 @@ const { publicConfiguration, verifiedIdentity } = require("./repository");
 const { HttpError, TOOL_CATALOG, uuid, text, integer, agentInput } = require("./validation");
 const route = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-function createStudioRouter({ environment = process.env, authenticate = (token) => verifiedIdentity(environment, token) } = {}) {
+async function resolveRuntimeConnected(probeRuntime) {
+  if (typeof probeRuntime !== "function") return false;
+  try {
+    return Boolean(await probeRuntime());
+  } catch {
+    return false;
+  }
+}
+
+function createStudioRouter({
+  environment = process.env,
+  authenticate = (token) => verifiedIdentity(environment, token),
+  probeRuntime = () => false,
+} = {}) {
   const router = express.Router();
   router.use((_req, res, next) => { res.set("Cache-Control", "no-store"); next(); });
-  router.get("/config", (_req, res) => res.json({ ...publicConfiguration(environment), runtimeConnected: false }));
+  router.get("/config", route(async (_req, res) => res.json({
+    ...publicConfiguration(environment),
+    runtimeConnected: await resolveRuntimeConnected(probeRuntime),
+  })));
   router.use(route(async (req, _res, next) => {
     const match = String(req.headers.authorization || "").match(/^Bearer (\S+)$/);
     if (!match || match[1].length > 8192) throw new HttpError(401, "Sign in to open your workspace");

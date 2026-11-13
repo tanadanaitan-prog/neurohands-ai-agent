@@ -96,15 +96,40 @@ async function readProviderFailure(response, { signal, maxBytes = MAX_ERROR_BYTE
   }
 }
 
-function createProviderFailures() {
-  // The owner passes static route labels. No endpoint, credential or provider body is retained.
+const DEFAULT_FAILURE_TTL_MS = 10 * 60 * 1000;
+
+function createProviderFailures({ ttlMs = DEFAULT_FAILURE_TTL_MS, now = () => Date.now() } = {}) {
+  const effectiveTtlMs = Number.isFinite(ttlMs) && ttlMs > 0 ? ttlMs : DEFAULT_FAILURE_TTL_MS;
   const blocked = new Map();
+
+  function activeEntry(route, currentTime = now()) {
+    const entry = blocked.get(route);
+    if (!entry) return null;
+    if (currentTime - entry.blockedAt >= effectiveTtlMs) {
+      blocked.delete(route);
+      return null;
+    }
+    return entry;
+  }
+
   return {
     block(route, reason) {
-      if (routes.has(route) && permanentReasons.has(reason)) blocked.set(route, reason);
+      if (routes.has(route) && permanentReasons.has(reason)) {
+        blocked.set(route, { reason, blockedAt: now() });
+      }
     },
-    get(route) { return blocked.get(route) || null; },
-    entries() { return [...blocked].map(([route, reason]) => ({ route, reason })); },
+    get(route) {
+      return activeEntry(route)?.reason || null;
+    },
+    entries() {
+      const currentTime = now();
+      const active = [];
+      for (const route of [...blocked.keys()]) {
+        const entry = activeEntry(route, currentTime);
+        if (entry) active.push({ route, reason: entry.reason });
+      }
+      return active;
+    },
   };
 }
 

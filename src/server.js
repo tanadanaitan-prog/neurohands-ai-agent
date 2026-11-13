@@ -7,7 +7,9 @@ const express = require("express");
 const crypto = require("crypto");
 const { equalSecret, supabaseHeaders } = require("./lib/security");
 const { createStudioRouter } = require("./platform/router");
+const { publicConfiguration } = require("./platform/repository");
 const path = require("node:path");
+const fs = require("node:fs");
 const { parseDocument, documentReadResult, isFreshRecord } = require("./lib/document-parser");
 const { createLegacyCatalogAccess } = require("./lib/catalog-access");
 const { emptyGeminiFinal, emptyOpenAIFinal, postToolText, POST_TOOL_SYNTHESIS_INSTRUCTION } = require("./lib/post-tool-response");
@@ -69,8 +71,23 @@ const {
   RESUMABLE_UPLOAD_ENABLED = "false",
   UPLOAD_MAX_BYTES = "50000000",
   SOFTWARE_ADMISSION_ENABLED = "false",
+  MODEL_TIMEOUT_MS = "15000",
+  SUPABASE_TIMEOUT_MS = "15000",
+  PROVIDER_FAILURE_TTL_MS = "600000",
   PORT = 3000,
 } = process.env;
+
+function parseBoundedMs(raw, fallback, min, max) {
+  const value = typeof raw === "string" ? raw.trim() : "";
+  if (!/^\d+$/.test(value)) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < min || parsed > max) return fallback;
+  return parsed;
+}
+
+const modelTimeoutMs = parseBoundedMs(MODEL_TIMEOUT_MS, 15000, 1000, 120000);
+const supabaseTimeoutMs = parseBoundedMs(SUPABASE_TIMEOUT_MS, 15000, 1000, 120000);
+const providerFailureTtlMs = parseBoundedMs(PROVIDER_FAILURE_TTL_MS, 10 * 60 * 1000, 1000, 24 * 60 * 60 * 1000);
 
 // This seam is deliberately disabled until its server-owned authority resolver,
 // durable audit writer, accepted workflows, and verified allowance snapshots
@@ -87,9 +104,14 @@ const app = express();
 app.use("/webhook", express.raw({ type: "*/*", limit: "1mb" }));
 // Preserve uploaded bytes even when the sender supplies a JSON content type.
 app.use((req, res, next) => req.path === "/api/upload" ? next() : express.json()(req, res, next));
+function probeStudioRuntime() {
+  if (!publicConfiguration(process.env).configured) return false;
+  return typeof askAI === "function" && fs.existsSync(path.join(__dirname, "agent", "graph.mjs"));
+}
+
 // Keep unfinished Phase 2 work out of the Phase 1 deployment.
 if (process.env.ENABLE_STUDIO === "true") {
-  app.use("/api/studio", createStudioRouter());
+  app.use("/api/studio", createStudioRouter({ probeRuntime: probeStudioRuntime }));
   app.use("/studio", express.static(path.join(__dirname, "../web/dist"), { index: "index.html" }));
 }
 const asyncRoute = (handler) => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
@@ -151,7 +173,7 @@ function geminiModels() {
 
 let cachedGeminiModel = null;
 let cachedFallbackModel = null;
-const providerFailures = createProviderFailures();
+const providerFailures = createProviderFailures({ ttlMs: providerFailureTtlMs });
 
 function modelProviderLabel(provider) {
   if (provider === "Gemini") return "gemini";
@@ -171,7 +193,7 @@ function modelHealthText() {
   return ["AI connection status", describe("gemini", "Gemini", geminiConfigured()),
     describe("fallback", "Fallback", Boolean(fallbackBase())),
     "This status check sends no AI request and does not verify credit or answer quality.",
-    "After correcting an account block within the approved free allowance, redeploy to clear the pause. Do not raise spending limits or buy credits under the $0 requirement.",
+    `After correcting an account block within the approved free allowance, wait up to ${providerFailureTtlMs >= 60000 ? `${Math.round(providerFailureTtlMs / 60000)}m` : `${Math.round(providerFailureTtlMs / 1000)}s`} for automatic recovery or redeploy to clear the pause. Do not raise spending limits or buy credits under the $0 requirement.`,
     "Public model tests use a separate script; private LINE conversations never use that test route."].join("\n\n");
 }
 
@@ -312,7 +334,7 @@ async function requestModelJson(provider, url, headers, body, model, usable = ()
       const attempt = beginModelAttempt(metricProvider, model, [GEMINI_API_KEY, FALLBACK_API_KEY]);
       const elapsed = () => Math.round(performance.now() - started);
       let response;
-      const signal = AbortSignal.timeout(15000);
+      const signal = AbortSignal.timeout(modelTimeoutMs);
       const failed = (reason, failureReason) => {
         finishModelAttempt(attempt, typeof reason === "number" ? "http_error" : reason, response?.status, elapsed(), undefined, failureReason);
         console.error(`${provider} request failed`, reason, JSON.stringify(attempt));
@@ -427,7 +449,7 @@ async function db(path, options = {}) {
   };
   if (method === "POST" && !headers.Prefer) headers.Prefer = "return=representation";
 
-  const signal = AbortSignal.timeout(15000);
+  const signal = AbortSignal.timeout(supabaseTimeoutMs);
   let res;
   try {
     res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {

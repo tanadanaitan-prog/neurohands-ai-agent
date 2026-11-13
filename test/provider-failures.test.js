@@ -222,3 +222,46 @@ test("only recognized permanent failures and route labels can be stored", () => 
   assert.equal(failures.get("fallback"), "spend_limit_reached", "An unknown error must not clear a permanent block");
   assert.equal(JSON.stringify(failures.entries()).includes(PRIVATE), false);
 });
+
+test("permanent failure latches expire automatically once ttlMs elapses", () => {
+  let clock = 1_000_000;
+  const failures = createProviderFailures({ ttlMs: 5_000, now: () => clock });
+
+  failures.block("gemini", "spend_limit_reached");
+  failures.block("fallback", "credit_exhausted");
+  assert.equal(failures.get("gemini"), "spend_limit_reached");
+  assert.equal(failures.entries().length, 2);
+
+  clock += 4_999;
+  assert.equal(failures.get("gemini"), "spend_limit_reached");
+
+  clock += 1;
+  assert.equal(failures.get("gemini"), null);
+  assert.deepEqual(failures.entries(), []);
+  assert.equal(failures.reset, undefined);
+
+  failures.block("fallback", "spend_limit_reached");
+  assert.equal(failures.get("fallback"), "spend_limit_reached");
+});
+
+test("invalid ttlMs falls back to 600000ms and active re-blocking resets expiry", () => {
+  for (const invalidTtl of [0, -5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    let clock = 500_000;
+    const failures = createProviderFailures({ ttlMs: invalidTtl, now: () => clock });
+    failures.block("gemini", "credit_exhausted");
+    clock += 599_999;
+    assert.equal(failures.get("gemini"), "credit_exhausted");
+    clock += 1;
+    assert.equal(failures.get("gemini"), null);
+  }
+
+  let clock = 2_000_000;
+  const failures = createProviderFailures({ ttlMs: 5_000, now: () => clock });
+  failures.block("gemini", "spend_limit_reached");
+  clock += 3_000;
+  failures.block("gemini", "quota_exhausted");
+  clock += 3_000;
+  assert.equal(failures.get("gemini"), "quota_exhausted");
+  clock += 2_000;
+  assert.equal(failures.get("gemini"), null);
+});
