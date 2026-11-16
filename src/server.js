@@ -1438,12 +1438,46 @@ upload: <CLIENT> <dept> — 7-day secure upload link
 docs: <CLIENT> — list client documents
 doc: <CODE> — show parsed document
 act: <CLIENT> <dept> <tool> {json} — propose a scoped tool run (yes to execute)
+calendar: <YYYY-MM-DD> <HH:mm> <title> — save calendar reminder + 1-tap Google Calendar link
+calendar — list open calendar reminders & checklist items
 task: / done: / checklist
 note: / learn: / market: + yes / no — save an approved operator note
 notes — show your confirmed notes
 pending — show your latest proposal before yes / no
 whois: <ID>
 help`;
+
+function formatGoogleCalendarUtc(date) {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function buildCalendarEventSummary(rawText, nowMs = Date.now()) {
+  const cleaned = String(rawText || "").trim();
+  const explicitMatch = cleaned.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(\d{1,2}:\d{2}))?\s+([\s\S]+)$/);
+  let startMs;
+  let title;
+  let whenLabel;
+  if (explicitMatch) {
+    const datePart = explicitMatch[1];
+    const timePart = (explicitMatch[2] || "09:00").padStart(5, "0");
+    title = explicitMatch[3].trim();
+    const parsed = Date.parse(`${datePart}T${timePart}:00+07:00`);
+    startMs = Number.isFinite(parsed) ? parsed : nowMs + 86400000;
+    whenLabel = `${datePart} ${timePart} BKT`;
+  } else {
+    title = cleaned || "Neurohands Follow-up";
+    const bktTomorrow = new Date(nowMs + 86400000 + 7 * 3600000).toISOString().slice(0, 10);
+    const parsed = Date.parse(`${bktTomorrow}T09:00:00+07:00`);
+    startMs = Number.isFinite(parsed) ? parsed : nowMs + 86400000;
+    whenLabel = `${bktTomorrow} 09:00 BKT`;
+  }
+  const startDate = new Date(startMs);
+  const endDate = new Date(startMs + 3600000);
+  const datesParam = `${formatGoogleCalendarUtc(startDate)}/${formatGoogleCalendarUtc(endDate)}`;
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${datesParam}&ctz=Asia/Bangkok&details=${encodeURIComponent("Scheduled via Neurohands Jarvis on LINE")}`;
+  const checklistItem = `[📅 ${whenLabel}] ${title}`;
+  return { title, whenLabel, checklistItem, calendarUrl };
+}
 
 const jarvisTools = createJarvisTools({ db, isStaff, normalizeDepartment, departments: DEPT_CODES,
   toolSchemas: TOOL_SCHEMAS, toolHandlers: TOOL_HANDLERS, proposeNote, buildDailyDigest });
@@ -1662,6 +1696,21 @@ async function handleStaffMessage(lineUserId, text, replyToken, event = {}) {
     const saved = await db(`jarvis_notes?id=eq.${pending.id}&proposed_by=eq.${encodeURIComponent(lineUserId)}&status=eq.pending`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status: "rejected" } });
     if (!saved?.[0]?.id) return send("This proposal has already been handled.");
     return send("Cancelled.");
+  }
+
+  const calCmd = /^(?:calendar|remind|schedule):\s*([\s\S]*)$/i.exec(t);
+  if (calCmd) {
+    const raw = calCmd[1].trim();
+    if (!raw || raw.length > 500) return send("Format: calendar: YYYY-MM-DD HH:mm <event title>");
+    const ev = buildCalendarEventSummary(raw);
+    const saved = await db("jarvis_checklist", { method: "POST", body: { item: ev.checklistItem, status: "open" } });
+    const id = saved?.[0]?.id || "";
+    return send(`📅 Calendar reminder saved${id ? ` (#${id})` : ""}:\n• Event: ${ev.title}\n• Time: ${ev.whenLabel}\n\n📲 Tap to add to your phone / Google Calendar:\n${ev.calendarUrl}\n\nType calendar or checklist anytime to view saved events, or done: ${id || "<id>"} when completed.`);
+  }
+
+  if (/^(calendar|reminders|schedule)$/i.test(t)) {
+    const rows = await db("jarvis_checklist?status=eq.open&select=id,item&order=created_at.asc");
+    return send((rows || []).map((c) => `#${c.id} • ${c.item}`).join("\n") || "No open calendar reminders or checklist items.\n\nTo add one, type:\ncalendar: 2026-11-20 14:00 Meeting with KNC Glass");
   }
 
   if (/^task:/i.test(t)) {
@@ -2237,4 +2286,4 @@ if (require.main === module) {
     Promise.allSettled([stopped, closed, sentry.close(2000)]).then(() => process.exit(0));
   });
 }
-module.exports = { loadMemories, getAgentCard, getProductText, respondAgentWithRace, isFreshRecord, TOOL_HANDLERS, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, requestModelJson, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent, modelExecutionIdentity, modelPromptTimestamp, BRAND_COPY, NEUROHANDS_PREVIEW_URL, DEFAULT_PUBLIC_UPDATES, normalizeGeminiModelName };
+module.exports = { loadMemories, getAgentCard, getProductText, respondAgentWithRace, isFreshRecord, TOOL_HANDLERS, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, requestModelJson, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent, modelExecutionIdentity, modelPromptTimestamp, BRAND_COPY, NEUROHANDS_PREVIEW_URL, DEFAULT_PUBLIC_UPDATES, normalizeGeminiModelName, buildCalendarEventSummary };

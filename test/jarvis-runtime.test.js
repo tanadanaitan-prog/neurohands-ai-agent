@@ -533,3 +533,16 @@ test("Jarvis returns live digest and platform update instead of robotic error wh
   assert.match(result.reply, /Private customer hardware stores business data locally/i);
   assert.doesNotMatch(result.reply, /I could not verify that request/);
 });
+
+test("Jarvis calendar command saves dated reminder to jarvis_checklist and generates 1-tap Google Calendar URL", async (t) => {
+  const f = fixture(t);
+  await f.send("calendar: 2026-11-20 14:00 Meeting with KNC Glass");
+  assert.equal(f.tables.jarvis_checklist.length, 1);
+  assert.equal(f.tables.jarvis_checklist[0].item, "[📅 2026-11-20 14:00 BKT] Meeting with KNC Glass");
+  const reply = f.line.at(-1).messages[0].text;
+  assert.match(reply, /📅 Calendar reminder saved \(#1\)/);
+  assert.match(reply, /https:\/\/calendar\.google\.com\/calendar\/render\?action=TEMPLATE/);
+  assert.match(reply, /dates=20261120T070000Z\/20261120T080000Z/);
+  await f.send("calendar");
+  assert.match(f.line.at(-1).messages[0].text, /#1 • \[📅 2026-11-20 14:00 BKT\] Meeting with KNC Glass/);
+});
