@@ -39,8 +39,8 @@
         "height": 278
       },
       "action": {
-        "type": "postback",
-        "data": "menu=projects"
+        "type": "uri",
+        "uri": "https://tanadanaitan-prog.github.io/neurohands-preview/"
       }
     },
     {

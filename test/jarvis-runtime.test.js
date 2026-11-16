@@ -19,9 +19,7 @@ function fixture(t, overrides = {}) {
     LINE_CHANNEL_SECRET: PRIVATE, LINE_CHANNEL_ACCESS_TOKEN: PRIVATE,
     WEBHOOK_ENCRYPTION_KEY: Buffer.alloc(32, 8).toString("base64"),
     SUPABASE_URL: "https://jarvis-database.invalid", SUPABASE_SERVICE_KEY: "sb_secret_fixture-only",
-    GEMINI_ENABLED: "false", GEMINI_API_KEY: PRIVATE, GEMINI_MODEL: "fixture-gemini",
-    GEMINI_MODELS: "", GEMINI_FALLBACK_MODELS: "",
-    MODEL_TIMEOUT_MS: "", SUPABASE_TIMEOUT_MS: "", PROVIDER_FAILURE_TTL_MS: "",
+    GEMINI_ENABLED: "false", GEMINI_API_KEY: PRIVATE, GEMINI_MODEL: "fixture-gemini", GEMINI_MODELS: "", GEMINI_FALLBACK_MODELS: "", MODEL_TIMEOUT_MS: "", SUPABASE_TIMEOUT_MS: "", PROVIDER_FAILURE_TTL_MS: "",
     FALLBACK_PROVIDER: "openrouter", FALLBACK_API_KEY: PRIVATE,
     FALLBACK_BASE_URL: "https://jarvis-model.invalid", FALLBACK_MODELS: "fixture-model:free", FALLBACK_MODEL: "",
     FOUNDER_LINE_ID: "", JARVIS_ACTIVATION_CODE: "", NEUROHANDS_API_KEY: PRIVATE, CRON_SECRET: "",
@@ -523,4 +521,15 @@ test("Jarvis keeps health and evidence commands available after account credit r
   assert.equal(f.tables.jarvis_notes.at(-1).status, "confirmed");
   assert.equal(f.calls.length, 1, "Deterministic commands must not attempt AI generation");
   assert.equal(f.logs.join("\n").includes(PRIVATE), false);
+});
+
+test("Jarvis returns live digest and platform update instead of robotic error when model fails on natural 'update' query", async (t) => {
+  const f = fixture(t);
+  f.model = async () => { throw new Error("Simulated model timeout"); };
+  const result = await f.run("update");
+  assert.equal(result.ctx.runStatus, "error");
+  assert.match(result.reply, /🎩 Digest/);
+  assert.match(result.reply, /https:\/\/tanadanaitan-prog\.github\.io\/neurohands-preview\//);
+  assert.match(result.reply, /Private customer hardware stores business data locally/i);
+  assert.doesNotMatch(result.reply, /I could not verify that request/);
 });

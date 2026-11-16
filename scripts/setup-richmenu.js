@@ -6,6 +6,23 @@ const { supabaseHeaders } = require("../src/lib/security");
 
 const { LINE_CHANNEL_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
 
+const NEUROHANDS_PREVIEW_URL = "https://tanadanaitan-prog.github.io/neurohands-preview/";
+const ALLOWED_RICH_MENU_URI_PATTERNS = [
+  /^https:\/\/liff\.line\.me\/[A-Za-z0-9._-]+(?:[/?#][A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/,
+  /^https:\/\/tanadanaitan-prog\.github\.io\/neurohands-preview(?:\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/,
+];
+
+function isValidRichMenuAction(action) {
+  if (!action || typeof action !== "object") return false;
+  if (action.type === "postback") return typeof action.data === "string" && /^menu=[a-z_]+$/.test(action.data);
+  if (action.type === "uri") {
+    return typeof action.uri === "string"
+      && action.uri.length <= 512
+      && ALLOWED_RICH_MENU_URI_PATTERNS.some((pattern) => pattern.test(action.uri));
+  }
+  return false;
+}
+
 function loadMenu(kind) {
   const root = path.resolve(__dirname, "..");
   const menu = JSON.parse(fs.readFileSync(path.join(root, "config", "rich-menus", `richmenu-${kind}.json`), "utf8"));
@@ -18,7 +35,7 @@ function loadMenu(kind) {
   for (const { bounds, action } of menu.areas) {
     const { x, y, width: w, height: h } = bounds || {};
     if (![x, y, w, h].every(Number.isInteger) || x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > width || y + h > height) throw new Error(`${kind}: area outside image`);
-    if (action?.type !== "postback" || !/^menu=[a-z_]+$/.test(action.data)) throw new Error(`${kind}: unexpected action`);
+    if (!isValidRichMenuAction(action)) throw new Error(`${kind}: unexpected action`);
   }
   console.log(`${kind}: ${width} x ${height}, ${menu.areas.length} buttons, ${image.length} bytes — valid`);
   return { menu, image };
@@ -100,4 +117,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exitCode = 1; });
-module.exports = { loadMenu };
+module.exports = { loadMenu, isValidRichMenuAction, NEUROHANDS_PREVIEW_URL };
