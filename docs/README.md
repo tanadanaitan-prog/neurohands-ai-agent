@@ -14,6 +14,7 @@ registered evidence and recovered-source paths retain their existing locations.
 
 | Document | Use it for |
 | --- | --- |
+| [Neurohands handbook](handbook/README.md) | Short entry point: purpose, objectives, process and workflow, with the [planning](handbook/PLANNING.md), [security](handbook/SECURITY.md) and [guardrail](handbook/GUARDRAILS.md) files. |
 | [Ordered project structure](architecture/PROJECT_STRUCTURE.md) | Folder reading order, platform flow, data catalog and Python checks. |
 | [Process README](PROCESS_README.md) | Every package command, inputs, success evidence, local start/stop and cloud handoffs. |
 | [Central knowledge and capability register](KNOWLEDGE_INDEX.md) | Saved Notion record, plugin/API/skill/memory boundaries and explicit-request updates. |

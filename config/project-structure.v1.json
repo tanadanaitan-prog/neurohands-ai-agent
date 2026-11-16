@@ -9,6 +9,7 @@
       "order": 10,
       "prefixes": [
         "README.md",
+        "CLAUDE.md",
         "docs/"
       ]
     },
