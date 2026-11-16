@@ -16,7 +16,7 @@ The security rules are in [SECURITY.md](SECURITY.md). The limits for AI tools ar
 
 | Date | Task | Type | Size | Status |
 | --- | --- | --- | --- | --- |
-| 2026-11-16 | Create the Neurohands handbook | Build | Large | Done on a local branch. Not pushed, not reviewed. |
+| 2026-11-16 | Create the Neurohands handbook | Build | Large | Done. Pushed on 2026-11-16. Not reviewed, not merged. |
 
 ## Tasks
 
@@ -86,7 +86,7 @@ None.
 
 #### State
 
-- **Commits:** local commits on `claude/handbook-20261116`. No push.
+- **Commits:** on `claude/handbook-20261116`. Pushed on 2026-11-16 at the owner's request. No pull request.
 - **Plan:** this section.
 - **Record of this task:** the "Evidence" list below and the change record in the handbook README.
 
@@ -98,4 +98,5 @@ None.
 - Steps 5 and 6: "README four sections: 4, sources named: 5", "PLANNING four sections: 4, step rows: 9".
 - Step 7, first run: the structure check failed with `UNCLASSIFIED_FILE` for `CLAUDE.md`. The cause: the catalog lists root files by name. The fix: one new line in `config/project-structure.v1.json`. This file was added to step 7 before the change.
 - Step 7, second run: "structure check exit: 0", "ok: True", "errors: 0", "local links checked: 346".
-- Step 9: the final results are in the commit message of the last commit on this branch.
+- Step 9: the final results are in the commit message of commit `81cf888`.
+- Push, 2026-11-16: `git push` reported "[new branch] claude/handbook-20261116 -> claude/handbook-20261116". The remote branch was at `81cf888` after the push.
