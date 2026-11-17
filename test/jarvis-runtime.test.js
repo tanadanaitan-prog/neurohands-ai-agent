@@ -529,9 +529,9 @@ test("Jarvis returns live digest and platform update instead of robotic error wh
   const result = await f.run("update");
   assert.equal(result.ctx.runStatus, "error");
   assert.match(result.reply, /🎩 Digest/);
-  assert.match(result.reply, /https:\/\/tanadanaitan-prog\.github\.io\/neurohands-preview\//);
+  assert.match(result.reply, /https:\/\/neurohands-ai-agent-production\.up\.railway\.app\/neurohands/);
   assert.match(result.reply, /Private customer hardware stores business data locally/i);
-  assert.doesNotMatch(result.reply, /I could not verify that request/);
+  assert.doesNotMatch(result.reply, /tanadanaitan|Prototype v2|stateless|I could not verify that request/i);
 });
 
 test("Jarvis calendar command saves dated reminder to jarvis_checklist and generates 1-tap Google Calendar URL", async (t) => {

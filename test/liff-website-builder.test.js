@@ -12,8 +12,9 @@ const {
   buildLineProposalFlexMessage,
   verifyLiffIdTokenAndMintJwt,
 } = require("../src/lib/liff-builder");
+const http = require("node:http");
 const { isValidRichMenuAction, loadMenu, NEUROHANDS_PREVIEW_URL } = require("../scripts/setup-richmenu");
-const { BRAND_COPY, DEFAULT_PUBLIC_UPDATES, normalizeGeminiModelName } = require("../src/server");
+const { app, BRAND_COPY, DEFAULT_PUBLIC_UPDATES, normalizeGeminiModelName } = require("../src/server");
 
 const SAMPLE_AST = {
   version: "1.0.0",
@@ -133,7 +134,8 @@ test("verifyLiffIdTokenAndMintJwt validates LINE JWKS claims and mints tenant-sc
   assert.deepEqual(expired, { ok: false, status: 401, code: "TOKEN_EXPIRED" });
 });
 
-test("Rich Menu validator and BRAND_COPY connect Neurohands Prototype v2 URI and hybrid private-hardware architecture", () => {
+test("Rich Menu validator, BRAND_COPY, and /neurohands website hide personal names and internal code", async (t) => {
+  assert.equal(NEUROHANDS_PREVIEW_URL, "https://neurohands-ai-agent-production.up.railway.app/neurohands");
   assert.equal(isValidRichMenuAction({ type: "postback", data: "menu=products" }), true);
   assert.equal(
     isValidRichMenuAction({ type: "uri", uri: "https://liff.line.me/2006551900-kncbuild?site=knc-catalog" }),
@@ -144,8 +146,12 @@ test("Rich Menu validator and BRAND_COPY connect Neurohands Prototype v2 URI and
     true
   );
   assert.equal(
-    isValidRichMenuAction({ type: "uri", uri: "https://tanadanaitan-prog.github.io/neurohands-preview/#builder" }),
+    isValidRichMenuAction({ type: "uri", uri: "https://neurohands-ai-agent-production.up.railway.app/website#builder" }),
     true
+  );
+  assert.equal(
+    isValidRichMenuAction({ type: "uri", uri: "https://tanadanaitan-prog.github.io/neurohands-preview/" }),
+    false
   );
   assert.equal(isValidRichMenuAction({ type: "uri", uri: "http://liff.line.me/insecure" }), false);
   assert.equal(isValidRichMenuAction({ type: "uri", uri: "https://evil.example.com/phish" }), false);
@@ -153,18 +159,36 @@ test("Rich Menu validator and BRAND_COPY connect Neurohands Prototype v2 URI and
   assert.ok(publicMenu.areas.length > 0);
   assert.ok(
     publicMenu.areas.some((area) => area.action?.type === "uri" && area.action?.uri === NEUROHANDS_PREVIEW_URL),
-    "Public Rich Menu must include a URI action pointing to https://tanadanaitan-prog.github.io/neurohands-preview/"
+    "Public Rich Menu must include a URI action pointing to https://neurohands-ai-agent-production.up.railway.app/neurohands"
   );
   assert.ok(loadMenu("active").menu.areas.length > 0);
   for (const key of ["about", "services", "projects", "activate"]) {
     assert.ok(BRAND_COPY[key].includes(NEUROHANDS_PREVIEW_URL), `BRAND_COPY.${key} must link to ${NEUROHANDS_PREVIEW_URL}`);
+    assert.doesNotMatch(BRAND_COPY[key], /tanadanaitan|prototype/i);
   }
   assert.match(BRAND_COPY.about, /private hardware/i);
-  assert.match(BRAND_COPY.about, /encrypted backup/i);
+  assert.match(BRAND_COPY.about, /(?:automatic|encrypted) backup/i);
   assert.ok(DEFAULT_PUBLIC_UPDATES.includes(NEUROHANDS_PREVIEW_URL));
   assert.match(DEFAULT_PUBLIC_UPDATES, /private hardware/i);
+  assert.doesNotMatch(DEFAULT_PUBLIC_UPDATES, /tanadanaitan|prototype/i);
   assert.equal(normalizeGeminiModelName("gemini-3.6-flash"), "gemini-2.5-flash");
   assert.equal(normalizeGeminiModelName("gemini-2.5-flash"), "gemini-2.5-flash");
+
+  const srv = http.createServer(app);
+  await new Promise((resolve) => srv.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise((resolve) => srv.close(resolve)));
+  const port = srv.address().port;
+  for (const routePath of ["/neurohands", "/website", "/preview"]) {
+    const res = await fetch(`http://127.0.0.1:${port}${routePath}`);
+    assert.equal(res.status, 200, `GET ${routePath} should return 200`);
+    const body = await res.text();
+    assert.match(body, /<title>Neurohands<\/title>/);
+    assert.doesNotMatch(
+      body,
+      /tanadanaitan|GEMINI_API_KEY|secret_environment_variables|TOOLMAP|POST \/webhook|window\.NH|Prototype/i,
+      `GET ${routePath} must not expose personal name or internal code`
+    );
+  }
 });
 
 test("20261114000001_liff_website_builder.sql enforces tenant RLS isolation and forwards anonymous web inquiries into support_cases", async (t) => {

@@ -40,7 +40,7 @@
       },
       "action": {
         "type": "uri",
-        "uri": "https://tanadanaitan-prog.github.io/neurohands-preview/"
+        "uri": "https://neurohands-ai-agent-production.up.railway.app/neurohands"
       }
     },
     {

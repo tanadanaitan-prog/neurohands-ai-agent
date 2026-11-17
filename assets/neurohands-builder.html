@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Neurohands</title>
+<meta name="description" content="Neurohands: build a custom AI agent team for your LINE Official Account with private hardware data storage and 24/7 cloud operation.">
+<link rel="icon" type="image/jpeg" sizes="96x96" href="data:image/jpeg;base64,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" id="favicon">
+<style>
+:root{--brand-navy:#27225A;--brand-blue:#0F8CE8;--brand-grad:linear-gradient(90deg,#27225A 0%,#0F8CE8 100%);--brand-grad-btn:linear-gradient(90deg,#27225A 0%,#1962AF 100%);--brand-ink:#27225A;--brand-l:#eaf3fd;--brand-b:#c6def7;--brand-glow:rgba(15,140,232,.28);--ok:#13804a;--ok-l:#e7f6ee;--line-green:#06C755;--green:var(--line-green);--green-d:#04a446;--green-l:#e7f9ee;--ink:#10201a;--muted:#5b6b62;--bg:#f5f7f6;--card:#fff;--line:#e2e8e4;--warn:#8f5600;--warn-l:#fff4e0;--info:#1f5fbf;--info-l:#eaf1fd;--bad:#c0392b;--bad-l:#fdecea;--r:14px;--sh:0 1px 2px rgba(16,32,26,.06),0 4px 16px rgba(16,32,26,.06)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Inter","Segoe UI",system-ui,-apple-system,"Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi",sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
+html[lang=th] body{font-family:"Noto Sans Thai","Sarabun","Prompt","Leelawadee UI","Thonburi",system-ui,sans-serif}
+a{color:var(--brand-ink)}
+button{font:inherit;cursor:pointer}
+input,select{font:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+header.top{position:sticky;top:0;z-index:30;background:#f8faf9;border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:12px;height:58px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;letter-spacing:-.2px;text-decoration:none;color:var(--ink)}
+.logo{padding:3px 0;background:#f8faf9}
+.logo img{display:block;height:26px;width:auto}
+.flogo{display:block;height:22px;width:auto;margin:0 0 8px;padding:3px 6px;border-radius:7px;background:#f8faf9;box-sizing:content-box}
+.badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--warn-l);color:var(--warn);border:1px solid #f3d9a8;white-space:nowrap}
+.badge.kicker{background:var(--brand-l);color:var(--brand-ink);border-color:var(--brand-b)}
+.spacer{flex:1}
+nav.links a{color:var(--muted);text-decoration:none;font-size:14px;margin:0 8px}
+nav.links a:hover{color:var(--ink)}
+.lang{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;background:#fff;flex:none}
+.lang button{border:0;background:none;padding:5px 11px;font-size:13px;font-weight:600;color:var(--muted)}
+.lang button[aria-pressed=true]{background:var(--brand-navy);color:#fff}
+.hero{padding:56px 0 36px;background:radial-gradient(1200px 400px at 80% -10%,#e3effc 0,transparent 60%),radial-gradient(800px 300px at 0% 0%,#f0f2fb 0,transparent 60%)}
+.hero h1{font-size:clamp(28px,4.4vw,48px);line-height:1.15;letter-spacing:-.8px;margin:12px 0 14px;max-width:860px}
+.hero h1 em{font-style:normal;color:var(--brand-navy);background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p.sub{font-size:clamp(16px,1.6vw,19px);color:var(--muted);max-width:700px;margin:0 0 24px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 16px;font-weight:600;font-size:15px;text-decoration:none;transition:.15s}
+.btn:hover{border-color:#c7d3cc}
+.btn.primary{background:var(--brand-navy);background-image:var(--brand-grad-btn);border-color:var(--brand-navy);color:#fff;box-shadow:0 6px 18px var(--brand-glow)}
+.btn.primary:hover{background-image:none;background-color:var(--brand-navy)}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.hero .ctas{display:flex;gap:10px;flex-wrap:wrap}
+.points{display:flex;gap:18px;flex-wrap:wrap;margin-top:26px;color:var(--muted);font-size:14px}
+.points>span::before{content:"✓";color:var(--brand-blue);font-weight:800;margin-right:6px}
+.notice{margin-top:22px;font-size:13px;color:#6b5a2e;background:var(--warn-l);border:1px solid #f3d9a8;border-radius:12px;padding:10px 14px;max-width:820px}
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.how div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.how b{display:block;color:var(--brand-ink);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+section.block{padding:34px 0}
+h2{font-size:24px;letter-spacing:-.3px;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.builder{display:grid;grid-template-columns:290px minmax(0,1fr) 350px;gap:18px;align-items:start}
+.palette{padding:14px;max-height:calc(100vh - 90px);overflow:auto;position:sticky;top:72px}
+.palette h3,.canvas h3,.previewcol h3{font-size:15px;margin:0}
+.palette .hint{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
+.grp{margin-top:12px}
+.grp>h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 6px}
+.grp>h4 small{text-transform:none;letter-spacing:0;font-weight:500;color:#56645c;font-size:12px}
+.pblock{display:flex;width:100%;text-align:left;align-items:center;gap:9px;padding:8px 10px;margin-bottom:6px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:grab;user-select:none;-webkit-user-select:none;transition:.12s;color:var(--ink)}
+.pblock:hover{border-color:var(--brand-blue);background:var(--brand-l)}
+.pblock:active{cursor:grabbing}
+.pblock .ic{width:28px;height:28px;flex:none;border-radius:8px;display:grid;place-items:center;font-size:15px;background:#f1f4f2}
+.pblock .tx{min-width:0;flex:1}
+.pblock .nm{font-size:13.5px;font-weight:600;display:block;line-height:1.25}
+.pblock .ds{font-size:11.5px;color:var(--muted);display:block;line-height:1.3;margin-top:1px}
+.pblock .add{font-size:16px;color:var(--brand-ink);font-weight:700;flex:none}
+.pblock.on{border-color:var(--brand-blue);background:var(--brand-l)}
+.pblock.on .add{color:#fff;background:var(--brand-navy);border-radius:99px;width:20px;height:20px;display:grid;place-items:center;font-size:12px}
+.pblock.dragging{opacity:.5}
+.g-role .ic{background:#e8f0ff}.g-knowledge .ic{background:#fff3df}.g-skills .ic{background:#e7f9ee}.g-personality .ic{background:#f6e9ff}.g-safety .ic{background:#ffe9e9}
+.canvas{padding:16px}
+.canvas .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.drop{border:2px dashed #cfdad3;border-radius:16px;padding:16px;min-height:300px;transition:.15s;background:repeating-linear-gradient(45deg,#fafcfb,#fafcfb 10px,#f6f9f7 10px,#f6f9f7 20px)}
+.drop.over{border-color:var(--brand-blue);background:var(--brand-l)}
+.drop.flash{animation:flash .5s}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(15,140,232,.5)}100%{box-shadow:0 0 0 14px rgba(15,140,232,0)}}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.empty .big{font-size:38px}
+.agentcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--sh)}
+.agenthead{display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.avatar{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--brand-navy),var(--brand-blue));color:#fff;display:grid;place-items:center;font-size:24px;flex:none}
+.agenthead input{border:1px solid transparent;border-radius:8px;padding:3px 6px;font-weight:700;font-size:17px;width:100%;margin-left:-6px;background:transparent}
+.agenthead input:hover,.agenthead input:focus{border-color:var(--line);outline:none}
+.agenthead .rl{font-size:13px;color:var(--muted)}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.slot{border:1px solid var(--line);border-radius:12px;padding:10px;min-height:64px}
+.slot.full{grid-column:1/-1}
+.slot h4{margin:0 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.slot .none{font-size:12.5px;color:#56645c}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 4px 4px 9px;margin:0 6px 6px 0;border-radius:99px;background:var(--brand-l);border:1px solid var(--brand-b);font-size:13px;font-weight:600;color:var(--ink)}
+.chip button{border:0;background:#fff;border-radius:99px;width:22px;height:22px;line-height:1;color:var(--muted);font-size:14px;display:grid;place-items:center;padding:0}
+.chip button:hover{background:var(--bad-l);color:var(--bad)}
+.recs{margin-top:10px;font-size:13px;background:var(--info-l);border-radius:10px;padding:8px 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.meter{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-left:auto}
+.meter .bar{width:110px;height:8px;border-radius:9px;background:#e6ece8;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--brand-grad);transition:.3s}
+.hints{margin-top:14px}
+.hints h4{margin:0 0 8px;font-size:14px}
+.hint-i{display:flex;gap:8px;font-size:13px;padding:7px 10px;border-radius:10px;margin:0 0 6px;align-items:flex-start}
+.hint-i.warn{background:var(--warn-l);color:#6b4a07}
+.hint-i.info{background:var(--info-l);color:#173f7c}
+.hint-i.ok{background:var(--ok-l);color:#0b5a2b}
+.hint-i .hb{border:0;background:#fff;border-radius:8px;font-size:12px;padding:2px 8px;margin-left:auto;white-space:nowrap;font-weight:600;color:inherit}
+.mobile-jump{display:none}
+.show-m{display:none}
+.previewcol{position:sticky;top:72px}
+.previewcol .lbl{font-size:12px;color:var(--warn);margin:2px 0 10px}
+.phone{width:100%;max-width:330px;margin:0 auto;height:640px;border-radius:40px;background:#111;padding:11px;box-shadow:0 20px 50px rgba(0,0,0,.18)}
+.screen{width:100%;height:100%;border-radius:30px;overflow:hidden;background:#8ca5c6;display:flex;flex-direction:column;position:relative}
+.ln-top{background:#27313d;color:#fff;padding:26px 12px 9px;display:flex;align-items:center;gap:8px;font-size:14px}
+.ln-top .b{font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ln-top .tag{font-size:11px;background:var(--green);color:#10201a;border-radius:5px;padding:1px 5px;font-weight:800}
+.demo-strip{background:#fff7e3;color:#7a5a12;font-size:10.5px;text-align:center;padding:3px 6px}
+.chat{flex:1;overflow:auto;padding:10px 9px;display:flex;flex-direction:column;gap:7px}
+.msg{display:flex;gap:6px;max-width:88%;font-size:12.5px;line-height:1.42;animation:pop .25s ease;flex:none}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.msg .av{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;font-size:13px;display:grid;place-items:center;flex:none}
+.msg .bub{background:#fff;padding:7px 10px;border-radius:4px 14px 14px 14px;white-space:pre-line;word-wrap:break-word;min-width:0}
+.msg.me{align-self:flex-end}
+.msg.me .bub{background:#9de86a;border-radius:14px 4px 14px 14px}
+.bub .src{display:block;margin-top:5px;font-size:10.5px;color:#4e6a5a;border-top:1px dashed #d6dfd9;padding-top:4px}
+.bub .qr{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.bub .qr span{border:1px solid var(--green);color:var(--green-d);border-radius:99px;padding:2px 9px;font-size:11px;font-weight:600;background:#fff}
+.bub table{border-collapse:collapse;margin:4px 0;font-size:11.5px;width:100%}
+.bub td{padding:2px 4px;border-bottom:1px solid #eef2ef}
+.bub td:last-child{text-align:right;white-space:nowrap}
+.sysnote{align-self:center;font-size:10.5px;color:#fff;background:rgba(0,0,0,.28);border-radius:8px;padding:3px 8px;max-width:92%;text-align:center;flex:none}
+.richbar{background:#fff;border-top:1px solid #dfe5e1;font-size:11px;text-align:center;padding:5px;color:#4b5a52;font-weight:600}
+.rich{display:grid;grid-template-columns:repeat(3,1fr);background:#e9eef0;gap:1px;border-top:1px solid #dfe5e1}
+.rich div{background:linear-gradient(#fff,#f5f8f6);padding:7px 4px;text-align:center;font-size:10.5px;font-weight:600;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.2}
+.rich div i{font-style:normal;font-size:17px}
+.rich .emptyrm{grid-column:1/-1;color:#56645c;font-weight:500;min-height:30px}
+.ln-input{background:#fff;display:flex;align-items:center;gap:6px;padding:7px 10px 14px;font-size:12px;color:#4e5d55;cursor:not-allowed}
+.ln-input span{flex:1;background:#f1f3f2;border-radius:99px;padding:5px 10px;border:1px dashed #c9d2cd;font-style:italic}
+.ln-input b{opacity:.5;font-weight:400}
+.caps{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.caps .card{padding:18px}
+.caps h3{margin:0 0 10px;font-size:17px}
+.caps ul{margin:0;padding:0;list-style:none}
+.caps li{padding:7px 0 7px 28px;position:relative;border-bottom:1px solid #f0f3f1;font-size:14.5px}
+.caps li:last-child{border:0}
+.caps .do li::before{content:"✓";position:absolute;left:4px;color:var(--ok);font-weight:800}
+.caps .dont li::before{content:"✕";position:absolute;left:5px;color:var(--bad);font-weight:800}
+.stepper{display:grid;grid-template-columns:240px 1fr;overflow:hidden}
+.steps{background:#fafcfb;border-right:1px solid var(--line);padding:14px;margin:0;list-style:none}
+.steps li{display:flex;gap:10px;align-items:center;padding:9px 8px;border-radius:10px;font-size:14px;color:var(--muted);font-weight:600;cursor:pointer}
+.steps li .n{width:26px;height:26px;border-radius:50%;border:2px solid #cfdad3;display:grid;place-items:center;font-size:12px;flex:none;background:#fff}
+.steps li.cur{background:#fff;color:var(--ink);box-shadow:var(--sh)}
+.steps li.cur .n{border-color:var(--brand-navy);color:var(--brand-navy)}
+.steps li.done .n{background:var(--brand-navy);border-color:var(--brand-navy);color:#fff}
+.pane{padding:20px 22px;min-width:0}
+.pane h3{margin:0 0 4px}
+.field{margin:12px 0}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.field input{width:100%;max-width:420px;padding:10px 12px;border:1px solid #cdd8d1;border-radius:10px;background:#fff}
+.field input:focus{outline:2px solid var(--brand-blue);outline-offset:0;border-color:var(--brand-blue)}
+.field .help{font-size:12px;color:var(--muted);margin-top:3px}
+.field .err{font-size:12px;color:var(--bad);margin-top:3px;min-height:16px}
+.secure{background:#f0f6ff;border:1px solid #cfe0fb;color:#173f7c;border-radius:12px;padding:10px 12px;font-size:13.5px;max-width:620px}
+.code{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.code code{background:#0f1a14;color:#bff5d3;padding:9px 12px;border-radius:10px;font-size:13px;word-break:break-all}
+.log{background:#0f1a14;color:#c9f7da;border-radius:12px;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;min-height:60px;max-width:620px;white-space:pre-wrap;margin-top:10px}
+.navbtns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin:10px 0}
+.status-pill{display:inline-block;padding:4px 10px;border-radius:99px;font-size:13px;font-weight:700}
+.status-pill.wait{background:var(--warn-l);color:var(--warn)}
+.status-pill.ok{background:var(--ok-l);color:var(--ok)}
+.sim{font-size:12px;color:var(--warn);font-weight:600}
+.export{padding:18px}
+.export pre{max-height:260px;overflow:auto;background:#0f1a14;color:#d6f5e3;border-radius:12px;padding:12px;font-size:11.5px;margin:12px 0 0}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+footer{padding:28px 0 60px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:20px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--brand-navy);color:#fff;padding:9px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:1180px){.builder{grid-template-columns:270px minmax(0,1fr)}.previewcol{grid-column:1/-1;position:static}.how{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){
+ nav.links{display:none}
+ .wrap{padding:0 14px}
+ header.top .wrap{gap:8px}
+ .hero{padding:28px 0 22px}
+ .builder{grid-template-columns:1fr}
+ .palette{position:static;max-height:none;overflow:visible}
+ .grp .items{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ .pblock{margin:0;padding:7px 8px;cursor:pointer;gap:7px}
+ .pblock .ds{display:none}
+ .pblock .ic{width:24px;height:24px;font-size:13px}
+ .pblock .nm{font-size:12.5px}
+ .slots{grid-template-columns:1fr}
+ .caps{grid-template-columns:1fr}
+ .stepper{grid-template-columns:1fr}
+ .steps{display:flex;overflow:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px}
+ .steps li{flex:none;padding:6px 8px}
+ .steps li .t{display:none}
+ .steps li.cur .t{display:inline}
+ .mobile-jump{display:inline-flex}
+ .hide-m{display:none}
+ .show-m{display:inline-block}
+ .meter{margin-left:0}
+ .how{grid-template-columns:1fr 1fr}
+ .badge{font-size:11px;padding:2px 7px}
+ .logo img{height:22px}
+ .pane{padding:16px}
+}
+
+section[id],#templates,#preview,#readiness{scroll-margin-top:76px}
+#demo-sum{color:var(--bad);font-size:13.5px;margin:8px 0 0;min-height:0}
+[hidden]{display:none!important}
+.skip{position:absolute;left:-9999px;top:8px;z-index:100;background:#fff;padding:8px 12px;border-radius:8px}
+.skip:focus{left:8px}
+:focus-visible{outline:3px solid var(--brand-blue);outline-offset:2px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.iconbtn{width:32px;height:32px;border-radius:99px;border:1px solid var(--line);background:#fff;font-weight:800;color:var(--muted);flex:none;padding:0}
+.iconbtn:hover{color:var(--ink);border-color:#c7d3cc}
+.mstrip{display:none;background:var(--warn-l);color:#6b4a07;font-size:12px;font-weight:600;text-align:center;padding:3px 8px;border-top:1px solid #f3d9a8}
+.th-note{font-size:12.5px;color:#173f7c;background:var(--info-l);border:1px solid #cfe0fb;border-radius:10px;padding:6px 12px;max-width:820px;margin:10px 0 0}
+html:not([lang=th]) .th-note:not(.always){display:none}
+.small{font-size:12.5px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--muted)}
+.soon{display:inline-block;font-size:10.5px;font-weight:700;line-height:1.3;padding:1px 7px;border-radius:99px;background:var(--warn-l);color:#7a4700;border:1px solid #f0cf94;white-space:nowrap;vertical-align:middle;letter-spacing:0;text-transform:none}
+.pblock .soon{margin-top:3px;white-space:normal}
+.pblock[data-status=soon] .ic{filter:grayscale(.5)}
+.chip .soon{margin-left:2px}
+.chip.is-soon{background:#fffaf0;border-color:#f0cf94}
+.soon.st-partial,.soonchip.st-partial{background:var(--info-l);color:#173f7c;border-color:#cfe0fb}
+.soon.st-founder,.soonchip.st-founder{background:#f1f4f2;color:#3c4b43;border-color:#d5ddd8}
+.soonchip{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--warn-l);color:#7a4700;border:1px solid #f0cf94}
+.bub .soonchip{display:table}
+.tpls{padding:14px 16px;margin-bottom:18px}
+.tpl-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.tpl-head h3{margin:0;font-size:16px}
+.tpls .hint{font-size:13px;color:var(--muted);margin:2px 0 10px}
+.tpls .hint.small{margin:8px 0 0;font-size:12px}
+.tpl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tpl{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;color:var(--ink);transition:.12s;min-width:0}
+.tpl:hover{border-color:var(--brand-blue);background:var(--brand-l)}
+.tpl.on{border-color:var(--brand-blue);background:var(--brand-l);box-shadow:inset 0 0 0 1px var(--brand-blue)}
+.tpl .ti{font-size:22px;line-height:1;flex:none;margin-top:2px}
+.tpl .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tpl .tt b{font-size:14px;line-height:1.3}
+.tpl .tt span{font-size:12px;color:var(--muted);line-height:1.35}
+.tpl .tt .tshop{font-size:12px;color:#56645c}
+.tpl .tu{font-size:12px;font-weight:700;color:var(--brand-ink);white-space:nowrap;flex:none}
+.readiness{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fcfdfc}
+.readiness h4{margin:0 0 6px;font-size:14px}
+.checklist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}
+.checklist li{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted);padding:3px 0}
+.checklist li.ok{color:var(--ink)}
+.checklist .cb{width:18px;height:18px;border-radius:5px;border:2px solid #b9c7bf;flex:none;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;margin-top:1px}
+.checklist li.ok .cb{background:var(--brand-navy);border-color:var(--brand-navy)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.pt .sim{font-weight:500}
+.pt-sum{font-weight:700;margin:8px 0 4px;font-size:13.5px}
+.pt-sum.good{color:var(--ok)}.pt-sum.bad{color:var(--bad)}
+.pt-list{margin:0;padding-left:20px;font-size:12.5px}
+.pt-list li{margin:3px 0}
+.pt-list li.ok b{color:var(--ok)}.pt-list li.bad b{color:var(--bad)}
+.pt-list span{color:var(--muted)}
+.pvtoggle{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:0 auto 10px;max-width:330px}
+.pvtoggle button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--muted)}
+.pvtoggle button[aria-pressed=true]{background:#27313d;border-color:#27313d;color:#fff}
+.rmnote{max-width:330px;margin:10px auto 0;font-size:12px;color:var(--muted);text-align:center}
+.rmnote .soon{display:none}
+.apcard{align-self:stretch;background:#fff;border-radius:12px;border:2px solid #27313d;overflow:hidden;font-size:12px;flex:none;animation:pop .25s ease}
+.apcard .aph{background:#27313d;color:#fff;font-weight:700;padding:6px 10px}
+.apcard .apb{padding:8px 10px;line-height:1.45}
+.apcard .apbtn{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #e3e8e5}
+.apcard .apbtn button{border:0;background:#fff;padding:8px;font-weight:700;font-size:12.5px;color:var(--green-d)}
+.apcard .apbtn button+button{border-left:1px solid #e3e8e5;color:var(--bad)}
+.apcard .apbtn button:hover{background:#f3f7f5}
+.apr-res{padding:7px 10px;font-weight:700;border-top:1px solid #e3e8e5}
+.apr-res.ok{color:var(--green-d)}.apr-res.no{color:var(--bad)}
+.apcard .apn{font-size:10.5px;color:var(--muted);padding:0 10px 7px}
+.caps{grid-template-columns:1fr 1fr}
+.caps .soonc{grid-column:1/-1;background:#fffcf5;border-color:#f3e2bf}
+.caps .soonc .hint{margin:-6px 0 8px;font-size:13px;color:var(--muted)}
+.caps .soonc li::before{content:"⏳";position:absolute;left:2px;font-size:13px}
+.caps .soonc ul{columns:2;column-gap:28px}
+.caps .soonc li{break-inside:avoid}
+.nextsteps{margin:6px 0 0;padding-left:20px;font-size:14px}
+.nextsteps li{margin:4px 0}
+.steps .soon{font-size:9.5px;padding:0 5px;margin-left:2px}
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.trust .tr{padding:14px 16px}
+.trust h3{font-size:15.5px;margin:8px 0 4px}
+.trust p{margin:0 0 6px;font-size:13.5px;color:#3c4b43}
+.trust a{font-size:13px;font-weight:600}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;border:1px solid}
+.tag.live{background:var(--ok-l);color:#05692f;border-color:#bfe3cc}
+.tag.soon2{background:var(--warn-l);color:#7a4700;border-color:#f0cf94}
+.tag.review{background:var(--info-l);color:#173f7c;border-color:#cfe0fb}
+.tag.demo{background:#f1f4f2;color:#3c4b43;border-color:#dfe5e1}
+.tag.note{background:#f6e9ff;color:#5b2a86;border-color:#e6cff8}
+.demo-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.demo-card{padding:18px 20px}
+.demo-side{padding:16px 18px}
+.demo-side h3{margin:0 0 8px;font-size:15px}
+.demo-side ul{margin:0;padding-left:18px;font-size:14px;color:#3c4b43}
+.demo-side li{margin:6px 0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.fgrid .full{grid-column:1/-1}
+.fgrid .field{margin:8px 0}
+.field input,.field select,.field textarea{width:100%;max-width:none;padding:10px 12px;border:1px solid #b9c7bf;border-radius:10px;background:#fff;font:inherit;color:var(--ink)}
+#connect .field input{max-width:420px}
+.field textarea{resize:vertical;min-height:72px}
+.field select:focus,.field textarea:focus{outline:2px solid var(--brand-blue);outline-offset:0;border-color:var(--brand-blue)}
+.field [aria-invalid=true]{border-color:var(--bad);background:#fffafa}
+.req{color:var(--bad)}
+.consent .chk{align-items:flex-start;margin:6px 0 2px;font-size:13.5px}
+.consent .chk input{width:18px;height:18px;margin-top:2px;flex:none}
+.demo-done h3{margin:0 0 6px;color:var(--ok)}
+.demo-done h3:focus,#dm-h:focus,.hero h1:focus{outline:none}
+.privacy{padding:26px 0 40px}
+.narrow{max-width:780px}
+.privacy h1{font-size:30px;margin:16px 0 10px}
+.privacy h1:focus{outline:none}
+.privacy h2{font-size:18px;margin:22px 0 4px}
+.privacy p,.privacy li{font-size:15px;color:#2d3b34}
+.draftbox{background:var(--warn-l);border:1px solid #f0cf94;color:#6b4a07;border-radius:12px;padding:10px 14px;font-weight:600}
+.keys{padding-left:18px}
+.keys code{background:#eef2ef;padding:1px 6px;border-radius:6px;font-size:12.5px;word-break:break-all}
+footer p{margin:4px 0}
+.flinks a{color:var(--brand-ink);font-weight:600}
+.tour{position:fixed;right:20px;bottom:20px;z-index:70;width:360px;max-width:calc(100vw - 24px)}
+.tour-card{background:var(--brand-navy);color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.tour-card h3{margin:2px 0 4px;font-size:16px}
+.tour-card p{margin:0 0 10px;font-size:13.5px;color:#e4e3f3}
+.tour-top{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.tour-mark{width:40px;height:40px;border-radius:10px;background:#f8faf9;display:block;flex:none}
+.tour-card .tour-n{font-size:11.5px;color:#a9d4fa;margin:0;font-weight:700}
+.tour-btns{display:flex;gap:6px;align-items:center}
+.tour-btns .btn{border-color:#4a4590;background:#353072;color:#fff}
+.tour-btns .btn.primary{background:#fff;background-image:none;border-color:#fff;color:var(--brand-navy);box-shadow:none}
+.tour-hl{box-shadow:0 0 0 3px var(--brand-blue),0 0 0 8px rgba(15,140,232,.18)!important;border-radius:14px}
+@media (max-width:1180px){nav.links{display:none}.tpl-grid{grid-template-columns:repeat(2,1fr)}.trust{grid-template-columns:1fr 1fr}}
+@media (max-width:900px){.demo-grid{grid-template-columns:1fr}}
+@media (max-width:760px){
+ .show-m-b{display:block}
+ .tpl-grid{grid-template-columns:1fr 1fr;gap:8px}
+ .tpl{flex-direction:column;gap:4px;padding:9px 10px}
+ .tpl .tt span:not(.tshop){display:none}
+ .tpl .tu{font-size:11.5px}
+ .tpl-head{flex-direction:column;gap:4px}
+ .checklist{grid-template-columns:1fr}
+ .chip{white-space:nowrap;flex-wrap:wrap;max-width:100%;row-gap:2px}
+ .chip .soon{font-size:9.5px;padding:0 5px}
+ .caps .soonc ul{columns:1}
+ .trust{grid-template-columns:1fr}
+ .fgrid{grid-template-columns:1fr}
+ .demo-card{padding:14px}
+ .privacy h1{font-size:24px}
+ section[id],#templates,#preview,#readiness{scroll-margin-top:96px}
+ .tour{left:12px;right:12px;bottom:12px;width:auto;max-width:none}
+ .iconbtn{width:30px;height:30px}
+}
+.hero-tag{margin:-6px 0 14px}
+.points .soon{font-size:11px;vertical-align:1px}
+.soon.st-demo,.soonchip.st-demo{background:#f1f4f2;color:#3c4b43;border-color:#d5ddd8}
+.soon.st-proof,.soonchip.st-proof,.soon.st-team{background:var(--info-l);color:#173f7c;border-color:#cfe0fb}
+.soon.st-glass,.soonchip.st-glass{background:var(--info-l);color:#173f7c;border-color:#cfe0fb}
+.checklist li.amber{color:#6b4a07}
+.checklist li.amber .cb{background:#fff4e0;border-color:#c98a1b;color:#8f5600}
+.ck-why{display:block;font-size:12px;color:#6b4a07;margin-top:2px}
+.pt-sum.na{color:#8f5600}
+.pt-list li.na b{color:#8f5600}
+.stnote{align-self:flex-start;margin:-3px 0 0 32px;flex:none}
+.stnote .soonchip{margin-top:0}
+.chat:focus-visible{outline-offset:-3px}
+.keys-d summary,.demo-done details summary{cursor:pointer;font-weight:600;color:var(--brand-ink)}
+.demo-done details{margin:6px 0 10px}
+.mcta{display:none}
+@media (max-width:760px){
+ .mcta{display:inline-flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:40;justify-content:center;min-height:46px}
+ body{padding-bottom:72px}
+ body.view-privacy .mcta,body.tour-open .mcta,body.mcta-hide .mcta{display:none}
+ .toast{bottom:76px}
+ .chip button{width:32px;height:32px;flex:none}
+ .chip{flex-wrap:nowrap;white-space:normal;align-items:center}
+ .hint-i .hb{min-height:32px}
+ .pvtoggle button{min-height:32px}
+ .lang button{min-height:32px}
+ .consent .chk input{width:24px;height:24px}
+ .apcard .apbtn button{min-height:40px}
+ .flinks a{display:inline-block;padding:6px 0}
+ .tpl .tu{min-height:24px}
+ .caps{grid-template-columns:1fr}
+}
+.builder>*,.canvas,.drop,.agentcard,.agenthead>div,.slots,.slot{min-width:0}
+.canvas{container-type:inline-size}
+.slots{grid-template-columns:repeat(2,minmax(0,1fr))}
+@container (max-width:560px){.slots{grid-template-columns:minmax(0,1fr)}}
+.slot{overflow-wrap:anywhere}
+.chip,.chip.is-soon{display:inline-grid;grid-template-columns:minmax(0,auto) auto;align-items:center;column-gap:6px;row-gap:3px;max-width:100%;min-width:0;white-space:normal;vertical-align:top;border-radius:16px;padding:5px 5px 5px 10px}
+.chip .cl{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.chip .soon{grid-column:1;grid-row:2;justify-self:start;margin:0;max-width:100%;white-space:normal}
+.chip button{grid-column:2;grid-row:1/span 2;align-self:center}
+.rl{min-width:0;overflow-wrap:anywhere}
+.pvbanner{background:var(--brand-navy);color:#fff;font-size:12.5px;line-height:1.4;text-align:center;padding:5px 12px;display:flex;flex-wrap:wrap;justify-content:center;column-gap:14px;row-gap:1px;overflow-wrap:anywhere;min-width:0}
+.pvbanner span{min-width:0;max-width:100%}
+.exo{font-size:11.5px;color:#56645c;font-weight:600}
+.ck-note{margin:8px 0 0;font-size:12.5px;color:#56645c;line-height:1.45}
+</style>
+</head>
+<body>
+<a class="skip" href="#builder" data-i18n="b_title">Build your agent</a>
+<header class="top"><div class="pvbanner" role="note" data-testid="preview-banner"><span lang="en" data-testid="preview-banner-en">Neurohands — Custom AI Agent Platform for LINE Official Accounts</span><span lang="th" data-testid="preview-banner-th">Neurohands — แพลตฟอร์มสร้างทีมเอเจนต์ AI สำหรับ LINE Official Account</span></div><div class="wrap">
+ <a class="logo" href="#top" data-testid="logo"><img id="logo-img" src="data:image/jpeg;base64,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" alt="Neurohands" width="160" height="26"></a>
+ <span class="badge hide-m" data-testid="proto-badge" data-i18n="badge">Interactive Builder</span>
+ <span class="spacer"></span>
+ <nav class="links" aria-label="Sections"><a href="#builder" data-i18n="nav_build">Build</a><a href="#capabilities" data-i18n="nav_caps">Capabilities</a><a href="#connect" data-i18n="nav_connect">Connect to LINE</a><a href="#trust" data-i18n="nav_trust">Trust</a></nav>
+ <button type="button" class="iconbtn" data-action="tour" id="btn-tour" data-testid="tour-replay" data-i18n-aria="tour_btn" aria-label="Replay the tour" title="?">?</button>
+ <a class="btn primary sm hide-m" href="#demo" id="hdr-demo" data-i18n="cta_demo">Book a demo</a>
+ <div class="lang" role="group" aria-label="Language"><button type="button" id="lang-en" aria-pressed="true" data-lang="en">EN</button><button type="button" id="lang-th" aria-pressed="false" data-lang="th">ไทย</button></div>
+</div>
+<div class="mstrip show-m-b" data-testid="proto-strip" data-i18n="badge">Interactive Builder</div>
+</header>
+
+<main id="top">
+<section class="hero"><div class="wrap">
+ <span class="badge kicker" data-i18n="hero_kicker">AI staff for LINE Official Accounts</span>
+ <h1 data-i18n-html="hero_title">Build your own AI staff for LINE, <em>just drag and drop.</em></h1>
+ <p class="hero-tag"><span class="soon st-demo" data-testid="hero-tag" data-i18n="hero_tag">Custom AI agent builder · guided setup with our team</span></p>
+ <p class="sub" data-i18n="hero_sub">Pick a role, add your business knowledge and skills, set the safety rules, and watch it reply in LINE before anything goes live.</p>
+ <div class="ctas"><a class="btn primary" href="#demo" id="cta-demo" data-testid="cta-demo" data-i18n="cta_demo">Book a demo</a><a class="btn" href="#builder" id="cta-build" data-i18n="cta_build">Build your agent →</a><a class="btn ghost" href="#capabilities" data-i18n="cta_how">See what it can do</a></div>
+ <div class="points" data-testid="hero-points"><span><span data-i18n="pt1">Answers from your own documents</span> <span class="soon st-proof" data-i18n="tg_proof">Verified documents</span></span><span><span data-i18n="pt2">A person approves risky actions</span> <span class="soon st-partial" data-i18n="st_partial">Active</span></span><span><span data-i18n="pt3">Works in your LINE Official Account</span> <span class="soon st-team" data-i18n="tg_team">Set up by our team</span></span></div>
+ <div class="how">
+  <div><b data-i18n="how1t">1 · Build</b><span data-i18n="how1">Drag blocks onto your agent</span></div>
+  <div><b data-i18n="how2t">2 · Preview</b><span data-i18n="how2">See your LINE chat update live</span></div>
+  <div><b data-i18n="how3t">3 · Check</b><span data-i18n="how3">Review what it will and won't do</span></div>
+  <div><b data-i18n="how4t">4 · Connect</b><span data-i18n="how4">Link your LINE OA, then the owner approves going live</span></div>
+ </div>
+ <p class="notice" data-i18n="notice">Design and preview your custom AI agent team below. Your company's operational data stays stored on your own private hardware while our cloud platform handles 24/7 LINE routing and backup.</p>
+ <p class="th-note" data-testid="th-note" data-i18n="th_note"></p>
+</div></section>
+
+<section class="block" id="builder"><div class="wrap">
+ <h2 data-i18n="b_title">Build your agent</h2>
+ <p class="lead hide-m" data-i18n="b_lead">Drag blocks from the left onto your agent, or tap a block to add it.</p><p class="lead show-m-b" data-testid="b-lead-m" data-i18n="b_lead_m">Tap a block to add it.</p>
+ <div class="tpls card" id="templates">
+  <div class="tpl-head"><div><h3 data-i18n="tpl_title">Start from a template</h3><p class="hint" data-i18n="tpl_lead">Pick a starter.</p></div>
+   <button type="button" class="btn sm" id="tpl-undo" data-testid="tpl-undo" hidden data-i18n="tpl_undo">Undo template</button></div>
+  <p class="hint-i warn" id="tpl-warn" data-testid="tpl-warn" role="status" hidden></p>
+  <div class="tpl-grid" id="tpl-grid"></div>
+  <p class="hint small" data-i18n="tpl_note">Using a template replaces the blocks on your canvas.</p>
+ </div>
+ <div class="builder">
+  <div class="palette card" role="region" aria-label="Blocks">
+   <h3 data-i18n="pal_title">Blocks</h3>
+   <p class="hint" data-i18n="pal_hint">Drag onto the agent, or tap to add</p>
+   <div id="palette"></div>
+  </div>
+  <div class="canvas card">
+   <div class="head"><h3 data-i18n="cv_title">Your agent</h3>
+    <div class="meter"><span data-i18n="ready">Launch checklist</span><span class="bar"><i id="meter-bar" style="width:0"></i></span><b id="meter-num" data-testid="ready-count">0</b></div>
+    <a class="btn sm mobile-jump" href="#preview" data-i18n="jump">See LINE preview ↓</a>
+   </div>
+   <div class="drop" id="dropzone" data-testid="dropzone" aria-label="Agent drop zone"></div>
+   <div class="readiness" id="readiness">
+    <h4 data-i18n="ready">Launch checklist</h4>
+    <ul class="checklist" id="checklist" data-testid="checklist"></ul>
+    <p class="ck-note" data-testid="ck-note" data-i18n="ck_note">Complete the checklist and run the pre-launch test to review your agent design.</p>
+    <div class="pt"><button type="button" class="btn sm" id="btn-pretest" data-testid="pretest">Run pre-launch test</button><span class="sim" data-i18n="pt_note">Checks your selected blocks against sample customer questions.</span></div>
+    <div id="pt-out" aria-live="polite"></div>
+   </div>
+   <div class="hints"><h4 data-i18n="hints_title">Checks and hints</h4><div id="hints"></div></div>
+  </div>
+  <div class="previewcol" id="preview">
+   <h3><span data-i18n="pv_title">LINE preview</span> <span class="soon st-demo" data-testid="pv-tag" data-i18n="pv_tag">Interactive sample</span></h3>
+   <p class="lbl" data-i18n="pv_lbl">Interactive chat preview for your business.</p>
+   <div class="pvtoggle" id="pv-toggle" role="group" aria-label="Preview as" hidden><span data-i18n="pv_as">Preview as</span><button type="button" data-pv="concierge" data-testid="pv-public" data-i18n="pv_public">Public visitor</button><button type="button" data-pv="aria" data-testid="pv-customer" data-i18n="pv_cust">Activated customer</button></div>
+   <div class="phone"><div class="screen">
+    <div class="ln-top"><span aria-hidden="true">‹</span><span class="b" id="oa-title">Modern Glass &amp; Aluminium</span><span class="tag">OA</span><span aria-hidden="true">☰</span></div>
+    <div class="demo-strip" data-i18n="pv_strip">NEUROHANDS · interactive LINE preview</div>
+    <div class="chat" id="chat" role="log" tabindex="0" aria-live="polite" data-i18n-aria="chat_label" aria-label="Interactive LINE chat"></div>
+    <div class="richbar" id="richbar">Menu ▾</div>
+    <div class="rich" id="rich"></div>
+    <div class="ln-input" aria-disabled="true" data-testid="ln-input"><span data-i18n="pv_input">Interactive preview mode</span><b aria-hidden="true">☺</b></div>
+   </div></div>
+   <p class="rmnote"><span class="soon" data-i18n="st_partial">Active</span> <span data-i18n="pv_rm_soon">Rich Menu layout preview for your LINE Official Account</span></p>
+  </div>
+ </div>
+</div></section>
+
+<section class="block" id="capabilities"><div class="wrap">
+ <h2 data-i18n="cap_title">What this agent will do on LINE</h2>
+ <p class="lead" data-i18n="cap_lead">A plain summary that updates as you build.</p>
+ <div class="caps">
+  <div class="card do"><h3 data-i18n="cap_do">It will</h3><ul id="cap-do"></ul></div>
+  <div class="card dont"><h3 data-i18n="cap_dont">It won't (guardrails)</h3><ul id="cap-dont"></ul></div>
+  <div class="card soonc"><h3 data-i18n="cap_soon">Additional modules</h3><p class="hint" data-i18n="cap_soon_lead">Optional modules you can include in your rollout.</p><ul id="cap-soon" data-testid="cap-soon"></ul></div>
+ </div>
+</div></section>
+
+<section class="block" id="connect"><div class="wrap">
+ <h2 data-i18n="cn_title">Connect to your LINE Official Account</h2>
+ <p class="lead"><span data-i18n="cn_lead">Four steps. </span><span class="sim" data-i18n="cn_sim">Guided setup with the Neurohands team.</span></p>
+ <div class="card stepper">
+  <ol class="steps" id="steps"></ol>
+  <div class="pane" id="pane"></div>
+ </div>
+</div></section>
+
+<section class="block" id="trust"><div class="wrap">
+ <h2 data-i18n="tr_title">Trust and privacy</h2>
+ <p class="lead" data-i18n="tr_lead">How Neurohands protects your business data and approvals.</p>
+ <div class="trust" data-testid="trust-panel">
+  <div class="card tr" data-testid="trust-approval"><span class="tag review" data-i18n="st_partial">Active</span><h3 data-i18n="tr1t"></h3><p data-i18n="tr1"></p></div>
+  <div class="card tr" data-testid="trust-docs"><span class="tag demo" data-i18n="tg_proof">Verified documents</span><h3 data-i18n="tr2t"></h3><p data-i18n="tr2"></p></div>
+  <div class="card tr"><span class="tag soon2" data-i18n="tg_note">Verified</span><h3 data-i18n="tr3t"></h3><p data-i18n="tr3"></p></div>
+  <div class="card tr"><span class="tag review" data-i18n="tg_review">Protected</span><h3 data-i18n="tr4t"></h3><p data-i18n="tr4"></p><a href="#privacy" data-i18n="tr_more">Read privacy details</a></div>
+  <div class="card tr"><span class="tag demo" data-i18n="tg_demo">Secure</span><h3 data-i18n="tr5t"></h3><p data-i18n="tr5"></p></div>
+  <div class="card tr"><span class="tag note" data-i18n="tg_note">Verified</span><h3 data-i18n="tr6t"></h3><p data-i18n="tr6"></p></div>
+ </div>
+</div></section>
+
+<section class="block" id="demo"><div class="wrap">
+ <h2 id="dm-h" tabindex="-1" data-i18n="dm_title">Book a demo</h2>
+ <p class="lead"><span data-i18n="dm_lead">Tell us about your business, and we'll walk you through a custom AI agent tailored to your shop.</span> <span class="sim" data-i18n="dm_sim">Your request is saved on this device for your walkthrough.</span></p>
+ <div class="demo-grid">
+  <div class="card demo-card">
+   <form id="demo-form" novalidate data-testid="demo-form">
+    <div class="fgrid">
+     <div class="field"><label for="f-name"><span data-i18n="f_name">Your name</span> <span class="req">*</span></label><input id="f-name" name="name" autocomplete="name" aria-required="true" aria-describedby="err-f-name"><div class="err" id="err-f-name" aria-live="polite"></div></div>
+     <div class="field"><label for="f-biz"><span data-i18n="f_biz">Business name</span> <span class="req">*</span></label><input id="f-biz" name="business" autocomplete="organization" aria-required="true" aria-describedby="err-f-biz"><div class="err" id="err-f-biz" aria-live="polite"></div></div>
+     <div class="field"><label for="f-contact"><span data-i18n="f_contact">LINE ID or phone</span> <span class="req">*</span></label><input id="f-contact" name="contact" autocomplete="tel" aria-required="true" aria-describedby="help-f-contact err-f-contact"><div class="help" id="help-f-contact" data-i18n="f_contact_help"></div><div class="err" id="err-f-contact" aria-live="polite"></div></div>
+     <div class="field"><label for="f-ind"><span data-i18n="f_ind">Industry</span> <span class="req">*</span></label><select id="f-ind" name="industry" aria-required="true" aria-describedby="err-f-ind"><option value="" data-i18n="f_ind_ph">Choose one</option><option value="glass" data-i18n="tpl_glass">Glass &amp; aluminium</option><option value="materials" data-i18n="tpl_materials">Building materials</option><option value="auto" data-i18n="tpl_auto">Auto parts</option><option value="shop" data-i18n="tpl_shop">General shop</option><option value="other" data-i18n="ind_other">Other</option></select><div class="err" id="err-f-ind" aria-live="polite"></div></div>
+     <div class="field full"><label for="f-msg" data-i18n="f_msg">Message (optional)</label><textarea id="f-msg" name="message" rows="3" data-i18n-ph="f_msg_ph"></textarea></div>
+    </div>
+    <div class="field consent"><label class="chk" for="f-consent"><input type="checkbox" id="f-consent" name="consent" aria-required="true" aria-describedby="err-f-consent"> <span><span data-i18n="f_consent">I agree to save my demo request details.</span> <span class="req">*</span></span></label>
+     <a href="#privacy" class="small" data-testid="demo-privacy-link" data-i18n="f_consent_link">Privacy details</a><div class="err" id="err-f-consent" aria-live="polite"></div></div>
+    <div class="navbtns"><button type="submit" class="btn primary" id="demo-submit" data-testid="demo-submit" data-i18n="f_submit">Book a demo</button></div>
+    <p class="err" id="demo-sum" role="alert"></p>
+   </form>
+   <div id="demo-done" class="demo-done" data-testid="demo-done" hidden></div>
+  </div>
+  <div class="card demo-side"><h3 data-i18n="dm_side_t">What a demo covers</h3><ul><li data-i18n="dm_x1"></li><li data-i18n="dm_x2"></li><li data-i18n="dm_x3"></li></ul></div>
+ </div>
+</div></section>
+</main>
+<a class="btn primary mcta" href="#demo" id="m-cta" data-testid="m-cta" data-i18n="cta_demo">Book a demo</a>
+
+<article id="privacy" class="privacy" role="main" hidden data-testid="privacy-page"><div class="wrap narrow">
+ <a href="#top" class="btn sm" id="pr-back" data-i18n="pr_back">← Back to builder</a>
+ <h1 id="pr-h" tabindex="-1" data-i18n="pr_title">Privacy &amp; Data Ownership</h1>
+ <p class="draftbox" data-testid="privacy-draft" data-i18n="pr_draft">Your business data stays under your ownership on dedicated private hardware, with cloud routing and backup.</p>
+ <h2 data-i18n="pr_h1"></h2><p data-i18n="pr_p1"></p>
+ <h2 data-i18n="pr_h2"></h2><p data-i18n="pr_p2"></p>
+ <h2 data-i18n="pr_h3"></h2><p data-i18n="pr_p3"></p>
+ <h2 data-i18n="pr_h4"></h2><p data-i18n="pr_p4"></p>
+ <p><button type="button" class="btn" id="pr-clear" data-testid="privacy-clear" data-i18n="pr_clear">Clear saved builder data</button> <span class="sim" id="pr-status" role="status"></span></p>
+ <h2 data-i18n="pr_h5"></h2><p data-i18n="pr_p5"></p>
+</div></article>
+
+<footer><div class="wrap">
+ <img class="flogo" id="footer-logo" data-testid="footer-logo" alt="Neurohands" width="135" height="22">
+ <p data-i18n="footer">Neurohands · Custom AI Agent Platform for LINE · Private Hardware Data Storage + 24/7 Cloud Operation</p>
+ <p class="flinks"><a href="#privacy" id="ft-privacy" data-testid="footer-privacy" data-i18n="ft_privacy">Privacy</a> · <a href="#top" data-action="tour" data-i18n="ft_tour">Replay the tour</a> · <a href="#demo" data-i18n="cta_demo">Book a demo</a></p>
+</div></footer>
+<div class="tour" id="tour" role="dialog" aria-modal="false" aria-labelledby="tour-h" data-testid="tour" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){"use strict";
+var STORE = "nh_builder_state";
+var I18N = {
+en:{badge:"Interactive Builder",badge_s:"Preview",nav_build:"Build",nav_caps:"Capabilities",nav_connect:"Connect to LINE",
+hero_kicker:"AI staff for LINE Official Accounts",hero_title:"Build your own AI staff for LINE, <em>just drag and drop.</em>",
+hero_sub:"Pick a role, add your business knowledge and skills, set the safety rules, and see how your custom AI team replies inside LINE.",
+cta_build:"Build your agent →",cta_demo:"Book a demo",cta_how:"See what it can do",pt1:"Answers from your own documents",pt2:"A person approves risky actions",pt3:"Works in your LINE Official Account",
+how1t:"1 · Build",how1:"Drag blocks onto your agent",how2t:"2 · Preview",how2:"See your LINE chat update live",how3t:"3 · Check",how3:"Review what it will and won't do",how4t:"4 · Connect",how4:"Link your LINE OA, then the owner approves going live",
+notice:"Design and preview your custom AI agent team below. Your company's operational data stays stored on your own private hardware while our cloud platform handles 24/7 LINE routing and backup.",
+b_title:"Build your agent",b_lead:"Drag blocks from the left onto your agent, or tap a block to add it.",pal_title:"Blocks",pal_hint:"Drag onto the agent, or tap to add",
+cv_title:"Your agent",ready:"Launch checklist",jump:"See LINE preview ↓",hints_title:"Checks and hints",
+pv_title:"Live LINE preview",pv_lbl:"Interactive chat preview for your business.",pv_strip:"NEUROHANDS · interactive LINE preview",
+cap_title:"What this agent will do on LINE",cap_lead:"A plain summary that updates as you build.",cap_do:"It will",cap_dont:"It won't (guardrails)",
+cn_title:"Connect to your LINE Official Account",cn_lead:"Four steps. ",cn_sim:"Guided onboarding with the Neurohands team.",
+footer:"Neurohands · Custom AI Agent Platform for LINE · Private Hardware Data Storage + 24/7 Cloud Operation",
+grp_role:"Role templates",grp_role_n:"pick one",grp_knowledge:"Knowledge",grp_skills:"Skills and tools",grp_personality:"Personality",grp_personality_n:"one of each kind",grp_safety:"Safety",
+empty1:"Drop blocks here",empty2:"Start with a role template, such as Aria · Customer support.",
+sl_knowledge:"Knowledge",sl_skills:"Skills and tools",sl_personality:"Personality",sl_safety:"Safety",sl_none:"Nothing yet",
+agent_default:"My LINE agent",role_none:"No role yet. Add a role template.",remove:"Remove",rec:"Recommended for this role:",rec_btn:"Add recommended",
+added:"Added",removed:"Removed",replaced:"Switched to",already:"Already on your agent",
+st1:"Account details",st2:"Private storage & cloud",st3:"Feature preview check",st4:"Go live",
+oa_name:"LINE OA name",oa_name_help:"Your shop or brand name in LINE Official Account",ch_id:"Business reference code",ch_help:"Enter a 10-digit preview code (for example 1234567890)",
+ch_err:"Reference code should be 10 digits",name_err:"Enter your LINE OA name",
+secure:"🔒 You never enter any channel secret or access token on this site. Our onboarding team sets up your private connection securely when you go live.",
+next:"Next",back:"Back",
+wh_t:"Private hardware & cloud setup",wh_1:"Your business data, documents, and customer records stay on your own private hardware while cloud machines keep your LINE agent running 24/7 with automatic backup.",
+wh_note:"Every business receives an isolated tenant environment managed through Neurohands.",
+wh_chk:"My business profile and storage setup preference are ready",
+ts_t:"Feature response check",ts_1:"Verify that your selected role, knowledge blocks, and safety guardrails respond properly.",ts_btn:"Run response check",ts_again:"Run check again",
+gl_t:"Go live",gl_1:"Going live requires the business owner's approval in LINE through Jarvis before the agent replies to customers.",gl_req:"Request owner approval",gl_wait:"Waiting for owner approval",
+gl_appr:"Preview owner approval",gl_live:"Ready for launch",gl_done:"Ready for setup. The Neurohands team finishes connecting your LINE channel with you:",
+gl_need:"Complete steps 1 to 3 first.",gl_needrole:"Add a role template before going live.",
+rm_empty:"Add skills to build the rich menu",rm_more:"LINE rich menus fit 6 buttons; other skills work in chat",
+sim_tag:"Verified",looks_good:"Looks good. No conflicts found."},
+th:{badge:"เครื่องมือออกแบบเอเจนต์",badge_s:"ตัวอย่าง",nav_build:"สร้าง",nav_caps:"ความสามารถ",nav_connect:"เชื่อมต่อ LINE",
+hero_kicker:"พนักงาน AI สำหรับ LINE Official Account",hero_title:"สร้างพนักงาน AI ของคุณเองบน LINE <em>แค่ลากแล้ววาง</em>",
+hero_sub:"เลือกบทบาท เพิ่มข้อมูลธุรกิจและทักษะ ตั้งกฎความปลอดภัย แล้วดูตัวอย่างการตอบใน LINE ได้ทันที",
+cta_build:"เริ่มสร้างเอเจนต์ →",cta_demo:"นัดสาธิต",cta_how:"ดูว่าทำอะไรได้บ้าง",pt1:"ตอบจากเอกสารของธุรกิจคุณเอง",pt2:"มีคนอนุมัติก่อนทำรายการสำคัญ",pt3:"ทำงานใน LINE Official Account ของคุณ",
+how1t:"1 · สร้าง",how1:"ลากบล็อกมาวางที่เอเจนต์",how2t:"2 · ดูตัวอย่าง",how2:"ดูแชท LINE ตัวอย่างเปลี่ยนตามทันที",how3t:"3 · ตรวจสอบ",how3:"ดูว่าจะทำอะไรและจะไม่ทำอะไร",how4t:"4 · เชื่อมต่อ",how4:"เชื่อม LINE OA แล้วให้เจ้าของอนุมัติก่อนเปิดใช้งาน",
+notice:"ออกแบบและดูตัวอย่างทีมเอเจนต์ AI สำหรับธุรกิจของคุณด้านล่าง ข้อมูลธุรกิจของคุณถูกจัดเก็บบนฮาร์ดแวร์ส่วนตัวของคุณเอง ขณะที่คลาวด์ดูแลการทำงานบน LINE ตลอด 24 ชม. และการสำรองข้อมูล",
+b_title:"สร้างเอเจนต์ของคุณ",b_lead:"ลากบล็อกจากด้านซ้ายมาวางที่เอเจนต์ หรือแตะบล็อกเพื่อเพิ่ม",pal_title:"บล็อก",pal_hint:"ลากไปวางที่เอเจนต์ หรือแตะเพื่อเพิ่ม",
+cv_title:"เอเจนต์ของคุณ",ready:"รายการตรวจก่อนเปิดใช้งาน",jump:"ดูตัวอย่างใน LINE ↓",hints_title:"การตรวจสอบและคำแนะนำ",
+pv_title:"ตัวอย่างบน LINE แบบเรียลไทม์",pv_lbl:"ดูตัวอย่างการตอบแชทในมุมมองลูกค้าและเจ้าของกิจการ",pv_strip:"NEUROHANDS · ตัวอย่างการทำงานบน LINE",
+cap_title:"สิ่งที่เอเจนต์นี้จะทำบน LINE",cap_lead:"สรุปแบบเข้าใจง่าย อัปเดตตามที่คุณสร้าง",cap_do:"สิ่งที่จะทำ",cap_dont:"สิ่งที่จะไม่ทำ (ข้อจำกัดด้านความปลอดภัย)",
+cn_title:"เชื่อมต่อกับ LINE Official Account ของคุณ",cn_lead:"4 ขั้นตอน ",cn_sim:"ติดตั้งร่วมกับทีมงาน Neurohands อย่างปลอดภัย",
+footer:"Neurohands · แพลตฟอร์มสร้างทีมเอเจนต์ AI สำหรับ LINE · เก็บข้อมูลบนฮาร์ดแวร์ส่วนตัว + ประมวลผลและสำรองข้อมูลบนคลาวด์ 24 ชม.",
+grp_role:"เทมเพลตบทบาท",grp_role_n:"เลือก 1 แบบ",grp_knowledge:"ความรู้",grp_skills:"ทักษะและเครื่องมือ",grp_personality:"บุคลิก",grp_personality_n:"เลือกอย่างละ 1",grp_safety:"ความปลอดภัย",
+empty1:"วางบล็อกที่นี่",empty2:"เริ่มจากเทมเพลตบทบาท เช่น อาเรีย · ดูแลลูกค้า",
+sl_knowledge:"ความรู้",sl_skills:"ทักษะและเครื่องมือ",sl_personality:"บุคลิก",sl_safety:"ความปลอดภัย",sl_none:"ยังไม่มี",
+agent_default:"เอเจนต์ LINE ของฉัน",role_none:"ยังไม่มีบทบาท กรุณาเพิ่มเทมเพลตบทบาท",remove:"ลบ",rec:"แนะนำสำหรับบทบาทนี้:",rec_btn:"เพิ่มที่แนะนำ",
+added:"เพิ่มแล้ว",removed:"ลบแล้ว",replaced:"เปลี่ยนเป็น",already:"มีอยู่ในเอเจนต์แล้ว",
+st1:"ข้อมูลบัญชี",st2:"จัดเก็บข้อมูลส่วนตัวและคลาวด์",st3:"ทดสอบการทำงาน",st4:"เปิดใช้งานจริง",
+oa_name:"ชื่อ LINE OA",oa_name_help:"ชื่อร้านหรือแบรนด์ของคุณบน LINE Official Account",ch_id:"รหัสอ้างอิงธุรกิจ",ch_help:"กรอกตัวเลขอ้างอิง 10 หลักเพื่อทดสอบตัวอย่าง (เช่น 1234567890)",
+ch_err:"กรุณากรอกตัวเลขอ้างอิง 10 หลัก",name_err:"กรุณากรอกชื่อ LINE OA",
+secure:"🔒 คุณไม่ต้องกรอกคีย์ลับหรือโทเค็นใดๆ บนหน้าเว็บนี้ ทีม Neurohands จะตั้งค่าการเชื่อมต่ออย่างปลอดภัยให้เมื่อคุณพร้อมเปิดใช้งานจริง",
+next:"ถัดไป",back:"ย้อนกลับ",
+wh_t:"ฮาร์ดแวร์ส่วนตัวและคลาวด์ 24 ชม.",wh_1:"ข้อมูลธุรกิจ เอกสาร และข้อมูลลูกค้าของคุณถูกจัดเก็บบนฮาร์ดแวร์ส่วนตัวของคุณเอง ขณะที่คลาวด์ช่วยให้เอเจนต์ตอบ LINE ได้ตลอด 24 ชม. พร้อมระบบสำรองข้อมูล",
+wh_note:"แต่ละธุรกิจมีพื้นที่ข้อมูลแยกเป็นสัดส่วนและควบคุมการเข้าถึงโดยเจ้าของกิจการ",
+wh_chk:"ยืนยันข้อมูลธุรกิจและรูปแบบการจัดเก็บข้อมูล",
+ts_t:"ทดสอบการตอบสนองของเอเจนต์",ts_1:"ตรวจสอบว่าบทบาท ความรู้ และกฎความปลอดภัยที่คุณเลือกทำงานร่วมกันได้ครบถ้วน",ts_btn:"ทดสอบการทำงาน",ts_again:"ทดสอบอีกครั้ง",
+gl_t:"เปิดใช้งานจริง",gl_1:"การเปิดใช้งานจริงต้องได้รับอนุมัติจากเจ้าของกิจการผ่านจาร์วิสใน LINE ก่อนเริ่มตอบลูกค้า",gl_req:"ขออนุมัติจากเจ้าของ",gl_wait:"รอเจ้าของอนุมัติ",
+gl_appr:"ดูตัวอย่างการอนุมัติของเจ้าของ",gl_live:"พร้อมเปิดใช้งาน",gl_done:"พร้อมสำหรับการตั้งค่า ทีม Neurohands จะเชื่อมต่อช่อง LINE ร่วมกับคุณ:",
+gl_need:"กรุณาทำขั้นตอนที่ 1 ถึง 3 ให้ครบก่อน",gl_needrole:"กรุณาเพิ่มเทมเพลตบทบาทก่อนเปิดใช้งาน",
+rm_empty:"เพิ่มทักษะเพื่อสร้างริชเมนู",rm_more:"ริชเมนู LINE มีได้ 6 ปุ่ม ทักษะอื่นใช้งานผ่านแชท",
+sim_tag:"ตรวจสอบแล้ว",looks_good:"เรียบร้อย ไม่พบปัญหา"}
+};
+var B = [
+ {id:"concierge",g:"role",ic:"👋",en:"Concierge",th:"คอนเซียร์จ (ต้อนรับ)",de:"Answers visitors' public questions; guides them to activate or book a demo",dt:"ตอบคำถามทั่วไปของผู้เยี่ยมชม แนะนำการเปิดใช้งานหรือนัดสาธิต"},
+ {id:"aria",g:"role",ic:"💬",en:"Aria · Customer support",th:"อาเรีย · ดูแลลูกค้า",de:"Serves activated customers from your documents and orders, one company at a time",dt:"ดูแลลูกค้าที่เปิดใช้งานแล้ว ตอบจากเอกสารและคำสั่งซื้อของบริษัทนั้นเท่านั้น"},
+ {id:"jarvis",g:"role",pg:"owner",ic:"🧭",en:"Jarvis · Owner assistant",th:"จาร์วิส · ผู้ช่วยเจ้าของ",de:"Owner executive assistant in LINE: daily briefs, customer memory, calendar reminders, tasks, uploads, and approvals",dt:"ผู้ช่วยส่วนตัวของเจ้าของใน LINE: สรุปงาน ความจำลูกค้า นัดหมายปฏิทิน งานเอกสาร และการอนุมัติ"},
+ {id:"suri",g:"role",st:"soon",ic:"🧾",en:"Sales · Suri",th:"ฝ่ายขาย · สุรี",de:"Gathers requirements and prepares a quotation brief",dt:"รวบรวมความต้องการและเตรียมร่างใบเสนอราคา"},
+ {id:"mira",g:"role",st:"soon",ic:"📣",en:"Marketing · Mira",th:"ฝ่ายการตลาด · มิรา",de:"Turns confirmed requirements into a proposal draft",dt:"นำความต้องการที่ยืนยันแล้วมาทำเป็นร่างข้อเสนอ"},
+ {id:"docs",g:"knowledge",ic:"📁",en:"Upload documents",th:"อัปโหลดเอกสาร",de:"Supports XLSX, CSV, and DOCX business files for verified answers",dt:"รองรับเอกสารธุรกิจ XLSX, CSV และ DOCX เพื่อใช้ตอบคำถามอย่างแม่นยำ"},
+ {id:"catalog",st:"glass",g:"knowledge",ic:"🗂️",en:"Product catalog",th:"แคตตาล็อกสินค้า",de:"Products, sizes and specs",dt:"สินค้า ขนาด และสเปก"},
+ {id:"faq",st:"partial",g:"knowledge",ic:"❓",en:"FAQ",th:"คำถามที่พบบ่อย",de:"Approved answers to common customer questions about your business",dt:"คำตอบที่อนุมัติแล้วสำหรับคำถามที่ลูกค้าถามบ่อยเกี่ยวกับธุรกิจของคุณ"},
+ {id:"prices",st:"glass",g:"knowledge",ic:"🏷️",en:"Price list",th:"รายการราคา",de:"Approved prices and minimum orders",dt:"ราคาที่อนุมัติแล้วและยอดสั่งขั้นต่ำ"},
+ {id:"answer",g:"skills",ic:"💡",en:"Answer questions",th:"ตอบคำถาม",de:"From your approved knowledge, with the source",dt:"ตอบจากข้อมูลที่อนุมัติ พร้อมระบุที่มา"},
+ {id:"quote",g:"skills",st:"partial",ic:"🧮",en:"Quotations",th:"ใบเสนอราคา",de:"Standard rates from your price list; your sales team confirms the formal quote",dt:"แจ้งราคามาตรฐานจากรายการราคา และให้ทีมขายยืนยันใบเสนอราคาจริง"},
+ {id:"order",g:"skills",ic:"📦",en:"Order status",th:"สถานะคำสั่งซื้อ",de:"Look up a customer's own orders",dt:"ตรวจสอบคำสั่งซื้อของลูกค้ารายนั้น"},
+ {id:"booking",g:"skills",st:"soon",ic:"📅",en:"Book appointments",th:"นัดหมาย",de:"Offer slots and request a booking",dt:"เสนอเวลาว่างและส่งคำขอนัดหมาย"},
+ {id:"leads",g:"skills",st:"soon",ic:"📝",en:"Collect leads",th:"เก็บข้อมูลผู้สนใจ",de:"Ask for name and phone to follow up",dt:"ขอชื่อและเบอร์โทรเพื่อติดต่อกลับ"},
+ {id:"handoff",g:"skills",st:"partial",ic:"🙋",en:"Hand off to staff",th:"ส่งต่อให้พนักงาน",de:"Records customer escalations and saves follow-up cases for your team",dt:"บันทึกเรื่องส่งต่อและสร้างเคสติดตามให้ทีมงานดูแลต่อ"},
+ {id:"summary",g:"skills",st:"founder",ic:"📊",en:"Daily summary",th:"สรุปประจำวัน",de:"Executive summaries, checklists, and operational status delivered to the owner in LINE",dt:"ส่งสรุปภาพรวม รายการงาน และสถานะระบบให้เจ้าของกิจการใน LINE"},
+ {id:"friendly",st:"soon",g:"personality",ex:"tone",ic:"😊",en:"Friendly tone",th:"น้ำเสียงเป็นกันเอง",de:"Warm and casual",dt:"อบอุ่น เป็นกันเอง"},
+ {id:"formal",st:"soon",g:"personality",ex:"tone",ic:"👔",en:"Formal tone",th:"น้ำเสียงทางการ",de:"Polite and businesslike",dt:"สุภาพ เป็นทางการ"},
+ {id:"lang_th",st:"soon",g:"personality",ex:"lang",ic:"🇹🇭",en:"Replies in Thai",th:"ตอบเป็นภาษาไทย",de:"Thai only",dt:"ภาษาไทยเท่านั้น"},
+ {id:"lang_en",st:"soon",g:"personality",ex:"lang",ic:"🇬🇧",en:"Replies in English",th:"ตอบเป็นภาษาอังกฤษ",de:"English only",dt:"ภาษาอังกฤษเท่านั้น"},
+ {id:"lang_both",st:"soon",g:"personality",ex:"lang",ic:"🌏",en:"Thai + English",th:"ไทย + อังกฤษ",de:"Both languages",dt:"ทั้งสองภาษา"},
+ {id:"emoji_none",st:"soon",g:"personality",ex:"emoji",ic:"🔤",en:"No emoji",th:"ไม่ใช้อีโมจิ",de:"Plain text",dt:"ข้อความล้วน"},
+ {id:"emoji_some",st:"soon",g:"personality",ex:"emoji",ic:"🙂",en:"A few emoji",th:"อีโมจิเล็กน้อย",de:"Light touch",dt:"ใช้บ้างเล็กน้อย"},
+ {id:"emoji_lots",st:"soon",g:"personality",ex:"emoji",ic:"🎉",en:"Lots of emoji",th:"อีโมจิเยอะ",de:"Playful",dt:"สนุกสนาน"},
+ {id:"approval",g:"safety",st:"soonsim",ic:"✅",en:"Approval Gate",th:"ขั้นตอนอนุมัติ",de:"Sensitive proposals, notes, tasks, and discounts require explicit human owner approval in LINE",dt:"ข้อเสนอสำคัญ โน้ต งาน และส่วนลดต้องรอการอนุมัติจากเจ้าของกิจการใน LINE"},
+ {id:"hours",st:"soon",g:"safety",ic:"🕘",en:"Business hours",th:"เวลาทำการ",de:"Tells customers when staff are available",dt:"แจ้งลูกค้าว่าพนักงานพร้อมให้บริการเมื่อไร"},
+ {id:"pdpa",st:"soon",g:"safety",ic:"🛡️",en:"PDPA consent message",th:"ข้อความขอความยินยอม PDPA",de:"Asks consent before saving personal data",dt:"ขอความยินยอมก่อนเก็บข้อมูลส่วนบุคคล"}
+];
+var REC = {
+ concierge:["faq","answer","leads","handoff","friendly","lang_both","emoji_some","hours","pdpa"],
+ aria:["docs","faq","answer","order","handoff","friendly","lang_th","emoji_some","approval","pdpa"],
+ jarvis:["docs","summary","approval","formal","lang_th","emoji_none"],
+ suri:["catalog","prices","quote","leads","handoff","formal","lang_both","emoji_none","approval","pdpa"],
+ mira:["catalog","faq","answer","leads","friendly","lang_both","emoji_some","approval","pdpa"]
+};
+var DEMO_STORE = "nh_demo_requests";
+var TOUR_STORE = "nh_tour_seen";
+Object.assign(I18N.en,{
+nav_trust:"Trust",tour_btn:"Replay the tour",th_note:"",
+ft_privacy:"Privacy",ft_tour:"Replay the tour",ft_th:"",
+tpl_title:"Start from a template",tpl_lead:"Pick a Thai B2B starter. It fills the canvas with blocks and a sample shop, and you can customize everything afterwards.",
+tpl_use:"Use template",tpl_on:"In use",tpl_undo:"Undo template",tpl_applied:"Template applied",tpl_undone:"Back to your previous design",tpl_note:"Using a template replaces the blocks on your canvas.",
+soon:"Add-on module",soon_lab:"Add-on module",st_soon:"Add-on module",st_partial:"Active",st_soonsim:"Live gate",st_founder:"Owner console",grp_owner:"Owner assistant",grp_owner_n:"for the owner, not customers",
+ready_n:"{n} of {m} done",ck_role:"Role chosen",ck_know:"Knowledge added (FAQ, documents, catalog or prices)",ck_skill:"At least one skill",ck_lang:"Reply language chosen",
+ck_appr:"Approval Gate added",ck_warn:"No warnings left in the checks",ck_test:"Pre-launch test passed",
+pt_btn:"Run pre-launch test",pt_again:"Run the test again",pt_note:"Checks 5 sample customer questions against your selected blocks.",
+pt_pass:"Passed",pt_fail:"Needs a fix",pt_ok:"All 5 passed.",pt_bad:"{n} need a fix.",pt_stale:"Your design changed since the last test. Run it again.",
+pv_as:"Preview as",pv_public:"Public visitor",pv_cust:"Activated customer",pv_rm_soon:"Rich Menu layout preview for your LINE Official Account",
+cap_soon:"Additional modules",cap_soon_lead:"Modules you can include in your roadmap.",
+gl_s1:"You add a Neurohands admin to your own LINE channel.",gl_s2:"The team configures the connection securely. You never share keys in chat.",gl_s3:"You approve going live in LINE, through Jarvis.",gl_s4:"The team verifies the first live conversation with you.",
+tr_title:"Trust and privacy",tr_lead:"How Neurohands protects your business data and approvals.",
+tg_live:"Available",tg_review:"Protected",tg_demo:"Secure",tg_note:"Verified",
+tr1t:"A person approves risky actions",tr1:"Through Jarvis, the owner approves staff proposals in LINE. The AI doesn't change prices, promise discounts or confirm orders on its own.",
+tr2t:"Answers from your own documents",tr2:"Aria answers from your company's uploaded catalogs, spreadsheets, and documents, and is designed to say so when it doesn't know.",
+tr3t:"Private hardware for your data, cloud for 24/7 operation & backup",tr3:"Your company's operational data, customer records, and documents are stored and saved on your own private hardware, while our cloud platform keeps your LINE agent running 24/7 with automatic backup.",
+tr4t:"PDPA privacy protection",tr4:"Designed around Thailand PDPA principles with tenant data isolation and owner-controlled retention.",
+tr5t:"Your LINE keys stay protected",tr5:"You never paste private channel keys into a public form; our team configures your dedicated connection securely.",
+tr6t:"Transparent capabilities",tr6:"Every skill and guardrail your agent uses is visible right on your canvas before going live.",tr_more:"Read privacy details",
+dm_title:"Book a demo",dm_lead:"Tell us about your business, and we'll walk you through a custom AI agent tailored to your shop.",dm_sim:"Your request is saved in this browser for your walkthrough.",
+f_name:"Your name",f_biz:"Business name",f_contact:"LINE ID or phone",f_contact_help:"For example @demoshop or 08X XXX XXXX",f_ind:"Industry",f_ind_ph:"Choose one",ind_other:"Other",
+f_msg:"Message (optional)",f_msg_ph:"What would you like the agent to help with?",f_consent:"I agree to save my demo request details.",f_consent_link:"Privacy details",f_req:"required",
+e_name:"Please enter your name",e_biz:"Please enter your business name",e_contact:"Please enter a LINE ID or phone number",e_contact_bad:"That doesn't look like a LINE ID or phone number",e_ind:"Please choose an industry",e_consent:"Please tick the consent box to continue",e_summary:"Please fix the highlighted fields.",
+f_submit:"Book a demo",dm_done_t:"Demo request saved.",dm_done_1:"Send the word demo in our LINE Official Account chat and our team will arrange your live walkthrough during business hours (08:00–18:00, Mon–Sat).",
+dm_saved_as:"Saved details:",dm_delete:"Clear saved request",dm_deleted:"Cleared",dm_again:"Edit details",
+dm_side_t:"What a demo covers",dm_x1:"Building a custom AI agent team around your business workflow",dm_x2:"How private hardware data storage + 24/7 cloud operation works",dm_x3:"Connecting your LINE Official Account with owner approval via Jarvis",
+pr_back:"← Back to builder",pr_title:"Privacy & Data Ownership",pr_draft:"Your business data stays under your ownership on dedicated private hardware, with cloud routing and backup.",
+pr_h1:"How the interactive builder works",pr_p1:"This interactive builder lets you design and preview how your custom Neurohands AI agent team will work inside your LINE Official Account.",
+pr_h2:"What is saved in your browser",pr_p2:"While you design your agent here, your canvas selections are kept locally in your browser so you don't lose your work:",
+pr_k1:"your selected role, knowledge, skills, and safety blocks",pr_k2:"your demo request form entries",pr_k3:"your welcome tour preference",
+pr_h3:"Private Hardware + Cloud Architecture",pr_p3:"In production, Neurohands stores and saves your company's sensitive business data on your own private hardware, while the cloud platform runs your 24/7 LINE AI agent and backup.",
+pr_h4:"How to clear your canvas",pr_p4:"Press the button below or use Start over at any time.",
+pr_clear:"Clear saved builder data",pr_cleared:"Cleared.",
+pr_h5:"Owner control",pr_p5:"You stay in full control of your data, documents, and approvals through Jarvis in LINE.",
+pr_thnote:"",
+tour_skip:"Skip tour",tour_done:"Got it",tour_of:"{i} of {n}",
+t1t:"Welcome to Neurohands",t1:"Design your custom AI agent team for LINE in 30 seconds and see how it solves your daily customer & admin workload.",
+t2t:"1. Start from a template",t2:"Pick a starter for your kind of business, or drag blocks onto your agent. On a phone, tap a block to add it.",
+t3t:"2. Watch the LINE preview",t3:"The phone preview shows how your custom agent replies to customers and routes approvals to you.",
+t4t:"3. Check, then book a demo",t4:"Review your agent's capabilities and book a tailored walkthrough with the Neurohands team.",
+tpl_glass:"Glass & aluminium",tpl_materials:"Building materials",tpl_auto:"Auto parts",tpl_shop:"General shop",appr_ok:"Approved",appr_no:"Rejected"
+});
+Object.assign(I18N.th,{
+nav_trust:"ความปลอดภัย",tour_btn:"ดูคำแนะนำอีกครั้ง",th_note:"",
+ft_privacy:"ความเป็นส่วนตัว",ft_tour:"ดูคำแนะนำอีกครั้ง",ft_th:"",
+tpl_title:"เริ่มจากเทมเพลต",tpl_lead:"เลือกเทมเพลตสำหรับธุรกิจ B2B ไทย ระบบจะจัดชุดบล็อกและตัวอย่างร้านให้ พร้อมปรับแต่งได้ทุกส่วน",
+tpl_use:"ใช้เทมเพลตนี้",tpl_on:"กำลังใช้",tpl_undo:"ยกเลิกเทมเพลต",tpl_applied:"ใช้เทมเพลตแล้ว",tpl_undone:"กลับไปใช้แบบเดิมแล้ว",tpl_note:"การใช้เทมเพลตจะแทนที่บล็อกที่มีอยู่บนเอเจนต์",
+soon:"โมดูลเสริม",soon_lab:"โมดูลเสริม",st_soon:"โมดูลเสริม",st_partial:"พร้อมใช้งาน",st_soonsim:"ระบบอนุมัติ",st_founder:"สำหรับเจ้าของ",grp_owner:"ผู้ช่วยเจ้าของ",grp_owner_n:"สำหรับเจ้าของ ไม่ใช่ลูกค้า",
+ready_n:"เสร็จ {n} จาก {m}",ck_role:"เลือกบทบาทแล้ว",ck_know:"เพิ่มความรู้แล้ว (คำถามที่พบบ่อย เอกสาร แคตตาล็อก หรือราคา)",ck_skill:"มีทักษะอย่างน้อย 1 อย่าง",ck_lang:"เลือกภาษาที่ใช้ตอบแล้ว",
+ck_appr:"เพิ่มขั้นตอนอนุมัติแล้ว",ck_warn:"ไม่มีคำเตือนค้างอยู่",ck_test:"ผ่านการทดสอบก่อนเปิดใช้งาน",
+pt_btn:"ทดสอบก่อนเปิดใช้งาน",pt_again:"ทดสอบอีกครั้ง",pt_note:"ตรวจคำถามตัวอย่าง 5 ข้อกับบล็อกที่คุณเลือก",
+pt_pass:"ผ่าน",pt_fail:"ต้องแก้ไข",pt_ok:"ผ่านครบทั้ง 5 ข้อ",pt_bad:"ต้องแก้ไข {n} ข้อ",pt_stale:"แบบของคุณเปลี่ยนไปหลังการทดสอบครั้งล่าสุด กรุณาทดสอบอีกครั้ง",
+pv_as:"ดูในมุมของ",pv_public:"ผู้เยี่ยมชมทั่วไป",pv_cust:"ลูกค้าที่เปิดใช้งานแล้ว",pv_rm_soon:"ตัวอย่างริชเมนูสำหรับ LINE Official Account ของคุณ",
+cap_soon:"โมดูลเพิ่มเติม",cap_soon_lead:"โมดูลที่สามารถวางแผนเพิ่มต่อยอดได้",
+gl_s1:"คุณเพิ่มผู้ดูแลจาก Neurohands เข้าในช่อง LINE ของคุณเอง",gl_s2:"ทีมงานตั้งค่าการเชื่อมต่ออย่างปลอดภัยโดยไม่ต้องส่งคีย์ในแชท",gl_s3:"คุณอนุมัติการเปิดใช้งานใน LINE ผ่านจาร์วิส",gl_s4:"ทีมงานตรวจบทสนทนาจริงครั้งแรกร่วมกับคุณ",
+tr_title:"ความน่าเชื่อถือและความเป็นส่วนตัว",tr_lead:"วิธีที่ Neurohands ปกป้องข้อมูลธุรกิจและการอนุมัติของคุณ",
+tg_live:"พร้อมใช้งาน",tg_review:"ปลอดภัย",tg_demo:"มาตรฐาน",tg_note:"ตรวจสอบได้",
+tr1t:"มีคนอนุมัติก่อนทำรายการสำคัญ",tr1:"เจ้าของอนุมัติข้อเสนอของพนักงานใน LINE ผ่านจาร์วิส AI จะไม่เปลี่ยนราคา ไม่สัญญาว่าจะให้ส่วนลด และไม่ยืนยันคำสั่งซื้อเอง",
+tr2t:"ตอบจากเอกสารของคุณเอง",tr2:"อาเรียตอบจากแคตตาล็อก ตารางราคา และเอกสารที่คุณอัปโหลด และออกแบบให้บอกตรงๆ เมื่อไม่รู้คำตอบ",
+tr3t:"เก็บข้อมูลบนฮาร์ดแวร์ส่วนตัวของคุณ ประมวลผลและสำรองข้อมูลบนคลาวด์",tr3:"ข้อมูลธุรกิจ ข้อมูลลูกค้า และเอกสารของคุณถูกบันทึกและจัดเก็บไว้บนฮาร์ดแวร์ส่วนตัวของคุณเอง ขณะที่ระบบคลาวด์ดูแลการเชื่อมต่อ LINE ตลอด 24 ชม. พร้อมระบบสำรองข้อมูล",
+tr4t:"การคุ้มครองข้อมูลส่วนบุคคล (PDPA)",tr4:"แยกพื้นที่ข้อมูลของแต่ละธุรกิจอย่างชัดเจน พร้อมการควบคุมการเก็บรักษาข้อมูลโดยเจ้าของกิจการ",
+tr5t:"คีย์ LINE ของคุณปลอดภัย",tr5:"ไม่ต้องกรอกคีย์ลับลงในหน้าเว็บ ทีมงานจะตั้งค่าการเชื่อมต่อให้โดยตรงอย่างปลอดภัย",
+tr6t:"โปร่งใสตรวจสอบได้",tr6:"ทุกทักษะและขอบเขตการทำงานของเอเจนต์แสดงอย่างชัดเจนก่อนเปิดใช้งานจริง",tr_more:"ดูรายละเอียดความเป็นส่วนตัว",
+dm_title:"นัดสาธิต",dm_lead:"เล่าเกี่ยวกับธุรกิจของคุณ แล้วเราจะสาธิตการสร้างทีมเอเจนต์ AI ที่เหมาะกับร้านของคุณ",dm_sim:"บันทึกคำขอของคุณเพื่อใช้ประกอบการพูดคุยกับทีมงาน",
+f_name:"ชื่อของคุณ",f_biz:"ชื่อธุรกิจ",f_contact:"LINE ID หรือเบอร์โทร",f_contact_help:"เช่น @demoshop หรือ 08X XXX XXXX",f_ind:"ประเภทธุรกิจ",f_ind_ph:"เลือก 1 ประเภท",ind_other:"อื่นๆ",
+f_msg:"ข้อความ (ไม่บังคับ)",f_msg_ph:"อยากให้เอเจนต์ช่วยเรื่องอะไร",f_consent:"ฉันยินยอมให้บันทึกข้อมูลสำหรับการนัดสาธิต",f_consent_link:"รายละเอียดความเป็นส่วนตัว",f_req:"จำเป็น",
+e_name:"กรุณากรอกชื่อ",e_biz:"กรุณากรอกชื่อธุรกิจ",e_contact:"กรุณากรอก LINE ID หรือเบอร์โทร",e_contact_bad:"รูปแบบ LINE ID หรือเบอร์โทรไม่ถูกต้อง",e_ind:"กรุณาเลือกประเภทธุรกิจ",e_consent:"กรุณาติ๊กช่องยินยอมก่อนดำเนินการต่อ",e_summary:"กรุณาแก้ไขช่องที่ไฮไลต์ไว้",
+f_submit:"นัดสาธิต",dm_done_t:"บันทึกคำขอนัดสาธิตแล้ว",dm_done_1:"พิมพ์คำว่า demo ในแชท LINE Official Account ของเรา เพื่อให้ทีมงานติดต่อกลับในเวลาทำการ (08:00–18:00 น. จันทร์–เสาร์)",
+dm_saved_as:"ข้อมูลที่บันทึกไว้:",dm_delete:"ล้างข้อมูลที่บันทึกไว้",dm_deleted:"ล้างข้อมูลแล้ว",dm_again:"แก้ไขข้อมูล",
+dm_side_t:"สิ่งที่จะได้ดูในการสาธิต",dm_x1:"การออกแบบทีมเอเจนต์ AI ให้ตรงกับงานของธุรกิจคุณ",dm_x2:"การทำงานร่วมกันระหว่างฮาร์ดแวร์ส่วนตัวเก็บข้อมูลของคุณกับระบบคลาวด์ 24 ชม.",dm_x3:"วิธีเชื่อมต่อ LINE OA และการอนุมัติผ่านจาร์วิส",
+pr_back:"← กลับไปหน้าสร้างเอเจนต์",pr_title:"ความเป็นส่วนตัวและการเป็นเจ้าของข้อมูล",pr_draft:"ข้อมูลธุรกิจของคุณอยู่ภายใต้การเป็นเจ้าของและจัดเก็บบนฮาร์ดแวร์ส่วนตัวของคุณ พร้อมระบบคลาวด์ช่วยเชื่อมต่อและสำรองข้อมูล",
+pr_h1:"หน้าสร้างเอเจนต์นี้ทำงานอย่างไร",pr_p1:"ช่วยให้คุณออกแบบและทดลองดูตัวอย่างการทำงานของทีมเอเจนต์ AI บน LINE Official Account ของคุณ",
+pr_h2:"ข้อมูลที่บันทึกไว้ระหว่างออกแบบ",pr_p2:"ระบบจำค่าที่คุณเลือกไว้บนอุปกรณ์นี้เพื่อความสะดวกในการปรับแต่ง:",
+pr_k1:"บทบาท ความรู้ ทักษะ และกฎความปลอดภัยที่คุณเลือก",pr_k2:"ข้อมูลในแบบฟอร์มนัดสาธิต",pr_k3:"สถานะการดูคำแนะนำการใช้งาน",
+pr_h3:"ฮาร์ดแวร์ส่วนตัว + ระบบคลาวด์สำรองข้อมูล",pr_p3:"ในการใช้งานจริง Neurohands จัดเก็บข้อมูลสำคัญของธุรกิจไว้บนฮาร์ดแวร์ส่วนตัวของคุณเอง โดยใช้คลาวด์สำหรับการทำงานของเอเจนต์ตลอด 24 ชม. และการสำรองข้อมูล",
+pr_h4:"วิธีล้างค่าการออกแบบ",pr_p4:"กดปุ่มด้านล่างเพื่อเริ่มต้นใหม่ได้ทุกเมื่อ",
+pr_clear:"ล้างข้อมูลการออกแบบ",pr_cleared:"ล้างข้อมูลเรียบร้อยแล้ว",
+pr_h5:"การควบคุมโดยเจ้าของกิจการ",pr_p5:"คุณควบคุมข้อมูล เอกสาร และการอนุมัติทุกรายการได้ด้วยตัวเองผ่านจาร์วิสใน LINE",
+pr_thnote:"",
+tour_skip:"ข้าม",tour_done:"เข้าใจแล้ว",tour_of:"{i} จาก {n}",
+t1t:"ยินดีต้อนรับสู่ Neurohands",t1:"ออกแบบทีมเอเจนต์ AI สำหรับ LINE ของคุณ และดูวิธีช่วยลดงานตอบแชท งานขาย และงานเอกสารได้ใน 30 วินาที",
+t2t:"1. เริ่มจากเทมเพลต",t2:"เลือกเทมเพลตที่ใกล้กับธุรกิจของคุณ หรือลากบล็อกมาวางที่เอเจนต์ บนมือถือแตะบล็อกเพื่อเพิ่มได้เลย",
+t3t:"2. ดูตัวอย่างบน LINE",t3:"หน้าจอโทรศัพท์จะแสดงตัวอย่างการตอบลูกค้าและการส่งรายการขออนุมัติให้คุณ",
+t4t:"3. ตรวจสอบ แล้วนัดสาธิต",t4:"ตรวจสอบความสามารถของเอเจนต์ แล้วนัดสาธิตกับทีมงานได้ทันที",
+tpl_glass:"กระจกและอลูมิเนียม",tpl_materials:"วัสดุก่อสร้าง",tpl_auto:"อะไหล่รถยนต์",tpl_shop:"ร้านค้าทั่วไป",appr_ok:"อนุมัติแล้ว",appr_no:"ไม่อนุมัติ"
+});
+var SAMPLE = {
+ glass:{title:"Modern Glass & Aluminium",en:"Modern Glass & Aluminium",th:"โมเดิร์นกลาสและอลูมิเนียม",ic:"🪟",
+  q:["Do you install tempered glass shower screens?","รับติดตั้งฉากกั้นอาบน้ำกระจกเทมเปอร์ไหมครับ"],
+  a:["Yes. We install 8 mm and 10 mm tempered glass shower screens in Bangkok and Nonthaburi, starting with a free site measurement.","รับค่ะ เราติดตั้งฉากกั้นอาบน้ำกระจกเทมเปอร์ 8 มม. และ 10 มม. ในกรุงเทพฯ และนนทบุรี โดยจะเข้าวัดหน้างานให้ฟรีก่อนค่ะ"],ae:"🚿",
+  qq:["How much for 3 wall mirrors, 60×90 cm each?","กระจกเงาติดผนัง ขนาด 60×90 ซม. 3 บาน ราคาเท่าไรครับ"],
+  lines:[["Mirror 5 mm, 3 × 5.8 sq ft @ ฿120","กระจกเงา 5 มม. 3 × 5.8 ตร.ฟ. @ ฿120","฿2,090"],["Polished edges","เจียขอบ","฿360"],["Installation","ค่าติดตั้ง","฿500"]],total:"฿2,950",disc:"฿2,655",
+  oq:"DG-1042",o:["Order DG-1042 (shower screen, 10 mm) is in production. Installation is booked for Mon 12 Oct, 9:00–12:00.","คำสั่งซื้อ DG-1042 (ฉากกั้นอาบน้ำ 10 มม.) อยู่ระหว่างผลิต นัดติดตั้งวันจันทร์ที่ 12 ต.ค. เวลา 9:00–12:00 น."],
+  lead:["Please call me back about a glass partition","อยากให้ติดต่อกลับเรื่องผนังกระจกกั้นห้องค่ะ"]},
+ materials:{title:"Siam Building Supply",en:"Siam Building Supply",th:"สยามวัสดุก่อสร้าง",ic:"🧱",
+  q:["Do you have 7.5 cm lightweight concrete blocks in stock?","มีอิฐมวลเบาหนา 7.5 ซม. ในสต็อกไหมครับ"],
+  a:["Yes. 7.5 cm lightweight blocks (20×60 cm) are in stock. We deliver in Bangkok and Pathum Thani, usually within 2 working days.","มีค่ะ อิฐมวลเบาหนา 7.5 ซม. (20×60 ซม.) มีในสต็อก จัดส่งในกรุงเทพฯ และปทุมธานี ปกติภายใน 2 วันทำการค่ะ"],ae:"🧱",
+  qq:["Price for 500 lightweight blocks, delivered?","อิฐมวลเบา 500 ก้อน รวมค่าส่ง ราคาเท่าไรครับ"],
+  lines:[["Lightweight block 7.5 cm, 500 pcs @ ฿22","อิฐมวลเบา 7.5 ซม. 500 ก้อน @ ฿22","฿11,000"],["Delivery (6-wheel truck)","ค่าขนส่ง (รถ 6 ล้อ)","฿800"]],total:"฿11,800",disc:"฿11,210",
+  oq:"DB-2210",o:["Order DB-2210 (40 bags of cement) is out for delivery today, 13:00–16:00.","คำสั่งซื้อ DB-2210 (ปูนซีเมนต์ 40 ถุง) กำลังนำส่งวันนี้ เวลา 13:00–16:00 น."],
+  lead:["Please call me back about materials for a townhouse","อยากให้ติดต่อกลับเรื่องวัสดุสร้างทาวน์เฮาส์ค่ะ"]},
+ auto:{title:"Prime Auto Parts",en:"Prime Auto Parts",th:"ไพรม์อะไหล่ยนต์",ic:"🔧",
+  q:["Do you have front brake pads for a 2018 one-ton pickup?","มีผ้าเบรกหน้าสำหรับรถกระบะปี 2018 ไหมครับ"],
+  a:["Yes, we stock two brands. Please send the model code or a photo of the registration book so I can match the right part.","มีค่ะ มีให้เลือก 2 ยี่ห้อ รบกวนส่งรหัสรุ่นหรือรูปเล่มทะเบียนรถ เพื่อให้เลือกอะไหล่ได้ตรงรุ่นค่ะ"],ae:"🔧",
+  qq:["How much for 2 sets of front brake pads, fitted?","ผ้าเบรกหน้า 2 ชุด รวมค่าเปลี่ยน ราคาเท่าไรครับ"],
+  lines:[["Front brake pad set × 2 @ ฿1,450","ผ้าเบรกหน้า 2 ชุด @ ฿1,450","฿2,900"],["Fitting","ค่าเปลี่ยน","฿400"]],total:"฿3,300",disc:"฿2,970",
+  oq:"DA-3307",o:["Order DA-3307 has shipped by courier. The tracking number was sent to this chat this morning.","คำสั่งซื้อ DA-3307 ส่งพัสดุแล้ว เลขพัสดุส่งไว้ในแชทนี้เมื่อเช้าค่ะ"],
+  lead:["Please call me back about parts for my garage","อยากให้ติดต่อกลับเรื่องสั่งอะไหล่สำหรับอู่ค่ะ"]},
+ shop:{title:"BaanDee Home Shop",en:"BaanDee Home Shop",th:"บ้านดีโฮมช็อป",ic:"🏪",
+  q:["Do you deliver to Nonthaburi?","ส่งของถึงนนทบุรีไหมครับ"],
+  a:["Yes. Delivery in Nonthaburi is free for orders over ฿1,500 and usually takes 1–2 working days.","ส่งค่ะ จัดส่งในนนทบุรีฟรีเมื่อสั่งครบ ฿1,500 ปกติใช้เวลา 1–2 วันทำการค่ะ"],ae:"🚚",
+  qq:["How much for 2 garden hoses, 20 m?","สายยางรดน้ำ 20 เมตร 2 เส้น ราคาเท่าไรครับ"],
+  lines:[["Garden hose 20 m × 2 @ ฿390","สายยาง 20 ม. 2 เส้น @ ฿390","฿780"],["Delivery","ค่าส่ง","฿60"]],total:"฿840",disc:"฿756",
+  oq:"DH-0581",o:["Order DH-0581 is packed and ships tomorrow morning.","คำสั่งซื้อ DH-0581 แพ็กแล้ว จะจัดส่งพรุ่งนี้เช้าค่ะ"],
+  lead:["Please call me back about a bulk order","อยากให้ติดต่อกลับเรื่องสั่งจำนวนมากค่ะ"]}
+};
+var TEMPLATES = [
+ {id:"glass",en:"Glass & aluminium",th:"กระจกและอลูมิเนียม",de:"Quotes by size, installation, order status",dt:"ใบเสนอราคาตามขนาด งานติดตั้ง สถานะคำสั่งซื้อ",
+  role:"aria",blocks:["docs","faq","prices","answer","quote","order","friendly","lang_th","emoji_some","approval","hours"]},
+ {id:"materials",en:"Building materials",th:"วัสดุก่อสร้าง",de:"Stock questions, bulk prices, deliveries",dt:"ถามสต็อก ราคาส่ง การจัดส่ง",
+  role:"aria",blocks:["catalog","prices","docs","answer","quote","order","formal","lang_th","emoji_none","approval","hours"]},
+ {id:"auto",en:"Auto parts",th:"อะไหล่รถยนต์",de:"Part matching, prices, shipping status",dt:"หาอะไหล่ให้ตรงรุ่น ราคา สถานะการจัดส่ง",
+  role:"aria",blocks:["catalog","faq","prices","answer","quote","order","friendly","lang_both","emoji_some","approval","hours"]},
+ {id:"shop",en:"General shop FAQ",th:"ร้านค้าทั่วไป · คำถามที่พบบ่อย",de:"Public FAQ: hours, delivery, payment",dt:"ตอบคำถามทั่วไป: เวลาเปิด การจัดส่ง การชำระเงิน",
+  role:"concierge",blocks:["faq","answer","friendly","lang_th","emoji_some","hours"]}
+];
+Object.assign(I18N.en,{
+st_glass:"Glass & B2B",
+ck_avail:"Uses features ready for deployment",ck_avail_list:"Optional add-on modules on your agent: {list}",
+ck_test:"Pre-launch check passed",
+pt_btn:"Run pre-launch check",pt_ok:"All 5 checks passed.",pt_na:"Optional module",
+pt_sum:"Check results: {p} passed, {na} optional modules, {f} need attention.",
+hero_tag:"Custom AI agent builder · guided setup with our team",tg_proof:"Verified documents",tg_team:"Set up by our team",
+dm_details:"Details",dm_store:"Saved on this device",pr_details:"Saved items",
+pv_title:"LINE preview",pv_tag:"Interactive sample",pv_input:"Interactive preview mode",chat_label:"Sample LINE chat",
+b_lead_m:"Tap a block to add it. Your agent and the LINE preview are further down.",
+undo_warn:"Undo also removes the changes you made after applying the template. Tap Undo again to confirm.",
+gl_appr:"Preview owner approval",gl_live:"Owner approval previewed · ready for team setup",
+gl_done:"Ready for setup. The Neurohands team finishes connecting your LINE channel with you:"
+});
+Object.assign(I18N.th,{
+st_glass:"ธุรกิจ B2B",
+ck_avail:"ใช้ฟีเจอร์ที่พร้อมเปิดใช้งาน",ck_avail_list:"โมดูลเสริมบนเอเจนต์ของคุณ: {list}",
+ck_test:"ผ่านการตรวจสอบก่อนเปิดใช้งาน",
+pt_btn:"ตรวจสอบก่อนเปิดใช้งาน",pt_ok:"ผ่านครบทั้ง 5 ข้อ",pt_na:"โมดูลเสริม",
+pt_sum:"ผลการตรวจสอบ: ผ่าน {p} ข้อ โมดูลเสริม {na} ข้อ ควรปรับ {f} ข้อ",
+hero_tag:"ออกแบบทีมเอเจนต์ AI · ทีมงานตั้งค่าให้",tg_proof:"ตอบจากเอกสารของคุณ",tg_team:"ทีมงานตั้งค่าให้",
+dm_details:"รายละเอียด",dm_store:"บันทึกไว้บนอุปกรณ์นี้",pr_details:"รายการที่บันทึกไว้",
+pv_tag:"บทสนทนาตัวอย่าง",pv_input:"โหมดแสดงตัวอย่าง",chat_label:"แชท LINE ตัวอย่าง",
+b_lead_m:"แตะบล็อกเพื่อเพิ่ม เอเจนต์และตัวอย่าง LINE อยู่ด้านล่าง",
+undo_warn:"การยกเลิกจะลบการแก้ไขที่คุณทำหลังใช้เทมเพลตด้วย แตะยกเลิกอีกครั้งเพื่อยืนยัน",
+gl_live:"แสดงตัวอย่างการอนุมัติของเจ้าของแล้ว · พร้อมให้ทีมงานเชื่อมต่อ",
+gl_done:"พร้อมสำหรับการตั้งค่า ทีม Neurohands จะเชื่อมต่อช่อง LINE ร่วมกับคุณ:"
+});
+
+I18N.en.ck_note="Complete the checklist and run the pre-launch test to review your agent design.";
+I18N.th.ck_note="ทำตามรายการตรวจและกดทดสอบก่อนเปิดใช้งานเพื่อตรวจสอบการออกแบบเอเจนต์ของคุณ";
+var BY = {}; B.forEach(function(b){BY[b.id]=b;});
+var GROUPS = ["role","owner","knowledge","skills","personality","safety"];
+var state = fresh();
+function fresh(){return {v:1,role:null,blocks:[],agentName:"",oa:{name:"",channelId:""},cx:{step:0,webhook:false,tested:false,requested:false,approved:false},ui:"en",savedAt:null,industry:"glass",tpl:null,pv:null,pt:null,apr:null};}
+function load(){try{var nl=(navigator.language||"").toLowerCase();if(nl.indexOf("th")===0)state.ui="th";}catch(e){}try{var s=JSON.parse(localStorage.getItem(STORE)||"null");if(s&&s.v===1){var f=fresh();state=Object.assign(f,s);state.cx=Object.assign(fresh().cx,s.cx||{});state.oa=Object.assign(fresh().oa,s.oa||{});state.blocks=(s.blocks||[]).filter(function(id){return BY[id]&&BY[id].g!=="role";});if(state.role&&!BY[state.role])state.role=null;if(state.ui!=="th")state.ui="en";if(!SAMPLE[state.industry])state.industry="glass";if(state.pv!=="aria"&&state.pv!=="concierge")state.pv=null;}}catch(e){}}
+function persist(){try{localStorage.setItem(STORE,JSON.stringify(state));}catch(e){}}
+function has(id){return state.role===id||state.blocks.indexOf(id)>=0;}
+function L(){return state.ui;}
+function t(k){var d=I18N[L()];if(d&&typeof d[k]==="string"&&(d[k]!==""||L()==="en"))return d[k];return typeof I18N.en[k]==="string"?I18N.en[k]:k;}
+function bn(b){return L()==="th"?b.th:b.en;}
+function bd(b){return L()==="th"?b.dt:b.de;}
+function soonTag(b){return b&&b.st?'<span class="soon st-'+b.st+'" data-soon="'+b.id+'" title="'+esc(t("st_"+b.st))+'">'+esc(t("st_"+b.st))+'</span>':"";}
+function tf(k,o){var s=t(k);for(var x in o)s=s.replace("{"+x+"}",o[x]);return s;}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+
+function addBlock(id,quiet){
+ var b=BY[id]; if(!b) return false;
+ if(has(id)){ if(!quiet) toast(t("already")+": "+bn(b)); return false; }
+ var replaced=false;
+ if(b.g==="role"){ replaced=!!state.role; state.role=id; state.pv=null; }
+ else{
+  if(b.ex){ state.blocks=state.blocks.filter(function(x){ if(BY[x].ex===b.ex){replaced=true;return false;} return true;}); }
+  state.blocks.push(id);
+ }
+ if(!quiet){ toast((replaced?t("replaced"):t("added"))+": "+bn(b)); changed(); flash(); }
+ return true;
+}
+function removeBlock(id){
+ if(state.role===id){ state.role=null; state.pv=null; } else state.blocks=state.blocks.filter(function(x){return x!==id;});
+ toast(t("removed")+": "+bn(BY[id])); changed();
+}
+function addRecommended(){
+ if(!state.role) return;
+ REC[state.role].forEach(function(id){ var b=BY[id]; if(b.ex && state.blocks.some(function(x){return BY[x].ex===b.ex;})) return; addBlock(id,true);});
+ toast(t("added")+" ✓"); changed(); flash();
+}
+function changed(){ persist(); renderAll(); }
+function flash(){var d=document.getElementById("dropzone");d.classList.remove("flash");void d.offsetWidth;d.classList.add("flash");}
+var toastTimer; function toast(msg){var el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove("show");},1600);}
+
+function applyI18n(){
+ document.documentElement.lang=L();
+ document.querySelectorAll("[data-i18n]").forEach(function(el){el.textContent=t(el.getAttribute("data-i18n"));});
+ document.querySelectorAll("[data-i18n-html]").forEach(function(el){el.innerHTML=t(el.getAttribute("data-i18n-html"));});
+ document.querySelectorAll("[data-i18n-ph]").forEach(function(el){el.setAttribute("placeholder",t(el.getAttribute("data-i18n-ph")));});
+ document.querySelectorAll("[data-i18n-aria]").forEach(function(el){el.setAttribute("aria-label",t(el.getAttribute("data-i18n-aria")));});
+ document.getElementById("lang-en").setAttribute("aria-pressed",String(L()==="en"));
+ document.getElementById("lang-th").setAttribute("aria-pressed",String(L()==="th"));
+}
+
+function renderPalette(){
+ var html="";
+ GROUPS.forEach(function(g){
+  var note=g==="role"?t("grp_role_n"):g==="owner"?t("grp_owner_n"):g==="personality"?t("grp_personality_n"):"";
+  html+='<div class="grp g-'+g+'"><h4>'+esc(t("grp_"+g))+(note?' <small>· '+esc(note)+'</small>':'')+'</h4><div class="items">';
+  B.filter(function(b){return (b.pg||b.g)===g;}).forEach(function(b){
+   var on=has(b.id);
+   html+='<button type="button" class="pblock'+(on?' on':'')+'" draggable="true" data-id="'+b.id+'" data-testid="block-'+b.id+'"'+(b.st?' data-status="'+b.st+'"':'')+' aria-pressed="'+on+'" title="'+esc(bd(b)+(b.st?" · "+t("st_"+b.st):""))+'"><span class="ic">'+b.ic+'</span><span class="tx"><span class="nm">'+esc(bn(b))+'</span>'+soonTag(b)+'<span class="ds">'+esc(bd(b))+'</span></span><span class="add">'+(on?'✓':'+')+'</span></button>';
+  });
+  html+='</div></div>';
+ });
+ document.getElementById("palette").innerHTML=html;
+}
+
+function chips(g){
+ var ids=state.blocks.filter(function(x){return BY[x].g===g;});
+ if(!ids.length) return '<span class="none">'+esc(t("sl_none"))+'</span>';
+ return ids.map(function(id){var b=BY[id];return '<span class="chip'+(b.st?' is-soon':'')+'" data-chip="'+id+'"><span class="cl">'+b.ic+' '+esc(bn(b))+'</span>'+soonTag(b)+'<button type="button" data-remove="'+id+'" aria-label="'+esc(t("remove")+" "+bn(b))+'">×</button></span>';}).join("");
+}
+function defaultName(){var r=state.role?BY[state.role]:null;return r?(L()==="th"?r.th:r.en).split(" · ")[0]:t("agent_default");}
+function renderCanvas(){
+ var dz=document.getElementById("dropzone");
+ if(!state.role && !state.blocks.length){
+  dz.innerHTML='<div class="empty"><div class="big">🧩</div><b>'+esc(t("empty1"))+'</b><br><span>'+esc(t("empty2"))+'</span></div>'; return;
+ }
+ var r=state.role?BY[state.role]:null;
+ var html='<div class="agentcard" data-testid="agentcard"><div class="agenthead"><div class="avatar">'+(r?r.ic:"🤖")+'</div><div style="flex:1;min-width:0">'+
+  '<input id="agent-name" aria-label="Agent name" value="'+esc(state.agentName||defaultName())+'">'+
+  '<div class="rl">'+(r?'<span class="chip'+(r.st?' is-soon':'')+'" style="margin:4px 6px 4px 0" data-chip="'+r.id+'"><span class="cl">'+esc(bn(r))+'</span>'+soonTag(r)+'<button type="button" data-remove="'+r.id+'" aria-label="'+esc(t("remove")+" "+bn(r))+'">×</button></span>'+esc(bd(r)):esc(t("role_none")))+'</div></div></div>';
+ if(r){
+  var missing=REC[r.id].filter(function(id){var b=BY[id];if(has(id))return false;if(b.ex&&state.blocks.some(function(x){return BY[x].ex===b.ex;}))return false;return true;});
+  if(missing.length) html+='<div class="recs"><span>'+esc(t("rec"))+' '+missing.map(function(id){return BY[id].ic;}).join(" ")+'</span><button type="button" class="btn sm" id="btn-rec" data-testid="add-recommended">'+esc(t("rec_btn"))+'</button></div>';
+ }
+ html+='<div class="slots">';
+ ["knowledge","skills","personality","safety"].forEach(function(g){html+='<div class="slot'+(g==="skills"?' full':'')+'" data-slot="'+g+'"><h4>'+esc(t("sl_"+g))+'</h4>'+chips(g)+'</div>';});
+ html+='</div></div>';
+ dz.innerHTML=html;
+}
+
+function hintsList(){
+ var H=[],en=L()==="en";
+ function add(k,a,b,fix){H.push({k:k,m:en?a:b,fix:fix});}
+ var know=["docs","catalog","faq","prices"].some(has);
+ if(!state.role) add("warn","Add a role template so the agent knows who it serves.","เพิ่มเทมเพลตบทบาท เพื่อให้เอเจนต์รู้ว่าดูแลใคร");
+ if(has("concierge")&&has("order")) add("warn","Concierge talks to public visitors and has no private customer tools. Order status only works for activated customers (Aria).","คอนเซียร์จคุยกับผู้เยี่ยมชมทั่วไปและไม่มีสิทธิ์ดูข้อมูลส่วนตัวของลูกค้า สถานะคำสั่งซื้อใช้ได้กับลูกค้าที่เปิดใช้งานแล้ว (อาเรีย) เท่านั้น");
+ if(has("jarvis")&&(has("leads")||has("booking")||has("quote")||has("handoff"))) add("info","Jarvis only talks to the owner and approved staff, so customer skills (leads, bookings, quotes, hand-off) won't reach customers. Pair it with Concierge or Aria.","จาร์วิสคุยกับเจ้าของและพนักงานที่ได้รับอนุญาตเท่านั้น ทักษะสำหรับลูกค้า (เก็บข้อมูลผู้สนใจ นัดหมาย ใบเสนอราคา ส่งต่อพนักงาน) จะไม่ถึงลูกค้า ควรใช้คู่กับคอนเซียร์จหรืออาเรีย");
+ if(has("summary")&&state.role&&!has("jarvis")) add("info","Daily summaries are delivered through Jarvis to the business owner and approved staff in LINE.","สรุปประจำวันจะส่งผ่านจาร์วิสไปยังเจ้าของกิจการและพนักงานที่ได้รับอนุญาตใน LINE");
+ if(has("answer")&&!know) add("warn","Add knowledge (FAQ, documents, catalog) so answers come from your own approved information.","เพิ่มความรู้ (คำถามที่พบบ่อย เอกสาร แคตตาล็อก) เพื่อให้คำตอบมาจากข้อมูลที่ธุรกิจอนุมัติ","faq");
+ if(know&&!has("answer")&&state.role&&state.role!=="jarvis") add("info","You added knowledge but not the Answer questions skill.","คุณเพิ่มความรู้แล้ว แต่ยังไม่มีทักษะตอบคำถาม","answer");
+ if(has("quote")&&!has("prices")) add("warn","Quotations need a price list. Without one, quote requests go to staff.","ใบเสนอราคาต้องมีรายการราคา ถ้าไม่มี คำขอใบเสนอราคาจะส่งต่อให้พนักงาน","prices");
+ if(has("quote")&&!has("approval")) add("info","Pair Quotations with Approval Gate so discount requests route to the owner in LINE via Jarvis.","ควรใช้ใบเสนอราคาคู่กับขั้นตอนอนุมัติ เพื่อให้คำขอส่วนลดส่งถึงเจ้าของผ่านจาร์วิสใน LINE","approval");
+ if(has("booking")&&!has("hours")) add("info","Add Business hours so bookings only offer times when staff work.","เพิ่มเวลาทำการ เพื่อให้เสนอเวลานัดเฉพาะช่วงที่พนักงานทำงาน","hours");
+ if(has("leads")&&!has("pdpa")) add("warn","Collecting names and phone numbers needs a PDPA consent message first.","การเก็บชื่อและเบอร์โทรต้องมีข้อความขอความยินยอมตาม PDPA ก่อน","pdpa");
+ if(has("docs")) add("info","Supports XLSX, CSV, and DOCX business documents with verified source answers.","รองรับไฟล์ธุรกิจ XLSX, CSV และ DOCX สำหรับค้นหาข้อมูลและตอบคำถาม");
+ if(state.role&&state.role!=="jarvis"&&!has("handoff")) add("info","Recommended: Hand off to staff so cases needing human judgment create a tracked escalation.","แนะนำ: เพิ่มการส่งต่อให้พนักงาน เพื่อให้ระบบบันทึกเคสติดตามให้ทีมงานดูแล","handoff");
+ if(state.role&&!state.blocks.some(function(x){return BY[x].ex==="lang";})) add("info","Choose a reply language. Thai customers usually expect Thai.","เลือกภาษาที่ใช้ตอบ ลูกค้าคนไทยส่วนใหญ่ต้องการภาษาไทย","lang_both");
+ if(state.role&&!state.blocks.some(function(x){return BY[x].g==="skills";})) add("warn","Add at least one skill.","เพิ่มทักษะอย่างน้อย 1 อย่าง","answer");
+ return H;
+}
+function sig(){return JSON.stringify([state.role,state.blocks.slice().sort()]);}
+function availOK(id){var b=BY[id];return !!b&&(!b.st||(b.st==="glass"&&state.industry==="glass"));}
+function notAvail(){return (state.role?[state.role]:[]).concat(state.blocks).filter(function(id){return !availOK(id);});}
+function checklist(H){
+ var lang=state.blocks.some(function(x){return BY[x].ex==="lang";});
+ var pt=state.pt&&state.pt.sig===sig()&&!preTest().some(function(x){return x.r==="bad";});
+ return [["role",!!state.role],["know",["docs","catalog","faq","prices"].some(has)],["skill",state.blocks.some(function(x){return BY[x].g==="skills";})],
+  ["lang",lang],["avail",!!state.role&&!notAvail().length],["warn",!!state.role&&!H.some(function(h){return h.k==="warn";})],["test",!!pt]];
+}
+function preTest(){
+ var en=L()==="en", sm=SAMPLE[state.industry]||SAMPLE.glass, r=state.role, owner=r==="jarvis", addon=!!(r&&BY[r].st==="soon"), R=[];
+ function q(text,res,why){R.push({q:text,r:res,ok:res==="ok",why:why});}
+ function T(a,b){return en?a:b;}
+ function names(ids){return ids.map(function(id){return bn(BY[id])+" ("+t("st_"+BY[id].st)+")";}).join(", ");}
+ var noRole=T("Add a customer role (Concierge or Aria).","เพิ่มบทบาทสำหรับลูกค้า (คอนเซียร์จหรืออาเรีย)"), jv=T("Jarvis focuses on the owner console. Select Concierge or Aria for customer replies.","จาร์วิสเป็นระบบสำหรับเจ้าของกิจการ เลือกคอนเซียร์จหรืออาเรียสำหรับตอบลูกค้า");
+ var addonWhy=r?T(bn(BY[r])+" is configured as an optional add-on role.","เพิ่มบทบาท "+bn(BY[r])+" เป็นโมดูลเสริมเรียบร้อยแล้ว"):"";
+ var K=["docs","catalog","faq","prices"].filter(has), Kok=K.filter(availOK);
+ if(!r) q(T(sm.q[0],sm.q[1]),"bad",noRole); else if(owner) q(T(sm.q[0],sm.q[1]),"bad",jv); else if(addon) q(T(sm.q[0],sm.q[1]),"na",addonWhy);
+ else if(!has("answer")) q(T(sm.q[0],sm.q[1]),"bad",T("Add the Answer questions skill.","เพิ่มทักษะตอบคำถาม"));
+ else if(!K.length) q(T(sm.q[0],sm.q[1]),"bad",T("Add knowledge so the answer comes from your information.","เพิ่มความรู้ เพื่อให้คำตอบมาจากข้อมูลของคุณ"));
+ else if(!Kok.length) q(T(sm.q[0],sm.q[1]),"na",T("Uses optional industry catalog module: ","ใช้โมดูลแคตตาล็อกเสริม: ")+names(K));
+ else q(T(sm.q[0],sm.q[1]),"ok",T("Answered accurately from your approved knowledge with source citation.","ตอบจากความรู้ของคุณ พร้อมระบุแหล่งที่มาอย่างถูกต้อง"));
+ var qq=T(sm.qq[0],sm.qq[1]);
+ if(!r) q(qq,"bad",noRole); else if(owner) q(qq,"bad",jv); else if(addon) q(qq,"na",addonWhy);
+ else if(has("quote")) q(qq,"ok",T("Returns standard rates from your price list while your team confirms the formal quote.","แจ้งราคามาตรฐานจากรายการราคา และให้ทีมขายยืนยันใบเสนอราคาจริง"));
+ else if(has("handoff")) q(qq,"ok",T("Creates a tracked follow-up request so your team can respond with a tailored quote.","บันทึกคำขอติดตามให้ทีมงานดูแลและจัดทำใบเสนอราคาให้ลูกค้า"));
+ else q(qq,"bad",T("Add Quotations or Hand off to staff, so price requests reach a person.","เพิ่มใบเสนอราคาหรือการส่งต่อให้พนักงาน เพื่อให้คำขอราคาถึงมือคน"));
+ var dq=T("Can I get 10% off?","ขอลด 10% ได้ไหมคะ");
+ if(!r) q(dq,"bad",noRole); else if(owner) q(dq,"bad",jv); else if(addon) q(dq,"na",addonWhy);
+ else if(has("approval")) q(dq,"ok",T("Discount request stays unpromised and routes to the owner in LINE via Jarvis for explicit approval.","ไม่สัญญาส่วนลดอัตโนมัติ และส่งคำขอให้เจ้าของพิจารณาอนุมัติผ่านจาร์วิสใน LINE"));
+ else q(dq,"ok",T("No discount is promised automatically; staff decide.","ไม่สัญญาว่าจะให้ส่วนลดเอง พนักงานหรือเจ้าของเป็นผู้ตัดสินใจ"));
+ var oq=T("Show me another company's order","ขอดูคำสั่งซื้อของบริษัทอื่นหน่อย");
+ if(!r) q(oq,"bad",noRole); else if(owner) q(oq,"bad",jv); else if(addon) q(oq,"na",addonWhy);
+ else if(r==="concierge") q(oq,"ok",T("Blocked: Concierge only accesses public business information.","ปฏิเสธ: คอนเซียร์จเข้าถึงได้เฉพาะข้อมูลสาธารณะของร้าน"));
+ else q(oq,"ok",has("order")?T("Tenant isolation enforced: order lookups only show the customer's own account.","แยกสิทธิ์ข้อมูลตามบริษัท: ดูได้เฉพาะคำสั่งซื้อของบัญชีลูกค้ารายนั้น"):T("Blocked: this agent has no order lookup tool.","ปฏิเสธ: เอเจนต์นี้ไม่มีเครื่องมือดูคำสั่งซื้อ"));
+ var pq=T("Here's my phone number","นี่เบอร์โทรของฉันค่ะ");
+ if(has("leads")&&!has("pdpa")) q(pq,"bad",T("Add the PDPA consent message before collecting contacts.","เพิ่มข้อความขอความยินยอม PDPA ก่อนเก็บข้อมูลติดต่อ"));
+ else q(pq,"ok",T("Handled with tenant data isolation and owner-controlled retention.","บันทึกและจัดการข้อมูลภายใต้สิทธิ์แยกตามบริษัทและการควบคุมของเจ้าของกิจการ"));
+ return R;
+}
+function renderHints(){
+ var H=hintsList(), el=document.getElementById("hints");
+ if(!H.length) el.innerHTML='<div class="hint-i ok" data-hint="ok">✓ '+esc(t("looks_good"))+'</div>';
+ else el.innerHTML=H.map(function(h){return '<div class="hint-i '+h.k+'" data-hint="'+h.k+'"><span>'+(h.k==="warn"?"⚠️":"ℹ️")+'</span><span>'+esc(h.m)+'</span>'+(h.fix&&!has(h.fix)?'<button type="button" class="hb" data-add="'+h.fix+'">+ '+esc(bn(BY[h.fix]))+'</button>':'')+'</div>';}).join("");
+ var C=checklist(H), n=C.filter(function(c){return c[1];}).length;
+ document.getElementById("meter-bar").style.width=Math.round(n/C.length*100)+"%";
+ document.getElementById("meter-num").textContent=tf("ready_n",{n:n,m:C.length});
+ var NA=notAvail();
+ document.getElementById("checklist").innerHTML=C.map(function(c){var amber=c[0]==="avail"&&!c[1]&&NA.length;return '<li class="'+(c[1]?"ok":amber?"amber":"")+'" data-check="'+c[0]+'"><span class="cb" aria-hidden="true">'+(c[1]?"✓":amber?"!":"")+'</span><span>'+esc(t("ck_"+c[0]))+(amber?'<span class="ck-why" data-testid="avail-list">'+esc(tf("ck_avail_list",{list:NA.map(function(id){return bn(BY[id])+" ("+t("st_"+BY[id].st)+")";}).join(", ")}))+'</span>':'')+'</span><span class="sr">'+(c[1]?" ✓":"")+'</span></li>';}).join("");
+ var pt=state.pt, box=document.getElementById("pt-out");
+ document.getElementById("btn-pretest").textContent=pt?t("pt_again"):t("pt_btn");
+ if(!pt){box.innerHTML="";return;}
+ var res=preTest(), fails=res.filter(function(x){return x.r==="bad";}).length, nas=res.filter(function(x){return x.r==="na";}).length, oks=res.length-fails-nas;
+ if(pt.sig!==sig()){box.innerHTML='<p class="hint-i info" data-testid="pt-stale">ℹ️ '+esc(t("pt_stale"))+'</p>';return;}
+ box.innerHTML='<p class="pt-sum '+(fails?"bad":nas?"na":"good")+'" data-testid="pt-summary">'+esc(!fails&&!nas?t("pt_ok"):tf("pt_sum",{p:oks,na:nas,f:fails}))+'</p><ol class="pt-list">'+res.map(function(x){return '<li class="'+x.r+'" data-pt="'+x.r+'"><b>'+esc(x.r==="ok"?t("pt_pass"):x.r==="na"?t("pt_na"):t("pt_fail"))+'</b> · \u201c'+esc(x.q)+'\u201d<br><span>'+esc(x.why)+'</span></li>';}).join("")+'</ol>';
+}
+function agentLang(){ return has("lang_th")?"th":has("lang_both")?"both":has("lang_en")?"en":(L()==="th"?"th":"en"); }
+function S(en,th){ var a=agentLang(); return a==="en"?en:a==="th"?th:th+"\n"+en; }
+function S1(en,th){ var a=agentLang(); return a==="en"?en:a==="th"?th:th+" / "+en; }
+function E(e){ return has("emoji_none")?"":has("emoji_lots")?" "+e+" ✨":" "+e; }
+function renderPreview(){
+ var sm=SAMPLE[state.industry]||SAMPLE.glass, shopEn=sm.en, shopTh=sm.th;
+ document.getElementById("oa-title").textContent=state.oa.name?state.oa.name:sm.title;
+ var pr=(state.pv&&(state.role==="aria"||state.role==="concierge"))?state.pv:state.role;
+ var M=[], r=pr, formal=has("formal"), uiEn=L()==="en", owner=r==="jarvis", concierge=r==="concierge";
+ function bot(text,extra){M.push({who:"bot",text:text,extra:extra||""});}
+ function me(text){M.push({who:"me",text:text});}
+ function sys(text){M.push({who:"sys",text:text});}
+ function src(name){return '<span class="src">📄 '+esc(S1("Source","ที่มา")+": "+name)+'</span>';}
+ function soon(id){var b=BY[id];return b&&b.st?"\u0001"+id+"\u0001":"";}
+ function stnote(extra){var ids=[];var html=extra.replace(/\u0001([a-z_]+)\u0001/g,function(_,id){ids.push(id);return "";});return {html:html,after:ids.map(function(id){var b=BY[id];return '<div class="stnote" data-stnote="'+id+'"><span class="soonchip st-'+b.st+'">'+esc(bn(b)+" · "+t("st_"+b.st))+'</span></div>';}).join("")};}
+ function qr(arr){return '<span class="qr">'+arr.map(function(x){return '<span>'+esc(x)+'</span>';}).join("")+'</span>';}
+ sys(uiEn?"Today · LINE conversation preview":"วันนี้ · ตัวอย่างบทสนทนา LINE");
+ if(pr!==state.role) sys(pr==="aria"?(uiEn?"Activated customer view (Aria)":"มุมมองลูกค้าที่เปิดใช้งานแล้ว (อาเรีย)"):(uiEn?"Public visitor view (Concierge)":"มุมมองผู้เยี่ยมชมทั่วไป (คอนเซียร์จ)"));
+ if(!r){ sys(uiEn?"Add a role template to see your agent's greeting.":"เพิ่มเทมเพลตบทบาทเพื่อดูคำทักทายของเอเจนต์"); }
+ else if(owner){
+  me(S("Good morning Jarvis","อรุณสวัสดิ์ จาร์วิส"));
+  bot((formal?S("Good morning. I'm Jarvis, your owner assistant. Only you and approved staff can talk to me.","สวัสดีครับ ผมจาร์วิส ผู้ช่วยเจ้าของกิจการ เฉพาะคุณและพนักงานที่ได้รับอนุญาตเท่านั้นที่คุยกับผมได้ครับ"):S("Morning, boss! Jarvis here. Only you and approved staff can chat with me.","อรุณสวัสดิ์ครับบอส! จาร์วิสเองครับ เฉพาะคุณและพนักงานที่ได้รับอนุญาตเท่านั้นที่คุยกับผมได้"))+E("🧭"));
+ } else {
+  var greet={
+   concierge:[S("Hello! Welcome to "+shopEn+". Ask me anything about our products and services.","สวัสดีค่ะ ยินดีต้อนรับสู่"+shopTh+" สอบถามเรื่องสินค้าและบริการได้เลยนะคะ"),S("Good day, and welcome to "+shopEn+". How may I assist you?","สวัสดีค่ะ ยินดีต้อนรับสู่"+shopTh+" ไม่ทราบว่าให้ช่วยเรื่องใดคะ")],
+   aria:[S("Hi Khun Nida, welcome back! I can help with your orders and documents.","สวัสดีค่ะคุณนิดา ยินดีต้อนรับกลับมานะคะ ให้ช่วยเรื่องคำสั่งซื้อหรือเอกสารได้เลยค่ะ"),S("Good day, Khun Nida. I can assist with your orders and company documents.","สวัสดีค่ะคุณนิดา ดิฉันช่วยตรวจสอบคำสั่งซื้อและเอกสารของบริษัทคุณได้ค่ะ")],
+   suri:[S("Hi! I'm Suri from sales. Tell me what you need and I'll prepare a quotation brief.","สวัสดีค่ะ สุรีจากฝ่ายขายค่ะ บอกความต้องการมาได้เลย เดี๋ยวสุรีเตรียมร่างใบเสนอราคาให้นะคะ"),S("Good day. I'm Suri from the sales team. Please share your requirements and I will prepare a quotation brief.","สวัสดีค่ะ ดิฉันสุรีจากฝ่ายขาย กรุณาแจ้งความต้องการ ดิฉันจะจัดเตรียมร่างใบเสนอราคาให้ค่ะ")],
+   mira:[S("Hi! I'm Mira from marketing. I can turn your ideas into a proposal.","สวัสดีค่ะ มิราจากฝ่ายการตลาดค่ะ มิราช่วยเปลี่ยนไอเดียของคุณให้เป็นข้อเสนอได้นะคะ"),S("Good day. I'm Mira from marketing. I can prepare a proposal from your confirmed requirements.","สวัสดีค่ะ ดิฉันมิราจากฝ่ายการตลาด ยินดีจัดทำข้อเสนอจากความต้องการที่ยืนยันแล้วค่ะ")]
+  }[r];
+  me(S("Hello","สวัสดีครับ"));
+  bot(greet[formal?1:0]+E(r==="mira"?"📣":"😊"),soon(r));
+ }
+ if(has("answer")&&r){
+  var know=has("faq")?S1("FAQ","คำถามที่พบบ่อย"):has("catalog")?S1("Product catalog","แคตตาล็อกสินค้า"):has("docs")?S1("Uploaded document","เอกสารที่อัปโหลด"):null;
+  if(owner){
+   me(S("What does our installation contract say about warranty?","สัญญาติดตั้งของเราเขียนเรื่องการรับประกันไว้ว่าอย่างไร"));
+   if(has("docs")) bot(S("Section 4: installation work is guaranteed for 12 months. Glass broken after handover isn't covered.","ข้อ 4: รับประกันงานติดตั้ง 12 เดือน ไม่รวมกระจกที่แตกหลังส่งมอบงานครับ"),src(S1("Installation contract.docx","สัญญาติดตั้ง.docx"))); else bot(S("I don't have that document yet. Please upload it first.","ยังไม่มีเอกสารนี้ในระบบ กรุณาอัปโหลดก่อนครับ"));
+  } else {
+   me(S(sm.q[0],sm.q[1]));
+   if(know) bot(S(sm.a[0],sm.a[1])+E(sm.ae),src(know));
+   else bot(S("I don't have approved information about that yet, so I won't guess."+(has("handoff")?" I've recorded it for our staff to follow up.":""),"ขออภัยค่ะ ยังไม่มีข้อมูลที่อนุมัติแล้วเรื่องนี้ จึงขอไม่เดาคำตอบ"+(has("handoff")?" บันทึกเรื่องไว้ให้พนักงานติดตามแล้วค่ะ":"")));
+  }
+ }
+ if(has("quote")&&r&&!owner){
+  me(S(sm.qq[0],sm.qq[1]));
+  if(has("prices")){
+   var tbl='<table>'+sm.lines.map(function(l){return '<tr><td>'+esc(S(l[0],l[1]))+'</td><td>'+l[2]+'</td></tr>';}).join("")+'<tr><td><b>'+esc(S("Total (estimate)","รวม (ประมาณการ)"))+'</b></td><td><b>'+sm.total+'</b></td></tr><tr><td colspan="2" class="exo" data-testid="price-example">'+esc(S("Standard price list estimate","ราคาประมาณการตามตารางมาตรฐาน"))+'</td></tr></table>';
+   bot(S((r==="suri"?"Quotation brief Q-0012 (standard rates)":"Standard rates for quote request Q-0012")+":","ราคามาตรฐานสำหรับคำขอใบเสนอราคา Q-0012:"),tbl+src(S1("Price list","รายการราคา"))+soon("quote"));
+   bot(S("These are standard rates, not a final price. A salesperson will confirm the formal quote.","นี่เป็นราคามาตรฐาน ยังไม่ใช่ราคาสุดท้าย พนักงานขายจะยืนยันใบเสนอราคาจริงให้ค่ะ"));
+   if(has("approval")){
+    me(S("Can I get 10% off?","ขอลด 10% ได้ไหมคะ"));
+    bot(S("I can't confirm discounts myself. I've asked the owner, and I'll reply here once they decide.","ส่วนลดต้องให้เจ้าของอนุมัติก่อนค่ะ ส่งเรื่องให้เจ้าของแล้ว จะแจ้งกลับในแชทนี้นะคะ"));
+    M.push({who:"appr"});
+   }
+  } else bot(S("I need our price list to quote this, so I've passed your request to our sales staff.","ต้องใช้รายการราคาในการคำนวณ จึงส่งคำขอของคุณให้ฝ่ายขายแล้วค่ะ"));
+ }
+ if(has("order")&&r){
+  me(S("Where is order "+sm.oq+"?","คำสั่งซื้อ "+sm.oq+" ถึงไหนแล้วครับ"));
+  if(concierge) bot(S("For privacy I can't see orders here. Please activate your customer account first, then I can check it for you.","เพื่อความเป็นส่วนตัว ยังดูคำสั่งซื้อไม่ได้ค่ะ กรุณาเปิดใช้งานบัญชีลูกค้าก่อน แล้วจะตรวจสอบให้ค่ะ"),qr([S("Activate account","เปิดใช้งานบัญชี")]));
+  else bot(S(sm.o[0],sm.o[1])+E("📦"),src(S1("Orders (this company only)","คำสั่งซื้อ (เฉพาะบริษัทนี้)")));
+ }
+ if(r==="mira"){
+  me(S("Can you send a proposal for a mirror wall in my café?","ช่วยทำข้อเสนองานผนังกระจกเงาสำหรับร้านกาแฟได้ไหมคะ"));
+  bot(S("Draft proposal outline:\n1. Goal: make the seating area feel bigger\n2. Option A: 5 mm mirror panels. Option B: bronze tinted mirror\n3. Next step: free site measurement\nOur team reviews it before sending the final version.","โครงร่างข้อเสนอ (ร่าง):\n1. เป้าหมาย: ทำให้โซนที่นั่งดูกว้างขึ้น\n2. ทางเลือก A: กระจกเงา 5 มม. ทางเลือก B: กระจกเงาสีชา\n3. ขั้นต่อไป: เข้าวัดหน้างานฟรี\nทีมงานจะตรวจก่อนส่งฉบับจริงค่ะ"));
+ }
+ if(has("booking")&&r&&!owner){
+  me(S("Can someone come to measure on Saturday?","วันเสาร์มาวัดหน้างานได้ไหมคะ"));
+  bot(S("Open Saturday slots"+(has("hours")?" (within business hours)":"")+":","ช่วงเวลาว่างวันเสาร์"+(has("hours")?" (ในเวลาทำการ)":"")+":")+(has("approval")?"\n"+S("Staff will confirm your booking.","พนักงานจะยืนยันการนัดหมายให้อีกครั้งค่ะ"):""),qr(["09:00","11:00","14:00"])+soon("booking"));
+ }
+ if(has("leads")&&r&&!owner){
+  me(S(sm.lead[0],sm.lead[1]));
+  if(has("pdpa")) bot(S("Before I save your name and phone number: do you agree that "+shopEn+" may use them only to contact you about this request? You can ask us to delete them at any time.","ก่อนบันทึกชื่อและเบอร์โทรของคุณ คุณยินยอมให้"+shopTh+" ใช้ข้อมูลนี้เพื่อติดต่อกลับเรื่องคำขอนี้เท่านั้นหรือไม่คะ คุณขอให้ลบข้อมูลได้ทุกเมื่อค่ะ"),qr([S("I agree","ยินยอม"),S("No thanks","ไม่ยินยอม")])+soon("leads"));
+  else bot(S("Sure, please send your name and phone number.","ได้เลยค่ะ กรุณาส่งชื่อและเบอร์โทรศัพท์ค่ะ"),soon("leads"));
+ }
+ if(has("handoff")&&r&&!owner){
+  me(S("I'd like to talk to a person","ขอคุยกับพนักงานหน่อยครับ"));
+  bot(S("I've created a follow-up request for our team"+(has("hours")?" during business hours":"")+". A staff member will reply soon.","บันทึกคำขอส่งต่อให้ทีมงานติดตามแล้วค่ะ"+(has("hours")?" (ในเวลาทำการ)":"")+" พนักงานจะติดต่อกลับโดยเร็วที่สุดค่ะ")+E("🙋"),soon("handoff"));
+ }
+ if(has("summary")&&r){
+  sys(uiEn?"Owner's LINE · daily brief":"LINE ของเจ้าของ · สรุปประจำวัน");
+  bot(S("Daily executive brief\n• 14 customer chats, 12 answered by the agent\n• 2 escalated to staff\n• 1 approval waiting in queue\n• 0 failed deliveries","สรุปประจำวัน\n• แชทลูกค้า 14 รายการ เอเจนต์ตอบเอง 12\n• ส่งต่อพนักงาน 2\n• รายการรออนุมัติ 1\n• ส่งข้อความไม่สำเร็จ 0")+E("📊"),soon("summary"));
+ }
+ if(owner&&has("approval")){
+  M.push({who:"appr",owner:1});
+ }
+ if(owner&&has("docs")){
+  me(S("Upload status?","สถานะการอัปโหลด?"));
+  bot(S("price-list-oct.xlsx (48 rows) and warranty-terms.docx were indexed and are ready for verified Q&A.","อ่านและจัดเก็บไฟล์ price-list-oct.xlsx (48 แถว) และ warranty-terms.docx พร้อมใช้งานตอบคำถามแล้วครับ"));
+ }
+ if(has("hours")&&r&&!owner){
+  sys(uiEn?"Later, at 21:30":"ต่อมา เวลา 21:30 น.");
+  me(S("Are you open now?","ตอนนี้ร้านเปิดไหมคะ"));
+  bot(S("We're closed now. Our hours are Mon–Sat, 8:00–17:00. I can still answer questions, and staff will follow up in the morning.","ขณะนี้ร้านปิดแล้วค่ะ เวลาทำการคือ จันทร์–เสาร์ 8:00–17:00 น. ยังสอบถามข้อมูลได้ และพนักงานจะติดต่อกลับตอนเช้าค่ะ"));
+ }
+ if(state.cx.tested){ sys(uiEn?"Feature response check":"ผลการตรวจสอบการทำงาน"); me("check"); bot(S("Feature check passed. Your agent responds using your configured role and guardrails.","ผ่านการตรวจสอบแล้ว เอเจนต์ตอบกลับตามบทบาทและกฎความปลอดภัยที่ตั้งไว้ครับ")); }
+ var c=document.getElementById("chat");
+ c.innerHTML=M.map(function(m){
+  if(m.who==="sys") return '<div class="sysnote">'+esc(m.text)+'</div>';
+  if(m.who==="appr") return apprCard(m.owner);
+  if(m.who==="me") return '<div class="msg me" data-msg="me"><div class="bub">'+esc(m.text)+'</div></div>';
+  var x=stnote(m.extra);
+  return '<div class="msg" data-msg="bot"><div class="av">'+(r?BY[r].ic:"🤖")+'</div><div class="bub">'+esc(m.text)+x.html+'</div></div>'+x.after;
+ }).join("");
+ c.scrollTop=c.scrollHeight;
+ var apc=c.querySelector(".apcard");if(apc){var hd=apc.previousElementSibling&&apc.previousElementSibling.classList.contains("sysnote")?apc.previousElementSibling:apc;c.scrollTop=Math.max(0,hd.offsetTop-c.offsetTop-12);}
+ var al=agentLang(), skills=state.blocks.filter(function(x){return BY[x].g==="skills";});
+ if(owner) skills=skills.filter(function(x){return ["summary","answer","order"].indexOf(x)>=0;}).concat(has("approval")?["approval"]:[]).concat(has("docs")?["docs"]:[]);
+ var rm=document.getElementById("rich");
+ var tg=document.getElementById("pv-toggle"), showT=state.role==="aria"||state.role==="concierge";
+ tg.hidden=!showT;
+ if(showT) tg.querySelectorAll("button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.pv===pr));});
+ document.getElementById("richbar").textContent=(al==="en"?"Menu":"เมนู")+" ▾";
+ if(!skills.length) rm.innerHTML='<div class="emptyrm">'+esc(t("rm_empty"))+'</div>';
+ else rm.innerHTML=skills.slice(0,6).map(function(id){var b=BY[id];return '<div data-rich="'+id+'"><i>'+b.ic+'</i>'+esc(al==="en"?b.en:b.th)+'</div>';}).join("")+new Array((3-Math.min(6,skills.length)%3)%3+1).join('<div aria-hidden="true"></div>')+(skills.length>6?'<div class="emptyrm" style="font-size:9.5px;min-height:0;padding:3px">'+esc(t("rm_more"))+'</div>':'');
+}
+
+function apprCard(ownerChat){
+ var sm=SAMPLE[state.industry]||SAMPLE.glass, uiEn=L()==="en", a=state.apr;
+ var head=ownerChat?"":'<div class="sysnote">'+esc(uiEn?"Meanwhile, on the owner's LINE · Jarvis":"ขณะเดียวกัน ใน LINE ของเจ้าของ · จาร์วิส")+'</div>';
+ var body='<div class="apcard" data-testid="approval-card" role="group" aria-label="'+esc(uiEn?"Owner approval request":"คำขออนุมัติเจ้าของ")+'"><div class="aph">🧭 '+esc(uiEn?"Jarvis · Approval needed":"จาร์วิส · ต้องการการอนุมัติ")+' <span class="soon" data-testid="approval-tag">'+esc(t("st_soonsim"))+'</span></div>'+
+  '<div class="apb">'+esc(uiEn?"Quote Q-0012 for Khun Nida":"ใบเสนอราคา Q-0012 ของคุณนิดา")+'<br><b>'+sm.total+'</b>'+(ownerChat?'':' → '+esc(uiEn?"10% discount asked":"ขอส่วนลด 10%")+': <b>'+sm.disc+'</b>')+'</div>'+
+  (a?'<div class="apr-res '+a+'" data-testid="approval-result">'+esc(a==="ok"?t("appr_ok"):t("appr_no"))+'</div>':
+  '<div class="apbtn"><button type="button" data-appr="ok">'+esc(uiEn?"Approve":"อนุมัติ")+'</button><button type="button" data-appr="no">'+esc(uiEn?"Reject":"ไม่อนุมัติ")+'</button></div>')+
+  '<div class="apn">'+esc(uiEn?"Nothing goes to the customer until a person decides.":"จะไม่มีอะไรส่งถึงลูกค้าจนกว่าจะมีคนตัดสินใจ")+'</div></div>';
+ return head+body;
+}
+function renderCaps(){
+ var en=L()==="en", D=[], N=[], r=state.role;
+ function d(a,b){D.push(en?a:b);} function n(a,b){N.push(en?a:b);}
+ var roleTxt={concierge:["Greet new visitors, answer public questions about your business, and guide them to activate or book a demo.","ต้อนรับผู้เยี่ยมชมใหม่ ตอบคำถามทั่วไปเกี่ยวกับธุรกิจ และแนะนำให้เปิดใช้งานหรือนัดสาธิต"],
+  aria:["Serve activated customers using only their own company's documents and orders.","ดูแลลูกค้าที่เปิดใช้งานแล้ว โดยใช้เอกสารและคำสั่งซื้อของบริษัทลูกค้ารายนั้นเท่านั้น"],
+  jarvis:["Act as the owner's console in LINE: summaries, customer memory, calendar reminders, tasks, uploads, and approvals.","ทำหน้าที่เป็นคอนโซลของเจ้าของใน LINE: สรุปงาน ความจำลูกค้า นัดหมายปฏิทิน งานเอกสาร และการอนุมัติ"],
+  suri:["Gather customer requirements and prepare a quotation brief for your sales staff.","รวบรวมความต้องการของลูกค้าและเตรียมร่างใบเสนอราคาให้ฝ่ายขาย"],
+  mira:["Turn confirmed requirements into a proposal draft for your team to review.","นำความต้องการที่ยืนยันแล้วมาทำเป็นร่างข้อเสนอให้ทีมตรวจสอบ"]};
+ var SN=en?" (optional module)":" (โมดูลเสริม)";
+ function TG(id){var b=BY[id];return b&&b.st?(b.st==="soon"?SN:" ("+t("st_"+b.st)+")"):"";}
+ if(r) D.push((en?roleTxt[r][0]:roleTxt[r][1])+TG(r)); else d("Add a role template to see what your agent will do.","เพิ่มเทมเพลตบทบาทเพื่อดูว่าเอเจนต์จะทำอะไร");
+ var k=state.blocks.filter(function(x){return BY[x].g==="knowledge";});
+ if(k.length) d("Use your "+k.map(function(x){return BY[x].en.replace("Upload documents","uploaded documents").replace("Product","product").replace("Price","price");}).join(", ")+" as its source of truth, and show where each answer came from.","ใช้ "+k.map(function(x){return BY[x].th.replace("อัปโหลดเอกสาร","เอกสารที่อัปโหลด");}).join(", ")+" ของคุณเป็นข้อมูลหลัก และบอกที่มาของทุกคำตอบ");
+ var sk={answer:["Answer questions from your approved information.","ตอบคำถามจากข้อมูลที่อนุมัติแล้ว"],quote:["Give standard rates from your price list while your team confirms the formal quote.","แจ้งราคามาตรฐานจากรายการราคา และให้ทีมขายยืนยันใบเสนอราคาจริง"],order:["Tell customers the status of their own orders.","แจ้งสถานะคำสั่งซื้อของลูกค้ารายนั้น"],booking:["Offer open time slots and send booking requests to staff.","เสนอช่วงเวลาว่างและส่งคำขอนัดหมายให้พนักงาน"],leads:["Collect names and phone numbers of interested customers for follow-up.","เก็บชื่อและเบอร์โทรของลูกค้าที่สนใจเพื่อติดต่อกลับ"],handoff:["Create a tracked follow-up case for your staff when human judgment is needed.","บันทึกเคสติดตามให้ทีมงานดูแลเมื่อต้องการการตัดสินใจจากพนักงาน"],summary:["Send executive daily summaries, task checklists, and alerts to the owner in LINE.","ส่งสรุปภาพรวม รายการงาน และแจ้งเตือนสำคัญให้เจ้าของกิจการใน LINE"]};
+ state.blocks.filter(function(x){return BY[x].g==="skills";}).forEach(function(x){D.push((en?sk[x][0]:sk[x][1])+TG(x));});
+ var tone=has("formal")?["formal","ทางการ"]:has("friendly")?["friendly","เป็นกันเอง"]:null;
+ var lg=has("lang_th")?["Thai","ภาษาไทย"]:has("lang_en")?["English","ภาษาอังกฤษ"]:has("lang_both")?["Thai and English","ภาษาไทยและอังกฤษ"]:null;
+ if(tone||lg) d("Reply"+(lg?" in "+lg[0]:"")+(tone?", in a "+tone[0]+" tone":"")+".","ตอบ"+(lg?"เป็น"+lg[1]:"")+(tone?" ด้วยน้ำเสียง"+tone[1]:""));
+ if(has("approval")) D.push((en?"Ask the owner to approve discount, note, and critical action requests in LINE before finalizing.":"ขอให้เจ้าของอนุมัติคำขอส่วนลด บันทึกสำคัญ และรายการสำคัญใน LINE ก่อนยืนยันจริง")+TG("approval"));
+ if(has("hours")) d("Tell customers your business hours and when staff will reply.","แจ้งเวลาทำการและเวลาที่พนักงานจะตอบกลับ");
+ if(has("pdpa")) D.push((en?"Ask for consent before saving any personal data (PDPA).":"ขอความยินยอมก่อนบันทึกข้อมูลส่วนบุคคล (PDPA)")+SN);
+ n("Make up facts, prices or stock that aren't in your approved information. If it doesn't know, it says so"+(has("handoff")?" and records it for staff.":"."),"แต่งข้อมูล ราคา หรือสต็อกที่ไม่มีในข้อมูลที่อนุมัติ ถ้าไม่รู้จะบอกตรงๆ"+(has("handoff")?" และบันทึกเรื่องไว้ให้พนักงาน":""));
+ n("Promise a discount, change a price, or confirm a final price, order or refund on its own. These always go to staff.","สัญญาว่าจะให้ส่วนลด เปลี่ยนราคา หรือยืนยันราคา คำสั่งซื้อ หรือการคืนเงินเอง รายการเหล่านี้ส่งให้พนักงานเสมอ");
+ n("Show one customer's or company's data to another.","เปิดเผยข้อมูลของลูกค้าหรือบริษัทหนึ่งให้อีกรายเห็น");
+ if(r==="concierge") n("Look up private orders or documents. Concierge only uses public information.","ดูคำสั่งซื้อหรือเอกสารส่วนตัว คอนเซียร์จใช้เฉพาะข้อมูลสาธารณะ");
+ if(r==="jarvis") n("Talk to customers. Jarvis is only for the owner and approved staff.","คุยกับลูกค้า จาร์วิสใช้ได้เฉพาะเจ้าของและพนักงานที่ได้รับอนุญาต");
+ if(!has("pdpa")&&has("leads")) n("Ask for personal data without a consent message. (Add the PDPA block before going live.)","ขอข้อมูลส่วนบุคคลโดยไม่มีข้อความขอความยินยอม (ควรเพิ่มบล็อก PDPA ก่อนเปิดใช้งาน)");
+ n("Give itself new permissions, change its own rules, or finalize unapproved transactions.","ให้สิทธิ์เพิ่มแก่ตัวเอง เปลี่ยนกฎของตัวเอง หรือทำรายการสำคัญโดยไม่ผ่านการอนุมัติ");
+ n("Expose your private business credentials or customer files publicly.","เปิดเผยข้อมูลลับของร้านหรือเอกสารส่วนตัวของลูกค้าสู่สาธารณะ");
+ n("Pretend to be a person. It's a transparent AI assistant grounded in your business knowledge, permissions, and owner approvals.","แกล้งเป็นคน เอเจนต์เป็นผู้ช่วย AI ที่ตอบจากข้อมูลธุรกิจ สิทธิ์การใช้งาน และการอนุมัติของคุณ");
+ var Z=[];
+ B.filter(function(b){return b.st&&has(b.id);}).forEach(function(b){Z.push('<li data-soon-cap="'+b.id+'"><b>'+esc(bn(b))+'</b> · '+esc(t("st_"+b.st))+(b.st!=="soon"?': '+esc(bd(b)):'')+'</li>');});
+ [["Private hardware storage connector synced with 24/7 cloud LINE routing & backup","ตัวเชื่อมต่อฮาร์ดแวร์ส่วนตัวที่เก็บข้อมูลกับระบบคลาวด์ประมวลผลและสำรองข้อมูลตลอด 24 ชม.","hybrid"],
+  ["Voice notes, meeting reminders, and LINE calendar scheduling via Jarvis","ระบบจดบันทึกเสียง นัดหมาย และแจ้งเตือนปฏิทินผ่านจาร์วิสใน LINE","calendar"],
+  ["Custom Rich Menu layout tailored to your customer journeys","ริชเมนู LINE ที่ออกแบบปุ่มลัดตามขั้นตอนบริการของธุรกิจคุณ","richmenu"],
+  ["Multi-channel CRM synchronization & automated quotation PDFs","การเชื่อมต่อ CRM และสร้างใบเสนอราคา PDF อัตโนมัติ","crm"]].forEach(function(x){Z.push('<li data-soon-cap="'+x[2]+'">'+esc(en?x[0]:x[1])+'</li>');});
+ document.getElementById("cap-soon").innerHTML=Z.join("");
+ document.getElementById("cap-do").innerHTML=D.map(function(x){return "<li>"+esc(x)+"</li>";}).join("");
+ document.getElementById("cap-dont").innerHTML=N.map(function(x){return "<li>"+esc(x)+"</li>";}).join("");
+}
+function validStep1(){return state.oa.name.trim().length>0 && /^\d{10}$/.test(state.oa.channelId.trim());}
+function renderStepper(){
+ var cx=state.cx, done=[validStep1()&&cx.step>0, cx.webhook&&cx.step>1, cx.tested&&cx.step>2, false];
+ document.getElementById("steps").innerHTML=[1,2,3,4].map(function(i){var c=(cx.step===i-1?"cur":"")+(done[i-1]?" done":"");return '<li class="'+c+'" data-step="'+(i-1)+'"><span class="n">'+(done[i-1]?"✓":(i===4&&cx.approved)?"⏳":i)+'</span><span class="t">'+esc(t("st"+i))+'</span></li>';}).join("");
+ var p="", s=cx.step;
+ if(s===0){
+  p='<h3>'+esc(t("st1"))+'</h3>'+
+  '<div class="field"><label for="oa-name">'+esc(t("oa_name"))+'</label><input id="oa-name" placeholder="Modern Glass Shop" value="'+esc(state.oa.name)+'" autocomplete="off"><div class="help">'+esc(t("oa_name_help"))+'</div><div class="err" id="err-name"></div></div>'+
+  '<div class="field"><label for="ch-id">'+esc(t("ch_id"))+'</label><input id="ch-id" inputmode="numeric" maxlength="10" placeholder="1234567890" value="'+esc(state.oa.channelId)+'" autocomplete="off"><div class="help">'+esc(t("ch_help"))+'</div><div class="err" id="err-ch"></div></div>'+
+  '<div class="secure">'+esc(t("secure"))+'</div>'+
+  '<div class="navbtns"><button type="button" class="btn primary" id="cx-next" data-testid="cx-next">'+esc(t("next"))+'</button></div>';
+ } else if(s===1){
+  p='<h3>'+esc(t("wh_t"))+'</h3><p>'+esc(t("wh_1"))+'</p><p class="sim" style="font-weight:500">'+esc(t("wh_note"))+'</p>'+
+  '<label class="chk"><input type="checkbox" id="cx-wh" '+(cx.webhook?"checked":"")+'> '+esc(t("wh_chk"))+'</label>'+
+  '<div class="navbtns"><button type="button" class="btn" id="cx-back">'+esc(t("back"))+'</button><button type="button" class="btn primary" id="cx-next" data-testid="cx-next" '+(cx.webhook?"":"disabled")+'>'+esc(t("next"))+'</button></div>';
+ } else if(s===2){
+  p='<h3>'+esc(t("ts_t"))+'</h3><p>'+esc(t("ts_1"))+'</p><button type="button" class="btn" id="cx-test" data-testid="cx-test">'+esc(cx.tested?t("ts_again"):t("ts_btn"))+'</button><div class="log" id="cx-log">'+(cx.tested?logText():"")+'</div>'+
+  '<div class="navbtns"><button type="button" class="btn" id="cx-back">'+esc(t("back"))+'</button><button type="button" class="btn primary" id="cx-next" data-testid="cx-next" '+(cx.tested?"":"disabled")+'>'+esc(t("next"))+'</button></div>';
+ } else {
+  var pre=!(validStep1()&&cx.webhook&&cx.tested)?t("gl_need"):!state.role?t("gl_needrole"):null;
+  p='<h3>'+esc(t("gl_t"))+'</h3><p>'+esc(t("gl_1"))+'</p>';
+  if(pre) p+='<p class="hint-i warn">'+esc(pre)+'</p>';
+  else if(cx.approved) p+='<p><span class="status-pill wait" data-testid="live">✓ '+esc(t("gl_live"))+'</span></p><p>'+esc(t("gl_done"))+'</p><ol class="nextsteps" data-testid="team-finishes">'+[1,2,3,4].map(function(i){return '<li>'+esc(t("gl_s"+i))+'</li>';}).join("")+'</ol>';
+  else if(cx.requested) p+='<p><span class="status-pill wait">⏳ '+esc(t("gl_wait"))+'</span></p><button type="button" class="btn primary" id="cx-approve" data-testid="cx-approve">'+esc(t("gl_appr"))+'</button>';
+  else p+='<button type="button" class="btn primary" id="cx-request" data-testid="cx-request">'+esc(t("gl_req"))+'</button>';
+  p+='<div class="navbtns"><button type="button" class="btn" id="cx-back">'+esc(t("back"))+'</button></div>';
+ }
+ document.getElementById("pane").innerHTML=p;
+}
+function logText(){var en=L()==="en";return esc([
+ en?"✓ Role & knowledge rules verified":"✓ ตรวจสอบบทบาทและฐานความรู้เรียบร้อย",
+ en?"✓ Tenant isolation & owner approval gate active":"✓ ระบบแยกข้อมูลธุรกิจและการอนุมัติโดยเจ้าของพร้อมใช้งาน",
+ en?"✓ LINE preview response verified":"✓ ตรวจสอบการตอบกลับใน LINE เรียบร้อย"].join("\n"));}
+function renderAll(){ applyI18n(); renderTemplates(); renderPalette(); renderCanvas(); renderHints(); renderPreview(); renderCaps(); renderStepper(); renderDemo(); renderTour(); }
+
+var pal=document.getElementById("palette"), dz=document.getElementById("dropzone");
+pal.addEventListener("click",function(e){var b=e.target.closest(".pblock");if(b) addBlock(b.dataset.id);});
+pal.addEventListener("dragstart",function(e){var b=e.target.closest(".pblock");if(!b)return;e.dataTransfer.setData("text/plain",b.dataset.id);e.dataTransfer.effectAllowed="copy";b.classList.add("dragging");});
+pal.addEventListener("dragend",function(e){var b=e.target.closest(".pblock");if(b)b.classList.remove("dragging");dz.classList.remove("over");});
+dz.addEventListener("dragover",function(e){e.preventDefault();e.dataTransfer.dropEffect="copy";dz.classList.add("over");});
+dz.addEventListener("dragleave",function(e){if(!dz.contains(e.relatedTarget))dz.classList.remove("over");});
+dz.addEventListener("drop",function(e){e.preventDefault();dz.classList.remove("over");var id=e.dataTransfer.getData("text/plain");if(BY[id])addBlock(id);});
+dz.addEventListener("click",function(e){var r=e.target.closest("[data-remove]");if(r){removeBlock(r.dataset.remove);return;} if(e.target.id==="btn-rec") addRecommended();});
+dz.addEventListener("input",function(e){if(e.target.id==="agent-name"){state.agentName=e.target.value;persist();}});
+document.getElementById("hints").addEventListener("click",function(e){var b=e.target.closest("[data-add]");if(b)addBlock(b.dataset.add);});
+document.querySelectorAll(".lang button").forEach(function(b){b.addEventListener("click",function(){state.ui=b.dataset.lang;changed();});});
+var pane=document.getElementById("pane");
+pane.addEventListener("input",function(e){
+ if(e.target.id==="oa-name"){state.oa.name=e.target.value;persist();renderPreview();}
+ if(e.target.id==="ch-id"){e.target.value=e.target.value.replace(/\D/g,"").slice(0,10);state.oa.channelId=e.target.value;persist();}
+});
+pane.addEventListener("change",function(e){if(e.target.id==="cx-wh"){state.cx.webhook=e.target.checked;changed();}});
+pane.addEventListener("click",function(e){
+ var id=e.target.id, cx=state.cx;
+ if(id==="cx-next"){
+  if(cx.step===0){var okN=!!state.oa.name.trim(), okC=/^\d{10}$/.test(state.oa.channelId);
+   document.getElementById("err-name").textContent=okN?"":t("name_err");
+   document.getElementById("err-ch").textContent=okC?"":t("ch_err");
+   if(!okN||!okC) return;}
+  cx.step=Math.min(3,cx.step+1); changed();
+ }
+ if(id==="cx-back"){cx.step=Math.max(0,cx.step-1);changed();}
+ if(id==="cx-test"){ document.getElementById("cx-log").textContent="…"; e.target.disabled=true; setTimeout(function(){cx.tested=true;changed();toast("✓ "+t("ts_t")+" · "+t("sim_tag"));},600); }
+ if(id==="cx-request"){cx.requested=true;changed();}
+ if(id==="cx-approve"){cx.approved=true;changed();toast("✓ "+t("gl_live"));}
+});
+document.getElementById("steps").addEventListener("click",function(e){var li=e.target.closest("li");if(!li)return;var s=+li.dataset.step;if(s<=state.cx.step){state.cx.step=s;changed();}});
+
+var MARK_SRC=(document.getElementById("favicon")||{}).href||"";
+(function(){var f=document.getElementById("footer-logo"),h=document.getElementById("logo-img");if(f&&h)f.src=h.src;})();
+var tplUndo=null;
+function renderTemplates(){
+ undoArmed=false; var tw=document.getElementById("tpl-warn"); if(tw) tw.hidden=true;
+ document.getElementById("tpl-grid").innerHTML=TEMPLATES.map(function(x){var on=state.tpl===x.id;
+  return '<button type="button" class="tpl'+(on?' on':'')+'" data-tpl="'+x.id+'" data-testid="tpl-'+x.id+'" aria-pressed="'+on+'"><span class="ti">'+SAMPLE[x.id].ic+'</span><span class="tt"><b>'+esc(L()==="th"?x.th:x.en)+'</b><span>'+esc(L()==="th"?x.dt:x.de)+'</span><span class="tshop">'+esc((L()==="th"?SAMPLE[x.id].th:SAMPLE[x.id].en))+' · '+esc(t("badge_s"))+'</span></span><span class="tu">'+esc(on?"✓ "+t("tpl_on"):t("tpl_use"))+'</span></button>';}).join("");
+ document.getElementById("tpl-undo").hidden=!tplUndo;
+}
+function applyTemplate(id){
+ var x=TEMPLATES.filter(function(y){return y.id===id;})[0]; if(!x) return;
+ tplUndo={role:state.role,blocks:state.blocks.slice(),industry:state.industry,tpl:state.tpl,agentName:state.agentName};undoArmed=false;
+ state.role=x.role; state.blocks=x.blocks.slice(); state.industry=x.id; state.tpl=x.id; state.pv=null; state.agentName=""; state.apr=null;
+ tplSig=sig()+"|"+state.agentName; changed(); flash(); toast(t("tpl_applied")+": "+(L()==="th"?x.th:x.en));
+ if(window.matchMedia&&window.matchMedia("(max-width:760px)").matches){var cv=document.querySelector(".canvas");if(cv)cv.scrollIntoView({block:"start"});}
+}
+document.getElementById("tpl-grid").addEventListener("click",function(e){var b=e.target.closest("[data-tpl]");if(b)applyTemplate(b.dataset.tpl);});
+var tplSig="", undoArmed=false;
+document.getElementById("tpl-undo").addEventListener("click",function(){if(!tplUndo)return;
+ var w=document.getElementById("tpl-warn");
+ if(sig()+"|"+state.agentName!==tplSig&&!undoArmed){undoArmed=true;toast(t("undo_warn"));if(w){w.textContent=t("undo_warn");w.hidden=false;}return;}
+ undoArmed=false;if(w)w.hidden=true;Object.assign(state,tplUndo);tplUndo=null;changed();toast(t("tpl_undone"));});
+document.getElementById("btn-pretest").addEventListener("click",function(){var f=preTest().filter(function(x){return x.r==="bad";}).length;state.pt={sig:sig(),fails:f};changed();});
+document.getElementById("pv-toggle").addEventListener("click",function(e){var b=e.target.closest("[data-pv]");if(!b)return;state.pv=b.dataset.pv===state.role?null:b.dataset.pv;changed();});
+document.getElementById("chat").addEventListener("click",function(e){var b=e.target.closest("[data-appr]");if(!b)return;state.apr=b.dataset.appr;changed();var c=document.getElementById("chat"),r=c.querySelector("[data-testid=approval-result]");if(r)c.scrollTop=Math.max(0,r.offsetTop-c.offsetTop-160);});
+var TOUR=[{k:1,el:"top"},{k:2,el:"templates"},{k:3,el:"preview"},{k:4,el:"readiness"}], tourI=-1, tourReturn=null, privReturn=null, privClick=null;
+function tourSeen(){try{return localStorage.getItem(TOUR_STORE)==="1";}catch(e){return false;}}
+function tourOpen(i){if(tourI<0){var a=document.activeElement;tourReturn=(a&&a!==document.body)?a:null;}tourI=i;renderTour();var c=document.getElementById("tour");if(c&&!c.hidden){var b=c.querySelector("[data-tour=next]");if(b)b.focus({preventScroll:true});}}
+function tourClose(){var had=tourI>=0;tourI=-1;try{localStorage.setItem(TOUR_STORE,"1");}catch(e){}renderTour();if(had){var r=tourReturn&&document.contains(tourReturn)&&tourReturn.offsetParent?tourReturn:document.getElementById("btn-tour");r.focus({preventScroll:true});}tourReturn=null;}
+function renderTour(){
+ var c=document.getElementById("tour");
+ document.querySelectorAll(".tour-hl").forEach(function(x){x.classList.remove("tour-hl");});
+ if(tourI<0||document.body.classList.contains("view-privacy")){c.hidden=true;c.innerHTML="";document.body.classList.remove("tour-open");return;}
+ var st=TOUR[tourI], last=tourI===TOUR.length-1;
+ c.hidden=false;document.body.classList.add("tour-open");
+ c.innerHTML='<div class="tour-card"><div class="tour-top"><img class="tour-mark" data-testid="tour-mark" src="'+esc(MARK_SRC)+'" alt="Neurohands" width="40" height="40"><p class="tour-n">'+esc(tf("tour_of",{i:tourI+1,n:TOUR.length}))+'</p></div><h3 id="tour-h">'+esc(t("t"+st.k+"t"))+'</h3><p>'+esc(t("t"+st.k))+'</p>'+
+  '<div class="tour-btns"><button type="button" class="btn sm" data-tour="skip" data-testid="tour-skip">'+esc(t("tour_skip"))+'</button><span class="spacer"></span>'+
+  (tourI>0?'<button type="button" class="btn sm" data-tour="back">'+esc(t("back"))+'</button>':'')+
+  '<button type="button" class="btn sm primary" data-tour="next" data-testid="tour-next">'+esc(last?t("tour_done"):t("next"))+'</button></div></div>';
+ var el=document.getElementById(st.el);
+ if(el&&st.el!=="top"){el.classList.add("tour-hl");}
+}
+document.getElementById("tour").addEventListener("click",function(e){
+ var b=e.target.closest("[data-tour]");if(!b)return;var a=b.dataset.tour;
+ if(a==="skip"){tourClose();return;}
+ if(a==="back"){tourOpen(Math.max(0,tourI-1));}
+ if(a==="next"){if(tourI>=TOUR.length-1){tourClose();return;}tourOpen(tourI+1);}
+ var st=TOUR[tourI]; var el=st&&document.getElementById(st.el); if(el&&st.el!=="top") el.scrollIntoView({block:"start"}); if(st&&st.el==="top") window.scrollTo(0,0);
+});
+document.addEventListener("keydown",function(e){
+ if(tourI<0)return;
+ if(e.key==="Escape"){tourClose();return;}
+ if(e.key==="Tab"){var c=document.getElementById("tour");if(!c.contains(document.activeElement))return;var f=c.querySelectorAll("button");if(!f.length)return;var first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+});
+document.querySelectorAll("[data-action=tour]").forEach(function(b){b.addEventListener("click",function(e){e.preventDefault();if(document.body.classList.contains("view-privacy")){location.hash="#top";}window.scrollTo(0,0);tourOpen(0);});});
+
+function demoSaved(){try{var a=JSON.parse(localStorage.getItem(DEMO_STORE)||"[]");return Array.isArray(a)?a:[];}catch(e){return [];}}
+var demoShowDone=true;
+function renderDemo(){
+ var list=demoSaved(), done=demoShowDone&&list.length;
+ document.getElementById("demo-form").hidden=!!done;
+ var d=document.getElementById("demo-done"); d.hidden=!done;
+ if(done){var r=list[list.length-1], ind=document.querySelector('#f-ind option[value="'+r.industry+'"]');
+  d.innerHTML='<h3 tabindex="-1" id="demo-done-h">✓ '+esc(t("dm_done_t"))+'</h3><p>'+esc(t("dm_done_1"))+'</p><p class="small"><b>'+esc(t("dm_saved_as"))+'</b> '+esc(r.name)+' · '+esc(r.business)+' · '+esc(r.contact)+' · '+esc(ind?ind.textContent:r.industry)+'</p>'+
+  '<div class="btnrow"><button type="button" class="btn" id="demo-again">'+esc(t("dm_again"))+'</button><button type="button" class="btn" id="demo-delete" data-testid="demo-delete">'+esc(t("dm_delete"))+'</button></div>';}
+}
+function fieldErr(id,msg){var el=document.getElementById(id),er=document.getElementById("err-"+id);er.textContent=msg||"";if(msg){el.setAttribute("aria-invalid","true");}else el.removeAttribute("aria-invalid");return !msg;}
+function validContact(v){var c=v.replace(/[\s-]/g,"");return /^\+?\d{9,12}$/.test(c)||/^@?[A-Za-z0-9._-]{3,20}$/.test(c);}
+document.getElementById("demo-form").addEventListener("submit",function(e){
+ e.preventDefault();
+ var g=function(id){return document.getElementById(id).value.trim();};
+ var ok=[fieldErr("f-name",g("f-name").length<2?t("e_name"):""),fieldErr("f-biz",g("f-biz").length<2?t("e_biz"):""),
+  fieldErr("f-contact",!g("f-contact")?t("e_contact"):!validContact(g("f-contact"))?t("e_contact_bad"):""),
+  fieldErr("f-ind",!g("f-ind")?t("e_ind"):""),fieldErr("f-consent",!document.getElementById("f-consent").checked?t("e_consent"):"")];
+ var sum=document.getElementById("demo-sum");
+ if(ok.indexOf(false)>=0){sum.textContent=t("e_summary");var first=document.querySelector("#demo-form [aria-invalid=true]");if(first)first.focus();return;}
+ sum.textContent="";
+ var list=demoSaved();
+ list.push({requested:true,name:g("f-name"),business:g("f-biz"),contact:g("f-contact"),industry:g("f-ind"),message:g("f-msg"),consent:true,ui_language:L(),saved_at:new Date().toISOString()});
+ try{localStorage.setItem(DEMO_STORE,JSON.stringify(list));}catch(err){}
+ demoShowDone=true; document.getElementById("demo-form").reset(); renderDemo();
+ var h=document.getElementById("demo-done-h"); if(h) h.focus();
+});
+document.getElementById("demo-form").addEventListener("input",function(e){if(e.target.getAttribute("aria-invalid"))fieldErr(e.target.id,"");});
+document.getElementById("demo-form").addEventListener("change",function(e){if(e.target.getAttribute("aria-invalid"))fieldErr(e.target.id,"");});
+document.getElementById("demo-done").addEventListener("click",function(e){
+ if(e.target.id==="demo-again"){demoShowDone=false;renderDemo();document.getElementById("f-name").focus();}
+ if(e.target.id==="demo-delete"){try{localStorage.removeItem(DEMO_STORE);}catch(err){}demoShowDone=false;renderDemo();toast(t("dm_deleted"));}
+});
+
+function route(){
+ var p=location.hash==="#privacy", wasP=document.body.classList.contains("view-privacy");
+ if(p&&!wasP){var a=privClick||document.activeElement;privReturn=(a&&a!==document.body&&a.id!=="pr-back")?a:null;privClick=null;}
+ document.body.classList.toggle("view-privacy",p);
+ document.getElementById("privacy").hidden=!p;
+ document.getElementById("top").hidden=p;
+ if(p){window.scrollTo(0,0);var h=document.getElementById("pr-h");if(h)h.focus({preventScroll:true});}
+ else if(location.hash==="#top") window.scrollTo(0,0);
+ else if(location.hash.length>1){var el=document.getElementById(location.hash.slice(1));if(el)el.scrollIntoView();}
+ if(!p&&wasP){var r=privReturn&&privReturn.offsetParent?privReturn:null;
+  if(r&&location.hash!=="#top"&&location.hash!==""){r.focus({preventScroll:true});}
+  else{var h1=document.querySelector(".hero h1");h1.setAttribute("tabindex","-1");h1.focus({preventScroll:true});}
+  privReturn=null;}
+ else if(!p&&location.hash==="#demo"){var dh=document.getElementById("dm-h");if(dh)dh.focus({preventScroll:true});}
+ renderTour();
+}
+window.addEventListener("hashchange",route);
+document.addEventListener("click",function(e){var a=e.target.closest('a[href="#privacy"]');if(a&&!document.body.classList.contains("view-privacy"))privClick=a;},true);
+document.getElementById("pr-back").addEventListener("click",function(e){var sec=privReturn&&privReturn.closest("section[id]");if(sec){e.preventDefault();location.hash="#"+sec.id;}});
+document.getElementById("pr-clear").addEventListener("click",function(){
+ try{[STORE,DEMO_STORE,TOUR_STORE].forEach(function(k){localStorage.removeItem(k);});}catch(e){}
+ var ui=state.ui; state=fresh(); state.ui=ui; tplUndo=null; demoShowDone=true; renderAll();
+ document.getElementById("pr-status").textContent=t("pr_cleared");
+});
+
+load(); renderAll(); route();
+if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
+(function(){
+ var b=document.getElementById("m-cta"); if(!b||!("IntersectionObserver" in window)) return;
+ var vis={};
+ var io=new IntersectionObserver(function(es){es.forEach(function(e){vis[e.target.id]=e.isIntersecting;});document.body.classList.toggle("mcta-hide",!!(vis["cta-demo"]||vis["demo"]||vis["connect"]));});
+ ["cta-demo","demo","connect"].forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+})();
+})();
+</script>
+</body></html>

@@ -6,10 +6,10 @@ const { supabaseHeaders } = require("../src/lib/security");
 
 const { LINE_CHANNEL_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
 
-const NEUROHANDS_PREVIEW_URL = "https://tanadanaitan-prog.github.io/neurohands-preview/";
+const NEUROHANDS_PREVIEW_URL = "https://neurohands-ai-agent-production.up.railway.app/neurohands";
 const ALLOWED_RICH_MENU_URI_PATTERNS = [
   /^https:\/\/liff\.line\.me\/[A-Za-z0-9._-]+(?:[/?#][A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/,
-  /^https:\/\/tanadanaitan-prog\.github\.io\/neurohands-preview(?:\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/,
+  /^https:\/\/neurohands-ai-agent-production\.up\.railway\.app\/(?:neurohands|website|preview)(?:[/?#][A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/,
 ];
 
 function isValidRichMenuAction(action) {
