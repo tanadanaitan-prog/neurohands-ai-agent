@@ -12,18 +12,29 @@ const ALLOWED_RICH_MENU_URI_PATTERNS = [
   /^https:\/\/neurohands-ai-agent-production\.up\.railway\.app\/(?:neurohands|website|preview)(?:[/?#][A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/,
 ];
 
-function isValidRichMenuAction(action) {
+function isSafeHttpsPath(pathname) {
+  return !/(?:^|[\\/])\.\.(?:[\\/]|$)/.test(pathname) && !pathname.includes("..\\");
+}
+
+function isValidRichMenuAction(action, { allowedLiffId = "" } = {}) {
   if (!action || typeof action !== "object") return false;
   if (action.type === "postback") return typeof action.data === "string" && /^menu=[a-z_]+$/.test(action.data);
   if (action.type === "uri") {
-    return typeof action.uri === "string"
-      && action.uri.length <= 512
-      && ALLOWED_RICH_MENU_URI_PATTERNS.some((pattern) => pattern.test(action.uri));
+    if (typeof action.uri !== "string" || !action.uri.trim() || action.uri.length > 512) return false;
+    let parsed;
+    try { parsed = new URL(action.uri); } catch { return false; }
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password || !isSafeHttpsPath(parsed.pathname)) {
+      return false;
+    }
+    if (parsed.hostname === "liff.line.me" && allowedLiffId) {
+      return parsed.pathname === `/${allowedLiffId}` || parsed.pathname.startsWith(`/${allowedLiffId}/`);
+    }
+    return ALLOWED_RICH_MENU_URI_PATTERNS.some((pattern) => pattern.test(action.uri));
   }
   return false;
 }
 
-function loadMenu(kind) {
+function loadMenu(kind, { quiet = false } = {}) {
   const root = path.resolve(__dirname, "..");
   const menu = JSON.parse(fs.readFileSync(path.join(root, "config", "rich-menus", `richmenu-${kind}.json`), "utf8"));
   const image = fs.readFileSync(path.join(root, "assets", "rich-menus", `richmenu-${kind}.png`));
@@ -37,7 +48,7 @@ function loadMenu(kind) {
     if (![x, y, w, h].every(Number.isInteger) || x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > width || y + h > height) throw new Error(`${kind}: area outside image`);
     if (!isValidRichMenuAction(action)) throw new Error(`${kind}: unexpected action`);
   }
-  console.log(`${kind}: ${width} x ${height}, ${menu.areas.length} buttons, ${image.length} bytes — valid`);
+  if (!quiet) console.log(`${kind}: ${width} x ${height}, ${menu.areas.length} buttons, ${image.length} bytes — valid`);
   return { menu, image };
 }
 

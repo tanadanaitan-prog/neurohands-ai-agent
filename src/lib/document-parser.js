@@ -18,8 +18,11 @@ function hasReadableContent(summary) {
 
 function isFreshRecord(row, nowMs = Date.now()) {
   if (!row || row.expires_at == null) return true;
-  const ts = Date.parse(row.expires_at);
-  return Number.isNaN(ts) || ts > nowMs;
+  if (typeof row.expires_at === "number") {
+    return Number.isFinite(row.expires_at) && row.expires_at > nowMs;
+  }
+  const ts = Date.parse(String(row.expires_at));
+  return Number.isFinite(ts) && ts > nowMs;
 }
 
 function documentReadResult(doc) {

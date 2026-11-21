@@ -9,10 +9,20 @@ function equalSecret(expected, supplied) {
 
 function supabaseHeaders(key) {
   if (!key) throw new Error("SUPABASE_SERVICE_KEY is required");
-  // Opaque secret keys are not JWTs. Keep legacy service_role JWT support.
+  // Supabase rejects opaque sb_secret_ keys in Authorization: Bearer (JWT-only); legacy service_role JWTs still require Bearer.
   return key.startsWith("sb_secret_")
     ? { apikey: key }
     : { apikey: key, Authorization: `Bearer ${key}` };
 }
 
-module.exports = { equalSecret, supabaseHeaders };
+function extractApiKey(req) {
+  const direct = req?.headers?.["x-api-key"];
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  const auth = req?.headers?.authorization;
+  if (typeof auth === "string" && auth.toLowerCase().startsWith("bearer ")) {
+    return auth.slice(7).trim();
+  }
+  return "";
+}
+
+module.exports = { equalSecret, supabaseHeaders, extractApiKey };

@@ -276,7 +276,13 @@ async function verifyLiffIdTokenAndMintJwt({
     aud: "authenticated",
     role: "authenticated",
     sub: `line:${claims.sub}`,
-    app_metadata: { provider: "line" },
+    app_metadata: {
+      provider: "line",
+      line_user_id: claims.sub,
+      client_account_id: binding.client_account_id,
+      client_code: binding.client_code,
+      role: binding.role || "staff",
+    },
     user_metadata: {
       line_user_id: claims.sub,
       client_account_id: binding.client_account_id,

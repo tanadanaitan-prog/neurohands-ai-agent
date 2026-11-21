@@ -24,7 +24,11 @@ function safeModel(model, secrets) {
 
 function configuration(env) {
   const secrets = [env.GEMINI_API_KEY, env.FALLBACK_API_KEY].filter(Boolean);
-  const geminiModel = env.GEMINI_MODEL === undefined ? "gemini-2.5-flash" : env.GEMINI_MODEL;
+  const configuredGemini = [env.GEMINI_MODEL, env.GEMINI_MODELS, env.GEMINI_FALLBACK_MODELS]
+    .flatMap((raw) => String(raw || "").split(","))
+    .map((m) => m.trim().replace(/^models\//i, ""))
+    .find(Boolean);
+  const geminiModel = configuredGemini || "gemini-3.6-flash";
   const requestedProvider = String(env.FALLBACK_PROVIDER || "").toLowerCase();
   const provider = Object.hasOwn(FALLBACK_BASES, requestedProvider) ? requestedProvider : "fallback";
   const fallbackModel = [env.FALLBACK_MODELS, env.FALLBACK_MODEL].flatMap((value) => String(value || "").split(","))

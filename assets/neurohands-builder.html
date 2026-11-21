@@ -1302,8 +1302,12 @@ document.getElementById("demo-form").addEventListener("submit",function(e){
  var sum=document.getElementById("demo-sum");
  if(ok.indexOf(false)>=0){sum.textContent=t("e_summary");var first=document.querySelector("#demo-form [aria-invalid=true]");if(first)first.focus();return;}
  sum.textContent="";
+ var payload={requested:true,name:g("f-name"),business:g("f-biz"),contact:g("f-contact"),industry:g("f-ind"),message:g("f-msg"),consent:true,ui_language:L(),saved_at:new Date().toISOString()};
+ if(location.protocol==="http:"||location.protocol==="https:"){
+  try{fetch("/api/liff/demo-request",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).catch(function(){});}catch(err){}
+ }
  var list=demoSaved();
- list.push({requested:true,name:g("f-name"),business:g("f-biz"),contact:g("f-contact"),industry:g("f-ind"),message:g("f-msg"),consent:true,ui_language:L(),saved_at:new Date().toISOString()});
+ list.push(payload);
  try{localStorage.setItem(DEMO_STORE,JSON.stringify(list));}catch(err){}
  demoShowDone=true; document.getElementById("demo-form").reset(); renderDemo();
  var h=document.getElementById("demo-done-h"); if(h) h.focus();
@@ -1348,6 +1352,16 @@ if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
  var io=new IntersectionObserver(function(es){es.forEach(function(e){vis[e.target.id]=e.isIntersecting;});document.body.classList.toggle("mcta-hide",!!(vis["cta-demo"]||vis["demo"]||vis["connect"]));});
  ["cta-demo","demo","connect"].forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
 })();
+ (function(){
+  if(location.protocol!=="http:"&&location.protocol!=="https:")return;
+  fetch("/api/liff/config").then(function(r){return r.ok?r.json():null;}).then(function(cfg){
+   if(!cfg||!cfg.liffEnabled||!cfg.liffId)return;
+   var s=document.createElement("script");
+   s.src="https://static.line-scdn.net/liff/edge/2/sdk.js";
+   s.onload=function(){if(window.liff){try{Promise.resolve(window.liff.init({liffId:cfg.liffId})).catch(function(){});}catch(e){}}};
+   document.head.appendChild(s);
+  }).catch(function(){});
+ })();
 })();
 </script>
 </body></html>

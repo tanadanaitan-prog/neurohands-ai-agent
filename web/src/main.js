@@ -4,8 +4,11 @@ import './style.css';
 const app = document.querySelector('#app');
 const dialog = document.querySelector('#editor');
 const notice = document.querySelector('#notice');
-const state = { client: null, session: null, workspaces: [], workspaceId: null, departments: [], teams: [], agents: [], versions: [], tools: [], canManage: false, view: 'builder', query: '', busy: false };
+const state = { client: null, session: null, workspaces: [], workspaceId: null, departments: [], teams: [], agents: [], versions: [], tools: [], canManage: false, view: 'builder', query: '', busy: false, telemetry: null, gatewayReady: null, telemetryEvents: [], telemetryStatus: 'offline', telemetryController: null };
+let telemetryKey = '';
+try { telemetryKey = sessionStorage.getItem('nh_telemetry_key') || ''; } catch {}
 let authEpoch = 0;
+let telemetryEpoch = 0;
 let noticeTimer;
 const escape = (value = '') => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = (name) => ({ plus: '+', board: '▦', versions: '◷', arrow: '↗', move: '↔', bot: '✦' }[name] || '');
@@ -41,8 +44,23 @@ async function submitForm(event, action) {
   catch (error) { showNotice(error.message, true); }
   finally { submit.disabled = false; }
 }
+let standaloneTelemetry = false;
+function bindTelemetryButtons(root = app) {
+  root.querySelector('#connect-telemetry-btn')?.addEventListener('click', telemetryKeyDialog);
+  root.querySelector('#connect-telemetry-inline')?.addEventListener('click', telemetryKeyDialog);
+}
+function renderTelemetryStandalone() {
+  standaloneTelemetry = true;
+  const { jarvisLabel, detail } = jarvisSummaryText();
+  app.innerHTML = `<div class="workspace-shell"><aside class="sidebar"><a class="brand" href="/studio/">${logo}</a><div class="jarvis-card"><span class="jarvis-icon">✦</span><strong>Jarvis</strong><span class="muted-pill ${state.telemetryStatus === 'live' ? 'live' : ''}">${escape(jarvisLabel)}</span><p>${detail}</p><button type="button" class="text-button" id="sidebar-telemetry">${telemetryKey ? 'Telemetry settings' : 'Connect telemetry'}</button></div><button type="button" class="text-button" id="back-to-auth">← Back to sign-in</button></aside><main class="workspace-main"><header class="topbar"><span>Neurohands <span class="slash">/</span> Live Telemetry</span><span class="private-label"><i></i> PDPA-masked stream</span></header><div class="page-content"><div class="page-heading"><div><p class="eyebrow">PDPA-SAFE OPERATIONS TELEMETRY</p><h1>Live gateway &amp; SLA stream.</h1><p>Rolling 60-second anonymized telemetry and 2.5s LINE response race health.</p></div></div><div id="telemetry-panel">${renderTelemetry()}</div></div></main></div>`;
+  app.querySelector('#sidebar-telemetry')?.addEventListener('click', telemetryKeyDialog);
+  bindTelemetryButtons(app);
+  app.querySelector('#back-to-auth')?.addEventListener('click', () => { standaloneTelemetry = false; resetTelemetryState({ clearKey: true }); renderAuth(Boolean(state.client)); });
+}
 function renderAuth(configured = true) {
-  app.innerHTML = `<main class="auth-shell"><section class="auth-brand"><a class="brand" href="/studio/">${logo}</a><div class="auth-story"><span class="capsule">YOUR ORGANIZATION, CONNECTED</span><h1>A place for every agent.<br>A team behind every task.</h1><p>Define your agents, give them responsibilities, and organize the work across your business.</p><div class="org-art" aria-hidden="true"><div class="art-node manager">✦ <span>Jarvis<small>Operations monitor</small></span></div><div class="art-line"></div><div class="art-row"><div class="art-node">Sales</div><div class="art-node">Research</div><div class="art-node">Operations</div></div></div></div><div class="auth-footer">Neurohands AI Agent · Your people stay in control.</div></section><section class="auth-form-wrap"><div class="auth-form"><p class="eyebrow">WELCOME TO YOUR WORKSPACE</p><h2>Let’s get to work.</h2><p>Sign in with your Neurohands app account.</p>${!configured ? '<div class="setup-note">Workspace sign-in is being configured. The administrator needs to connect Supabase Auth before you can continue.</div>' : ''}<form id="signin-form"><label>Email<input name="email" type="email" autocomplete="username" placeholder="you@company.com" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary full" ${!configured ? 'disabled' : ''}>Sign in <span>→</span></button></form><button class="text-button" id="signup" ${!configured ? 'disabled' : ''}>Create an app account</button><p class="auth-note">This app account is separate from your Supabase dashboard account. Your workspace data is only available to its authorized members.</p></div></section></main>`;
+  standaloneTelemetry = false;
+  app.innerHTML = `<main class="auth-shell"><section class="auth-brand"><a class="brand" href="/studio/">${logo}</a><div class="auth-story"><span class="capsule">YOUR ORGANIZATION, CONNECTED</span><h1>A place for every agent.<br>A team behind every task.</h1><p>Define your agents, give them responsibilities, and organize the work across your business.</p><div class="org-art" aria-hidden="true"><div class="art-node manager">✦ <span>Jarvis<small>Operations monitor</small></span></div><div class="art-line"></div><div class="art-row"><div class="art-node">Sales</div><div class="art-node">Research</div><div class="art-node">Operations</div></div></div></div><div class="auth-footer">Neurohands AI Agent · Your people stay in control.</div></section><section class="auth-form-wrap"><div class="auth-form"><p class="eyebrow">WELCOME TO YOUR WORKSPACE</p><h2>Let’s get to work.</h2><p>Sign in with your Neurohands app account.</p>${!configured ? '<div class="setup-note">Workspace sign-in is being configured. Connect Live Telemetry with your Gateway key below, or configure Supabase Auth when ready.<div style="margin-top:10px"><button type="button" class="secondary" id="open-telemetry-standalone">Open Live Telemetry</button></div></div>' : ''}<form id="signin-form"><label>Email<input name="email" type="email" autocomplete="username" placeholder="you@company.com" required></label><label>Password<input name="password" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit" class="primary full" ${!configured ? 'disabled' : ''}>Sign in <span>→</span></button></form><button class="text-button" id="signup" ${!configured ? 'disabled' : ''}>Create an app account</button><p class="auth-note">This app account is separate from your Supabase dashboard account. Your workspace data is only available to its authorized members.</p></div></section></main>`;
+  app.querySelector('#open-telemetry-standalone')?.addEventListener('click', () => { renderTelemetryStandalone(); connectTelemetry(); });
   app.querySelector('#signin-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = new FormData(event.target);
@@ -80,7 +98,7 @@ async function loadAccount() {
     state.tools = tools.tools;
     state.workspaceId = state.workspaces.find((item) => item.id === state.workspaceId)?.id || state.workspaces[0]?.id || null;
     await loadWorkspace();
-    if (epoch === authEpoch) render();
+    if (epoch === authEpoch) { render(); connectTelemetry(); }
   } catch (error) {
     if (epoch !== authEpoch) return;
     app.innerHTML = `<main class="blocked-state"><span class="brand-mark">n↗</span><h1>Your workspace needs attention.</h1><p>${escape(error.message)}</p><button id="retry" class="primary">Try again</button><button id="exit" class="secondary">Sign out</button></main>`;
@@ -101,10 +119,176 @@ function renderBoard() {
 function renderVersions() {
   return `<div class="version-intro">Published definitions preserve the instructions and permissions for a specific revision. Connecting a definition to a website or LINE channel is a separate deployment step.</div>${state.versions.length ? `<div class="version-list">${state.versions.map((version) => `<article><span class="agent-avatar">✦</span><div><h2>${escape(state.agents.find((agent) => agent.id === version.agent_id)?.name || 'Agent')}</h2><p>Revision ${version.revision} · ${escape(new Date(version.published_at).toLocaleString())}</p></div><span class="status ready">Definition saved</span></article>`).join('')}</div>` : '<div class="large-empty"><span>◷</span><h2>Your first revision starts here.</h2><p>Give an agent its responsibilities, then publish its definition from the editor.</p></div>'}`;
 }
+function stopTelemetryStream() {
+  telemetryEpoch += 1;
+  if (state.telemetryController) {
+    state.telemetryController.abort();
+    state.telemetryController = null;
+  }
+}
+function resetTelemetryState({ clearKey = true } = {}) {
+  stopTelemetryStream();
+  state.telemetry = null;
+  state.telemetryEvents = [];
+  state.telemetryStatus = 'offline';
+  if (clearKey) {
+    telemetryKey = '';
+    try { sessionStorage.removeItem('nh_telemetry_key'); } catch {}
+  }
+}
+function jarvisSummaryText() {
+  const jarvisLabel = { live: 'Live SSE connected', connecting: 'Connecting…', unauthorized: 'Key rejected', 'key-required': 'Gateway ready (locked)', offline: 'Runtime idle', error: 'Stream error' }[state.telemetryStatus] || 'Setup in progress';
+  const slaText = state.telemetry?.stats?.slaCompliancePct != null ? `${escape(state.telemetry.stats.slaCompliancePct)}%` : '—';
+  const totalRuns = state.telemetry?.stats?.totalRuns ?? 0;
+  return {
+    jarvisLabel,
+    detail: state.telemetry?.stats ? `${slaText} Race SLA · ${escape(totalRuns)} runs tracked.` : 'Operations monitoring is ready once a telemetry key is connected.',
+  };
+}
+function updateTelemetryDom() {
+  if (!state.session && !standaloneTelemetry) return;
+  const pill = app.querySelector('.jarvis-card .muted-pill');
+  const note = app.querySelector('.jarvis-card p');
+  const sidebarTelemetry = app.querySelector('#sidebar-telemetry');
+  const { jarvisLabel, detail } = jarvisSummaryText();
+  if (pill) {
+    pill.textContent = jarvisLabel;
+    pill.className = `muted-pill ${state.telemetryStatus === 'live' ? 'live' : ''}`;
+  }
+  if (note) note.textContent = detail;
+  if (sidebarTelemetry) sidebarTelemetry.textContent = telemetryKey ? 'Telemetry settings' : 'Connect telemetry';
+  const panel = app.querySelector('#telemetry-panel');
+  if (panel) {
+    panel.innerHTML = renderTelemetry();
+    bindTelemetryButtons(panel);
+  }
+}
+function pushTelemetryEvent(entry) {
+  state.telemetryEvents = [entry, ...state.telemetryEvents].slice(0, 25);
+  updateTelemetryDom();
+}
+async function consumeTelemetryStream(controller, reader, epoch) {
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let eventName = 'message';
+  try {
+    while (!controller.signal.aborted && epoch === telemetryEpoch) {
+      const { value, done } = await reader.read();
+      if (done) {
+        if (epoch === telemetryEpoch) {
+          state.telemetryStatus = 'offline';
+          updateTelemetryDom();
+        }
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('event:')) eventName = line.slice(6).trim();
+        else if (line.startsWith('data:')) {
+          try {
+            const payload = JSON.parse(line.slice(5).trim());
+            if (eventName === 'snapshot') {
+              state.telemetry = payload;
+              state.telemetryEvents = (payload.recentEvents || []).slice().reverse();
+              updateTelemetryDom();
+            } else if (eventName === 'telemetry') {
+              pushTelemetryEvent(payload);
+            }
+          } catch {}
+        } else if (!line.trim()) {
+          eventName = 'message';
+        }
+      }
+    }
+  } catch (error) {
+    if (error?.name !== 'AbortError' && epoch === telemetryEpoch) {
+      state.telemetryStatus = 'offline';
+      updateTelemetryDom();
+    }
+  }
+}
+async function connectTelemetry() {
+  stopTelemetryStream();
+  const epoch = telemetryEpoch;
+  try {
+    const readyRes = await fetch('/ready');
+    if (epoch !== telemetryEpoch) return;
+    if (readyRes.ok) {
+      const readyData = await readyRes.json();
+      state.gatewayReady = Boolean(readyData.ready);
+    }
+  } catch {
+    if (epoch !== telemetryEpoch) return;
+    state.gatewayReady = false;
+  }
+  if (!telemetryKey) {
+    state.telemetryStatus = state.gatewayReady ? 'key-required' : 'offline';
+    updateTelemetryDom();
+    return;
+  }
+  state.telemetryStatus = 'connecting';
+  updateTelemetryDom();
+  try {
+    const controller = new AbortController();
+    state.telemetryController = controller;
+    // Use fetch with custom x-api-key header instead of native EventSource so secrets never enter URLs or logs.
+    const response = await fetch('/api/dashboard/stream', {
+      headers: { 'x-api-key': telemetryKey },
+      signal: controller.signal,
+    });
+    if (epoch !== telemetryEpoch) { controller.abort(); return; }
+    if (!response.ok || !response.body) {
+      state.telemetryStatus = response.status === 401 ? 'unauthorized' : 'error';
+      updateTelemetryDom();
+      return;
+    }
+    state.telemetryStatus = 'live';
+    updateTelemetryDom();
+    void consumeTelemetryStream(controller, response.body.getReader(), epoch);
+  } catch (error) {
+    if (error?.name !== 'AbortError' && epoch === telemetryEpoch) {
+      state.telemetryStatus = 'offline';
+      updateTelemetryDom();
+    }
+  }
+}
+function telemetryKeyDialog() {
+  modal('Connect Gateway Telemetry', 'Enter the workspace gateway API key (stored in memory / session storage for this tab only).', `<form><label>Gateway API key<input name="apiKey" type="password" value="" autocomplete="off" placeholder="${telemetryKey ? 'Enter new key to replace saved key' : 'x-api-key'}"></label><div class="dialog-actions">${telemetryKey ? '<button type="button" class="secondary" id="clear-telemetry-key">Disconnect</button>' : ''}<button type="submit" class="primary">Connect stream</button></div></form>`);
+  dialog.querySelector('#clear-telemetry-key')?.addEventListener('click', () => {
+    resetTelemetryState({ clearKey: true });
+    dialog.close();
+    connectTelemetry();
+  });
+  dialog.querySelector('form').onsubmit = (event) => submitForm(event, async (form) => {
+    telemetryKey = String(form.get('apiKey') || '').trim();
+    try {
+      if (telemetryKey) sessionStorage.setItem('nh_telemetry_key', telemetryKey);
+      else sessionStorage.removeItem('nh_telemetry_key');
+    } catch {}
+    const expectedEpoch = telemetryEpoch + 1;
+    await connectTelemetry();
+    if (telemetryEpoch !== expectedEpoch) return;
+    showNotice(telemetryKey ? (state.telemetryStatus === 'live' ? 'Telemetry stream connected.' : `Telemetry status: ${state.telemetryStatus}.`) : 'Telemetry disconnected.');
+  });
+}
+function renderTelemetry() {
+  const stats = state.telemetry?.stats || {};
+  const providers = state.telemetry?.providers || {};
+  const providerTags = Object.entries(providers).map(([name, status]) => `<span class="status ${status === 'ok' ? 'ready' : 'paused'}">${escape(name)}: ${escape(status)}</span>`).join(' ');
+  const rows = state.telemetryEvents.length
+    ? state.telemetryEvents.map((ev) => `<article class="telemetry-row"><span class="status ${(ev.status === 'error' || ev.ok === false) ? 'paused' : 'ready'}">${escape(ev.type || 'event')}</span><div class="telemetry-meta"><strong>${escape(ev.agentCode || ev.answeredBy || ev.lane || 'runtime')}</strong><p>${escape(ev.preview || ev.error || (ev.latencyMs != null ? `Latency ${ev.latencyMs}ms · SLA ${ev.slaMet ? 'OK' : 'Slow'}` : ev.status || 'ok'))}</p></div><span class="telemetry-time">${escape(ev.createdAt ? new Date(ev.createdAt).toLocaleTimeString() : '')}</span></article>`).join('')
+    : '<div class="large-empty"><span>◉</span><h2>Live runtime stream</h2><p>Connect your gateway key to inspect anonymized message previews, 2.5s Race SLA compliance, and active provider status.</p><button class="primary" id="connect-telemetry-inline">Connect telemetry</button></div>';
+  return `<div class="telemetry-bar"><div>${providerTags || `<span class="status">${state.gatewayReady ? 'Gateway Ready' : 'Gateway Status Pending'}</span>`}</div><button class="secondary" id="connect-telemetry-btn">${telemetryKey ? 'Telemetry key' : 'Connect key'}</button></div><div class="telemetry-grid"><div><span>SLA COMPLIANCE (&le; 2.5S)</span><strong>${stats.slaCompliancePct != null ? `${escape(stats.slaCompliancePct)}%` : '—'}</strong></div><div><span>P95 LATENCY</span><strong>${stats.p95LatencyMs != null ? `${escape(stats.p95LatencyMs)} ms` : '—'}</strong></div><div><span>COMPLETED RUNS</span><strong>${escape(stats.completedRuns ?? '—')}</strong></div><div><span>CHECKING RACES</span><strong>${escape(stats.checkingRaces ?? '—')}</strong></div></div><div class="version-list">${rows}</div>`;
+}
 function render() {
   const workspace = state.workspaces.find((item) => item.id === state.workspaceId);
-  app.innerHTML = `<div class="workspace-shell"><aside class="sidebar"><a class="brand" href="/studio/">${logo}</a><p class="sidebar-label">WORKSPACE</p><label class="workspace-select"><span class="sr-only">Current workspace</span><select id="workspace-select">${state.workspaces.map((item) => `<option value="${item.id}" ${item.id === state.workspaceId ? 'selected' : ''}>${escape(item.name)}</option>`).join('') || '<option>No workspace yet</option>'}</select></label><button class="new-workspace" id="new-workspace">+ New workspace</button><nav><button data-view="builder" class="${state.view === 'builder' ? 'active' : ''}"><span>▦</span> Team builder</button><button data-view="versions" class="${state.view === 'versions' ? 'active' : ''}"><span>◷</span> Published definitions</button></nav><div class="jarvis-card"><span class="jarvis-icon">✦</span><strong>Jarvis</strong><span class="muted-pill">Setup in progress</span><p>Operations monitoring will appear here when the runtime is connected.</p></div><div class="profile"><span class="profile-avatar">${escape((state.user?.email || 'U').slice(0, 1).toUpperCase())}</span><span>${escape(state.user?.email || 'Signed in')}</span><button id="signout" aria-label="Sign out">↪</button></div></aside><main class="workspace-main"><header class="topbar"><span>Organization <span class="slash">/</span> ${escape(workspace?.name || 'Welcome')}</span><span class="private-label"><i></i> Private workspace</span></header><div class="page-content"><div class="page-heading"><div><p class="eyebrow">${state.view === 'builder' ? 'PEOPLE, AGENTS & PURPOSE' : 'VERSION HISTORY'}</p><h1>${state.view === 'builder' ? 'Your agent organization.' : 'Ready for the next step.'}</h1><p>${state.view === 'builder' ? 'Give every agent a role, a team, and a clear responsibility.' : 'A reliable record of what each agent was instructed to do.'}</p></div>${workspace && state.canManage ? '<button class="primary" id="create-agent">+ Create agent</button>' : ''}</div>${!workspace ? '<section class="large-empty"><span>▦</span><h2>Start with your organization.</h2><p>Create a workspace to organize agents across your departments.</p><button class="primary" id="first-workspace">Create workspace</button></section>' : `<div class="stats"><div><span>AGENTS</span><strong>${state.agents.length}</strong></div><div><span>DEPARTMENTS</span><strong>${state.departments.length}</strong></div><div><span>TEAMS</span><strong>${state.teams.length}</strong></div><div><span>PUBLISHED DEFINITIONS</span><strong>${state.versions.length}</strong></div></div>${state.canManage ? '<div class="organization-actions"><button class="text-button" id="add-department">+ Add department</button><button class="text-button" id="add-team">+ Add team</button></div>' : '<p class="read-only-note">You have view access. A workspace administrator can edit agents.</p>'}${state.view === 'builder' ? renderBoard() : renderVersions()}`}</div></main></div>`;
-  app.querySelector('#signout').onclick = () => state.client.auth.signOut();
+  const { jarvisLabel, detail } = jarvisSummaryText();
+  app.innerHTML = `<div class="workspace-shell"><aside class="sidebar"><a class="brand" href="/studio/">${logo}</a><p class="sidebar-label">WORKSPACE</p><label class="workspace-select"><span class="sr-only">Current workspace</span><select id="workspace-select">${state.workspaces.map((item) => `<option value="${item.id}" ${item.id === state.workspaceId ? 'selected' : ''}>${escape(item.name)}</option>`).join('') || '<option>No workspace yet</option>'}</select></label><button class="new-workspace" id="new-workspace">+ New workspace</button><nav><button data-view="builder" class="${state.view === 'builder' ? 'active' : ''}"><span>▦</span> Team builder</button><button data-view="versions" class="${state.view === 'versions' ? 'active' : ''}"><span>◷</span> Published definitions</button><button data-view="telemetry" class="${state.view === 'telemetry' ? 'active' : ''}"><span>◉</span> Live telemetry</button></nav><div class="jarvis-card"><span class="jarvis-icon">✦</span><strong>Jarvis</strong><span class="muted-pill ${state.telemetryStatus === 'live' ? 'live' : ''}">${escape(jarvisLabel)}</span><p>${detail}</p><button type="button" class="text-button" id="sidebar-telemetry">${telemetryKey ? 'Telemetry settings' : 'Connect telemetry'}</button></div><div class="profile"><span class="profile-avatar">${escape((state.user?.email || 'U').slice(0, 1).toUpperCase())}</span><span>${escape(state.user?.email || 'Signed in')}</span><button id="signout" aria-label="Sign out">↪</button></div></aside><main class="workspace-main"><header class="topbar"><span>Organization <span class="slash">/</span> ${escape(workspace?.name || 'Welcome')}</span><span class="private-label"><i></i> Private workspace</span></header><div class="page-content"><div class="page-heading"><div><p class="eyebrow">${state.view === 'builder' ? 'PEOPLE, AGENTS & PURPOSE' : state.view === 'telemetry' ? 'PDPA-SAFE OPERATIONS TELEMETRY' : 'VERSION HISTORY'}</p><h1>${state.view === 'builder' ? 'Your agent organization.' : state.view === 'telemetry' ? 'Live gateway & SLA stream.' : 'Ready for the next step.'}</h1><p>${state.view === 'builder' ? 'Give every agent a role, a team, and a clear responsibility.' : state.view === 'telemetry' ? 'Rolling 60-second anonymized telemetry and 2.5s LINE response race health.' : 'A reliable record of what each agent was instructed to do.'}</p></div>${workspace && state.canManage && state.view !== 'telemetry' ? '<button class="primary" id="create-agent">+ Create agent</button>' : ''}</div>${state.view === 'telemetry' ? `<div id="telemetry-panel">${renderTelemetry()}</div>` : !workspace ? '<section class="large-empty"><span>▦</span><h2>Start with your organization.</h2><p>Create a workspace to organize agents across your departments.</p><button class="primary" id="first-workspace">Create workspace</button></section>' : `<div class="stats"><div><span>AGENTS</span><strong>${state.agents.length}</strong></div><div><span>DEPARTMENTS</span><strong>${state.departments.length}</strong></div><div><span>TEAMS</span><strong>${state.teams.length}</strong></div><div><span>PUBLISHED DEFINITIONS</span><strong>${state.versions.length}</strong></div></div>${state.canManage ? '<div class="organization-actions"><button class="text-button" id="add-department">+ Add department</button><button class="text-button" id="add-team">+ Add team</button></div>' : '<p class="read-only-note">You have view access. A workspace administrator can edit agents.</p>'}${state.view === 'builder' ? renderBoard() : renderVersions()}`}</div></main></div>`;
+  app.querySelector('#signout').onclick = () => { resetTelemetryState({ clearKey: true }); state.client.auth.signOut(); };
+  app.querySelector('#sidebar-telemetry')?.addEventListener('click', telemetryKeyDialog);
+  bindTelemetryButtons(app);
   app.querySelector('#new-workspace').onclick = createWorkspace;
   app.querySelector('#first-workspace')?.addEventListener('click', createWorkspace);
   app.querySelector('#create-agent')?.addEventListener('click', () => editAgent());
@@ -205,7 +389,8 @@ async function initialize() {
     state.client.auth.onAuthStateChange((event, session) => {
       const previousId = state.session?.user?.id;
       state.session = session;
-      if (!session) { authEpoch++; state.workspaceId = null; state.workspaces = []; state.agents = []; dialog.close(); renderAuth(); }
+      if (!session) { authEpoch++; resetTelemetryState({ clearKey: true }); state.workspaceId = null; state.workspaces = []; state.agents = []; state.view = 'builder'; dialog.close(); renderAuth(); }
+      // Defer loadAccount past Supabase's internal onAuthStateChange lock to avoid a v2 getSession deadlock.
       else if (previousId !== session.user.id || event === 'SIGNED_IN' || event === 'INITIAL_SESSION') setTimeout(loadAccount, 0);
     });
   } catch (error) { app.innerHTML = `<main class="blocked-state"><h1>Couldn’t open the workspace.</h1><p>${escape(error.message)}</p><button class="primary" id="reload">Reload</button></main>`; app.querySelector('#reload').onclick = () => location.reload(); }

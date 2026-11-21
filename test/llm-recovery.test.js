@@ -566,7 +566,7 @@ test("LLM recovery uses mocked providers only", async (t) => {
   await t.test("geminiModels deduplicates overlapping entries across GEMINI_MODEL, GEMINI_MODELS, and GEMINI_FALLBACK_MODELS", async (t) => {
     const { gateway } = loadGateway(t, {
       GEMINI_MODEL: "gemini-primary",
-      GEMINI_MODELS: "gemini-primary, gemini-backup",
+      GEMINI_MODELS: "models/gemini-primary, gemini-backup",
       GEMINI_FALLBACK_MODELS: "gemini-backup, gemini-third",
     });
     const seenModels = [];
@@ -581,6 +581,27 @@ test("LLM recovery uses mocked providers only", async (t) => {
     });
     assert.equal(await gateway.askAI("Policy", "Question"), "Fallback Final");
     assert.deepEqual(seenModels, ["gemini-primary", "gemini-backup", "gemini-third"]);
+    assert.equal(gateway.normalizeGeminiModelName("models/gemini-3.6-flash"), "gemini-3.6-flash");
+  });
+
+  await t.test("geminiModels respects explicit GEMINI_MODELS without forcing default when GEMINI_MODEL is empty", async (t) => {
+    const { gateway } = loadGateway(t, {
+      GEMINI_MODEL: "",
+      GEMINI_MODELS: "gemini-2.5-flash, gemini-3.6-flash",
+      GEMINI_FALLBACK_MODELS: "",
+    });
+    const seenModels = [];
+    t.mock.method(globalThis, "fetch", async (url) => {
+      const address = new URL(url);
+      if (address.hostname === "generativelanguage.googleapis.com") {
+        const match = address.pathname.match(/\/models\/([^/:]+):generateContent$/);
+        seenModels.push(match?.[1]);
+        return json({ candidates: [] });
+      }
+      return answer("Fallback Final");
+    });
+    assert.equal(await gateway.askAI("Policy", "Question"), "Fallback Final");
+    assert.deepEqual(seenModels, ["gemini-2.5-flash", "gemini-3.6-flash"]);
   });
 
   await t.test("missing or invalid provider usage remains unavailable rather than zero", async (t) => {

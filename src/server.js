@@ -44,6 +44,9 @@ const {
   scheduleOptionalTraceAfterAudit,
 } = require("./lib/optional-trace-runtime");
 const telemetry = require("./observability/sentry");
+const { createLiffRouter } = require("./lib/liff-router");
+const { createDashboardTelemetry, createDashboardTelemetryRouter } = require("./lib/dashboard-telemetry");
+const { createLineAdminRouter, syncDefaultRichMenus, publishTenantCustomRichMenu, inspectLineConsoleReadiness } = require("./lib/line-console");
 
 const C06_DATABASE_DEGRADED_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
 const C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID).message;
@@ -54,14 +57,18 @@ const {
   WEBHOOK_ENCRYPTION_KEY,
   SUPABASE_URL,
   SUPABASE_SERVICE_KEY,
+  LINE_LOGIN_CHANNEL_ID = "",
+  LIFF_ID = "",
+  SUPABASE_JWT_SECRET = "",
   GEMINI_API_KEY,
   GEMINI_ENABLED = "true",
-  GEMINI_MODEL = "gemini-2.5-flash",
+  GEMINI_MODEL = "gemini-3.6-flash",
   GEMINI_MODELS = "",
   GEMINI_FALLBACK_MODELS = "",
   JARVIS_ACTIVATION_CODE = "",
   FOUNDER_LINE_ID = "",
   NEUROHANDS_API_KEY = "",
+  DASHBOARD_TELEMETRY_KEY = "",
   CRON_SECRET = "",
   FALLBACK_PROVIDER = "",
   FALLBACK_API_KEY = "",
@@ -162,21 +169,21 @@ function fallbackModels() {
 }
 
 function normalizeGeminiModelName(name) {
-  const trimmed = String(name || "").trim();
-  if (trimmed.toLowerCase() === "gemini-3.6-flash") return "gemini-2.5-flash";
-  return trimmed;
+  return String(name || "").trim().replace(/^models\//i, "");
 }
 
 function geminiModels() {
-  const combined = [GEMINI_MODEL || "gemini-2.5-flash", GEMINI_MODELS, GEMINI_FALLBACK_MODELS]
+  const combined = [GEMINI_MODEL, GEMINI_MODELS, GEMINI_FALLBACK_MODELS]
     .flatMap((raw) => String(raw || "").split(",").map(normalizeGeminiModelName).filter(Boolean));
   const unique = [...new Set(combined)];
-  return unique.length ? unique : ["gemini-2.5-flash"];
+  return unique.length ? unique : ["gemini-3.6-flash"];
 }
 
 let cachedGeminiModel = null;
 let cachedFallbackModel = null;
 const providerFailures = createProviderFailures({ ttlMs: providerFailureTtlMs });
+const dashboardTelemetry = createDashboardTelemetry({ raceSlaMs: 2500 });
+const runStartTimes = new Map();
 
 function modelProviderLabel(provider) {
   if (provider === "Gemini") return "gemini";
@@ -441,11 +448,10 @@ const BRAND_COPY = {
   about: `Neurohands — Custom AI Agent Platform for LINE.\n\nWe build your own custom AI agent team (Aria for customer service & orders, Suri for sales quotes, Mira for marketing, and Jarvis for owner approvals) inside your LINE Official Account.\n\n🔒 Private Hardware Data Storage + 24/7 Cloud Operation:\n• Private Hardware Storage: Your company's business data, catalogs, and documents are stored and saved on your own private hardware so you keep full ownership.\n• 24/7 Cloud Operation & Backup: Our cloud platform keeps your LINE AI agent running around the clock with automatic backup.\n\n🧩 Design & preview your custom AI agent:\n${NEUROHANDS_PREVIEW_URL}`,
   services: `What Neurohands Does for Your Business\n\n• Custom AI customer service (enquiries, complaints, live order tracking)\n• Automated B2B quotations & sales follow-up with owner Approval Gate (Jarvis)\n• Verified business document & catalog answers\n• Private-Hardware Data Storage: Save and store your own operational data on your private hardware, paired with 24/7 cloud operation and backup\n\n👉 Build & preview your custom LINE AI agent:\n${NEUROHANDS_PREVIEW_URL}`,
   projects: `Neurohands Custom AI Agent Builder\n\n• Interactive LINE AI Agent Builder:\n${NEUROHANDS_PREVIEW_URL}\n• Custom AI agent teams tailored for Glass & Aluminium, Building Materials, Auto Parts, and B2B businesses\n• Private Hardware + Cloud Platform: Keep your company's data saved on your own private hardware while your AI agent serves customers 24/7 on LINE\n• Next: finance, HR and operations agents`,
-  contact: "Contact\n\nLINE: this chat\nHours: 08:00–18:00, Monday–Saturday (Bangkok time)\nEmail: contact@your-domain.com",
+  contact: `Contact Neurohands\n\nLINE Official Account: this chat\nHours: 08:00–18:00, Monday–Saturday (Bangkok time)\nInteractive Builder & Docs: ${NEUROHANDS_PREVIEW_URL}\nBook a demo: send demo in chat`,
   activate: `Get started\n\n🧩 Build & preview your custom AI agent online:\n${NEUROHANDS_PREVIEW_URL}\n\n✔ Existing client:\nUse the full private activation code supplied by your team. Send the word activate, a space, then the complete code beginning NH-.\n\nCopy the full code, not its shortened hint. Keep it private.\n\n✚ New to Neurohands:\nsend the word: demo\nand our team will arrange a tailored demo within business hours (08:00–18:00, Mon–Sat).`,
 };
 
-// ---------- SUPABASE ----------
 async function db(path, options = {}) {
   const method = options.method || "GET";
   const headers = {
@@ -501,6 +507,14 @@ async function getSetting(key, fallback) {
   return rows?.[0]?.value ?? fallback;
 }
 
+async function saveSetting(key, value) {
+  await db("settings?on_conflict=key", {
+    method: "POST",
+    body: { key, value: String(value) },
+    headers: { Prefer: "return=representation,resolution=merge-duplicates" },
+  });
+}
+
 // ---------- LINE ----------
 function verifySignature(rawBody, signature) {
   if (!LINE_CHANNEL_SECRET || !signature) return false;
@@ -543,6 +557,7 @@ async function linkRichMenu(userId, richMenuId) {
 
 async function logMessage(fields) {
   await db("messages", { method: "POST", body: fields });
+  dashboardTelemetry.recordMessage(fields);
 }
 
 // ---------- IDENTITY ----------
@@ -771,9 +786,8 @@ const TOOL_HANDLERS = {
   async list_documents(ctx) {
     if (!ctx.clientAccountId) return { documents: [] };
     const rows = await db(`client_documents?client_account_id=eq.${encodeURIComponent(ctx.clientAccountId)}&department=eq.${encodeURIComponent(ctx.department)}&select=*&order=created_at.desc&limit=10`);
-    const fresh = (r) => !r || r.expires_at == null || Number.isNaN(Date.parse(r.expires_at)) || Date.parse(r.expires_at) > Date.now();
     const documents = (rows || [])
-      .filter((doc) => fresh(doc) && fresh(doc.parsed_summary))
+      .filter((doc) => isFreshRecord(doc) && isFreshRecord(doc.parsed_summary))
       .map(({ doc_code, department, file_name, parsed_status, row_count, created_at }) => ({
         doc_code, department, file_name, parsed_status, row_count, created_at,
       }));
@@ -914,13 +928,33 @@ async function startAgentRun(ctx, input, agent) {
     body: { agent_code: agent.agent_code || null, line_user_id: ctx.lineUserId, client_account_id: ctx.clientAccountId, department: ctx.department, objective: agent.objective, input, status: "started", iterations: 0, webhook_event_id: currentWebhookEventId(), ...(agent.run_kind === "operator" ? { run_kind: "operator" } : {}) },
   });
   if (!rows?.[0]?.id) throw new Error("Agent run evidence could not be saved");
+  if (runStartTimes.size >= 500) runStartTimes.delete(runStartTimes.keys().next().value);
+  runStartTimes.set(rows[0].id, {
+    startedAt: Date.now(),
+    clientAccountId: ctx.clientAccountId ?? null,
+    agentCode: agent.agent_code || null,
+    department: ctx.department || null,
+  });
   return rows[0].id;
 }
 
 async function completeAgentRun(runId, status, output, iterations, error = null, metrics = null) {
   if (!runId) return;
+  const startMeta = runStartTimes.get(runId);
+  runStartTimes.delete(runId);
+  const latencyMs = startMeta ? Math.max(0, Date.now() - startMeta.startedAt) : null;
   const saved = await db(`agent_runs?id=eq.${runId}`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: { status, output, iterations, error, completed_at: new Date().toISOString(), llm_metrics: metrics } });
   if (!saved?.[0]?.id) throw new Error("Run completion could not be saved");
+  dashboardTelemetry.recordRun({
+    runId,
+    clientAccountId: startMeta?.clientAccountId ?? null,
+    agentCode: startMeta?.agentCode ?? null,
+    department: startMeta?.department ?? null,
+    status,
+    iterations,
+    latencyMs,
+    error,
+  });
   return issueMandatoryAgentRunAuditReceipt(saved[0].id, status);
 }
 
@@ -1210,12 +1244,16 @@ async function generalConcierge(text, admissionContext = {}) {
 }
 
 async function respondAgentWithRace(event, ctx, userText, agent, runner = runAgent, raceDelayMs = 2500) {
+  const raceStartMs = Date.now();
   let replied = false;
+  let racedToChecking = false;
   let runnerCompleted = false;
   let checkingDelivery = Promise.resolve();
   const timeout = setTimeout(async () => {
     if (!replied) {
+      // Claim LINE's single-use replyToken synchronously before the await below so runner and timer cannot collide.
       replied = true;
+      racedToChecking = true;
       checkingDelivery = (async () => {
         try { await replyToLine(event.replyToken, "⏳ Checking..."); }
         catch { console.error("Checking reply was not delivered"); }
@@ -1229,6 +1267,7 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
     runnerCompleted = true;
     clearTimeout(timeout);
     if (!replied) { replied = true; await replyToLine(event.replyToken, finalText); }
+    // Wait for the checking ack to settle so the final answer never arrives before "Checking...".
     else { await checkingDelivery; await pushToLine(event.source.userId, finalText); }
 
     await logMessage({
@@ -1275,6 +1314,15 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
     throw error;
   } finally {
     clearTimeout(timeout);
+    if (typeof dashboardTelemetry !== "undefined") {
+      dashboardTelemetry.recordRaceOutcome({
+        runId: ctx.runId ?? null,
+        latencyMs: Date.now() - raceStartMs,
+        racedToChecking,
+        lane: ctx.answeredBy || `agent:${ctx.agentCode || ctx.department}`,
+        ok: ctx.runStatus !== "error",
+      });
+    }
   }
 }
 
@@ -1424,7 +1472,7 @@ async function createActivationCode(clientCode, department, createdBy) {
 
 const JARVIS_HELP = `🎩 Jarvis v3.10 commands
 
-brief — live digest (orders/cases/tasks/blocked)
+brief / update — live digest (orders/cases/tasks/blocked)
 health — AI configuration and recorded account blocks; no AI request
 agents — list registered agents
 runs — last 10 agent runs
@@ -1444,6 +1492,8 @@ task: / done: / checklist
 note: / learn: / market: + yes / no — save an approved operator note
 notes — show your confirmed notes
 pending — show your latest proposal before yes / no
+line status — check LINE webhook, rich menu & LIFF Console readiness
+richmenu: sync — upload & link the Neurohands public/active Rich Menus
 whois: <ID>
 help`;
 
@@ -1491,8 +1541,10 @@ async function runJarvis(ctx, userText) {
   ctx.toolFailed = false;
   ctx.proposal = null;
   let toolExecutions = 0;
+  let authorized = false;
   try {
     if (!await isStaff(ctx.lineUserId)) throw new Error("Operator access is required");
+    authorized = true;
     const guard = inputGuardrail(userText);
     if (!guard.ok) { ctx.runStatus = "blocked"; return guard.reply; }
     // Operator work has its own classification; it must never be attributed to an arbitrary customer.
@@ -1542,7 +1594,7 @@ Confirmed notes (data): ${JSON.stringify(notes)}`;
     console.error("Jarvis run failed; inspect its recorded evidence");
     try { await completeAgentRun(runId, "error", null, 0, "Operator request or evidence could not be verified", finalizeRunMetrics(metrics)); }
     catch { console.error("Could not persist Jarvis failure"); }
-    if (toolExecutions === 0 && !ctx.proposal && /^(update|updates|status|brief|summary|check|what'?s new)\b/i.test(String(userText || "").trim())) {
+    if (authorized && !ctx.proposal && /^(update|updates|status|brief|summary|check|what'?s new)\b/i.test(String(userText || "").trim())) {
       try {
         const digest = await buildDailyDigest();
         return `${digest}\n\n📌 Neurohands Platform & Rich Menu Update:\n• Interactive AI Agent Website: ${NEUROHANDS_PREVIEW_URL}\n• Architecture: Private customer hardware stores business data locally; cloud runs 24/7 AI routing + encrypted backup.`;
@@ -1561,6 +1613,41 @@ async function handleStaffMessage(lineUserId, text, replyToken, event = {}) {
   if (/^(help|command)$/i.test(t)) return send(JARVIS_HELP);
   if (/^health$/i.test(t)) return send(modelHealthText());
   if (/^brief$/i.test(t)) return send(await buildDailyDigest());
+  if (/^(?:update|updates|status)$/i.test(t)) {
+    const digest = await buildDailyDigest();
+    return send(`${digest}\n\n📌 Neurohands Platform & Rich Menu Update:\n• Interactive AI Agent Website: ${NEUROHANDS_PREVIEW_URL}\n• Architecture: Private customer hardware stores business data locally; cloud runs 24/7 AI routing + encrypted backup.`);
+  }
+  if (/^line\s+status$/i.test(t)) {
+    return respondAgentWithRace({ replyToken, source: { userId: lineUserId } }, { lineUserId, answeredBy: "jarvis" }, t, null, async () => {
+      const r = await inspectLineConsoleReadiness({
+        lineChannelSecret: LINE_CHANNEL_SECRET,
+        lineChannelAccessToken: LINE_CHANNEL_ACCESS_TOKEN,
+        lineLoginChannelId: LINE_LOGIN_CHANNEL_ID,
+        liffId: LIFF_ID,
+        supabaseJwtSecret: SUPABASE_JWT_SECRET,
+        publicBase: PUBLIC_BASE || "https://neurohands-ai-agent-production.up.railway.app",
+        getSettingFn: getSetting,
+      });
+      const actions = r.consoleActions.length ? `\nActions:\n${r.consoleActions.map((a) => `• ${a}`).join("\n")}` : "\n• All messaging & rich menu checks green.";
+      return `🎩 LINE Console Readiness\n• Bot: ${r.bot?.displayName || "-"} (${r.bot?.basicId || "offline"})\n• Webhook active: ${r.webhook.matchesExpected}\n• Default Rich Menu synced: ${r.defaultRichMenu.matchesSettings}\n• LIFF login ready: ${r.readyForLiff}${actions}`;
+    });
+  }
+  if (/^richmenu:\s*sync$/i.test(t)) {
+    return respondAgentWithRace({ replyToken, source: { userId: lineUserId } }, { lineUserId, answeredBy: "jarvis" }, t, null, async () => {
+      try {
+        const synced = await syncDefaultRichMenus({
+          lineChannelAccessToken: LINE_CHANNEL_ACCESS_TOKEN,
+          getSettingFn: getSetting,
+          saveSettingFn: saveSetting,
+        });
+        return `🎩 Rich Menus synced & linked to all users.\n• Public: ${synced.richmenuPublicId}\n• Active: ${synced.richmenuActiveId}`;
+      } catch (err) {
+        console.error("Rich Menu sync error:", err?.name || "Error");
+        const safeMsg = /LINE API|LINE_CHANNEL_ACCESS_TOKEN|Menu payload|Rich Menu/i.test(err?.message || "") ? err.message : "Unexpected internal failure while syncing menus";
+        return `🎩 Rich Menu sync failed: ${safeMsg}`;
+      }
+    });
+  }
   const note = /^(note|learn|market):\s*([\s\S]*)$/i.exec(t);
   if (note) {
     const content = note[2].trim();
@@ -1670,13 +1757,32 @@ async function handleStaffMessage(lineUserId, text, replyToken, event = {}) {
     if (!claimed) return send("This proposal has already been handled.");
     if (claimed.tool_name) {
       const ctx = { lineUserId, clientAccountId: claimed.client_account_id, department: claimed.department, allowedTools: [claimed.tool_name], agentCode: null, runId: claimed.source_run_id || null };
-      const account = (await db(`client_accounts?id=eq.${encodeURIComponent(ctx.clientAccountId)}&active=eq.true&select=id,active`))?.[0];
+      const isAdminRichMenu = claimed.tool_name === "publish_rich_menu" && ctx.clientAccountId == null && Boolean(FOUNDER_LINE_ID && lineUserId === FOUNDER_LINE_ID);
+      const account = ctx.clientAccountId != null
+        ? (await db(`client_accounts?id=eq.${encodeURIComponent(ctx.clientAccountId)}&active=eq.true&select=id,active`))?.[0]
+        : null;
       let out;
-      if (!account || account.active !== true) {
+      if (!isAdminRichMenu && (!account || account.active !== true)) {
         ctx.toolFailed = true;
         out = { error: "The client account is no longer active. No action was executed." };
         await db("tool_calls", { method: "POST", body: { run_id: ctx.runId, agent_code: null, tool_name: claimed.tool_name,
           input: claimed.tool_args || {}, output: out, allowed: false, status: "blocked" } });
+      } else if (claimed.tool_name === "publish_rich_menu") {
+        try {
+          out = await publishTenantCustomRichMenu({
+            lineChannelAccessToken: LINE_CHANNEL_ACCESS_TOKEN,
+            menuPayload: claimed.tool_args?.menuPayload,
+            targetLineUserId: claimed.tool_args?.targetLineUserId || null,
+            linkUserFn: linkRichMenu,
+          });
+        } catch (err) {
+          ctx.toolFailed = true;
+          const safeMsg = /LINE API|LINE_CHANNEL_ACCESS_TOKEN|Menu payload|Rich Menu|richMenuId/i.test(err?.message || "") ? err.message : "Rich menu publish failed.";
+          out = { error: safeMsg };
+        }
+        const logged = await db("tool_calls", { method: "POST", body: { run_id: ctx.runId, agent_code: null, tool_name: claimed.tool_name,
+          input: claimed.tool_args || {}, output: out, allowed: true, status: ctx.toolFailed ? "error" : "success" } });
+        if (!logged?.[0]?.id) throw new Error("Tool evidence could not be saved");
       } else {
         out = await executeToolWithLog(ctx, ctx.runId, claimed.tool_name, claimed.tool_args || {});
       }
@@ -1968,6 +2074,40 @@ app.get(["/neurohands", "/website", "/preview"], (_req, res) => {
   });
   res.type("html").sendFile(NEUROHANDS_BUILDER_FILE);
 });
+
+app.use("/api/liff", createLiffRouter({
+  db,
+  lineLoginChannelId: LINE_LOGIN_CHANNEL_ID,
+  liffId: LIFF_ID,
+  supabaseJwtSecret: SUPABASE_JWT_SECRET,
+  apiKey: NEUROHANDS_API_KEY,
+  founderLineId: FOUNDER_LINE_ID,
+  websiteUrl: PUBLIC_BASE ? `${PUBLIC_BASE.replace(/\/+$/, "")}/neurohands` : NEUROHANDS_PREVIEW_URL,
+  proposeNote,
+  notifyOwner: (msg) => (FOUNDER_LINE_ID && LINE_CHANNEL_ACCESS_TOKEN ? pushToLine(FOUNDER_LINE_ID, msg) : Promise.resolve()),
+}));
+
+app.use("/api/line", createLineAdminRouter({
+  apiKey: NEUROHANDS_API_KEY,
+  lineChannelSecret: LINE_CHANNEL_SECRET,
+  lineChannelAccessToken: LINE_CHANNEL_ACCESS_TOKEN,
+  lineLoginChannelId: LINE_LOGIN_CHANNEL_ID,
+  liffId: LIFF_ID,
+  supabaseJwtSecret: SUPABASE_JWT_SECRET,
+  publicBase: PUBLIC_BASE || "https://neurohands-ai-agent-production.up.railway.app",
+  getSettingFn: getSetting,
+  saveSettingFn: saveSetting,
+}));
+
+app.use("/api/dashboard", createDashboardTelemetryRouter({
+  db,
+  apiKey: DASHBOARD_TELEMETRY_KEY || NEUROHANDS_API_KEY,
+  telemetry: dashboardTelemetry,
+  getProviderStatus: () => ({
+    gemini: providerFailures.get("gemini") || (geminiConfigured() ? "ok" : "disabled"),
+    fallback: providerFailures.get("fallback") || (fallbackBase() ? "ok" : "disabled"),
+  }),
+}));
 
 app.post("/api/upload/session", asyncRoute(async (req, res) => {
   res.set("Cache-Control", "no-store");
@@ -2297,4 +2437,4 @@ if (require.main === module) {
     Promise.allSettled([stopped, closed, sentry.close(2000)]).then(() => process.exit(0));
   });
 }
-module.exports = { loadMemories, getAgentCard, getProductText, respondAgentWithRace, isFreshRecord, TOOL_HANDLERS, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, requestModelJson, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent, modelExecutionIdentity, modelPromptTimestamp, BRAND_COPY, NEUROHANDS_PREVIEW_URL, DEFAULT_PUBLIC_UPDATES, normalizeGeminiModelName, buildCalendarEventSummary };
+module.exports = { loadMemories, getAgentCard, getProductText, respondAgentWithRace, isFreshRecord, TOOL_HANDLERS, app, parseDocument, askAI, askGeminiWithTools, callFallbackChat, requestModelJson, runOpenAIToolLoop, makeUploadToken, checkUploadToken, executeToolWithLog, runAgent, runJarvis, activateByCode, replyToLine, pushToLine, handleEvent, modelExecutionIdentity, modelPromptTimestamp, BRAND_COPY, NEUROHANDS_PREVIEW_URL, DEFAULT_PUBLIC_UPDATES, normalizeGeminiModelName, buildCalendarEventSummary, dashboardTelemetry };

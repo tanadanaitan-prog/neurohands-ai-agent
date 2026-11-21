@@ -546,3 +546,85 @@ test("Jarvis calendar command saves dated reminder to jarvis_checklist and gener
   await f.send("calendar");
   assert.match(f.line.at(-1).messages[0].text, /#1 • \[📅 2026-11-20 14:00 BKT\] Meeting with KNC Glass/);
 });
+
+test("Jarvis LINE 'update' command replies immediately without waiting on model tools, and natural updates survive tool-turn failures", async (t) => {
+  const f = fixture(t);
+  let modelCalls = 0;
+  f.model = async () => {
+    modelCalls += 1;
+    if (modelCalls === 1) return { tool: "operations_status", args: {} };
+    throw new Error("Simulated post-tool model failure");
+  };
+  await f.send("update");
+  assert.equal(modelCalls, 0);
+  const directReply = f.line.at(-1).messages[0].text;
+  assert.match(directReply, /🎩 Digest/);
+  assert.match(directReply, /https:\/\/neurohands-ai-agent-production\.up\.railway\.app\/neurohands/);
+
+  const result = await f.run("update please");
+  assert.equal(result.ctx.runStatus, "error");
+  assert.match(result.reply, /🎩 Digest/);
+  assert.doesNotMatch(result.reply, /I could not verify that request/i);
+
+  const unauthorized = await f.run("update", { lineUserId: "Uattacker-not-staff" });
+  assert.equal(unauthorized.ctx.runStatus, "error");
+  assert.match(unauthorized.reply, /I could not verify that request/i);
+  assert.doesNotMatch(unauthorized.reply, /🎩 Digest/);
+});
+
+test("Jarvis yes executes founder-approved publish_rich_menu proposal and blocks non-founder admin rich menu", async (t) => {
+  const f = fixture(t, { FOUNDER_LINE_ID: "operator-one" });
+  const richmenuCalls = [];
+  const origFetch = globalThis.fetch;
+  t.mock.method(globalThis, "fetch", async (address, options = {}) => {
+    const url = new URL(String(address));
+    if (url.hostname === "api.line.me" && url.pathname.startsWith("/v2/bot/richmenu")) {
+      richmenuCalls.push({ host: url.hostname, path: url.pathname, method: options.method || "GET" });
+      return json({ richMenuId: "richmenu-custom-1" }, 200);
+    }
+    if (url.hostname === "api-data.line.me" && url.pathname.includes("/content")) {
+      richmenuCalls.push({ host: url.hostname, path: url.pathname, method: options.method || "POST", bytes: Buffer.isBuffer(options.body) ? options.body.length : 0 });
+      return json({}, 200);
+    }
+    if (url.hostname === "api.line.me" && /^\/v2\/bot\/user\/[^/]+\/richmenu\//.test(url.pathname)) {
+      richmenuCalls.push({ host: url.hostname, path: url.pathname, method: options.method || "POST" });
+      return json({}, 200);
+    }
+    return origFetch(address, options);
+  });
+
+  f.tables.jarvis_notes.push({
+    id: 501,
+    proposed_by: "operator-one",
+    status: "pending",
+    tool_name: "publish_rich_menu",
+    client_account_id: null,
+    department: "operations",
+    source_run_id: null,
+    tool_args: {
+      targetLineUserId: "Utenant-target-1",
+      menuPayload: { size: { width: 1664, height: 928 }, selected: false, name: "Founder Menu", chatBarText: "Neurohands", areas: [] },
+    },
+  });
+
+  await f.send("yes", "operator-one");
+  assert.equal(f.tables.jarvis_notes.find((n) => n.id === 501).status, "confirmed");
+  assert.ok(richmenuCalls.some((c) => c.path === "/v2/bot/richmenu"));
+  assert.ok(richmenuCalls.some((c) => c.host === "api-data.line.me" && c.bytes > 0));
+  assert.ok(richmenuCalls.some((c) => c.path === "/v2/bot/user/Utenant-target-1/richmenu/richmenu-custom-1"));
+  assert.match(f.line.at(-1).messages[0].text, /Executed publish_rich_menu/);
+
+  f.tables.jarvis_notes.push({
+    id: 502,
+    proposed_by: "operator-two",
+    status: "pending",
+    tool_name: "publish_rich_menu",
+    client_account_id: null,
+    department: "operations",
+    source_run_id: null,
+    tool_args: { menuPayload: { name: "Unauthorized Admin Menu", areas: [] } },
+  });
+  await f.send("yes", "operator-two");
+  assert.equal(f.tables.jarvis_notes.find((n) => n.id === 502).status, "failed");
+  assert.equal(f.tables.tool_calls.at(-1).status, "blocked");
+});
