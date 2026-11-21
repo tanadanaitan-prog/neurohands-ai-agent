@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "updated_at": "2026-11-22T01:25:00+07:00",
+  "lessons": [
+    {
+      "id": "LES-001",
+      "error_signature": "Gemini request failed 404 on gemini-2.5-flash / gemini-2.5-flash-lite",
+      "root_cause": "normalizeGeminiModelName forcibly rewrote gemini-3.6-flash to deprecated gemini-2.5-flash, causing agent_runs #74-#78 to 404 in 70-141ms.",
+      "approved_fix": "Stop downgrading configured model names, strip optional models/ prefixes, and honor explicit GEMINI_MODELS without forcing a default ahead of explicit env configuration.",
+      "regression_test": "platform/test/llm-recovery.test.js (geminiModels deduplicates overlapping entries & respects explicit GEMINI_MODELS)",
+      "verified_commit": "771af108a012ecd4922ef383fa2dad42dd34586a",
+      "status": "verified"
+    },
+    {
+      "id": "LES-002",
+      "error_signature": "Supabase Security Advisor 0015_rls_references_user_metadata & 22P02 invalid input syntax for type bigint",
+      "root_cause": "RLS policies read end-user editable user_metadata and cast empty or non-numeric strings directly to ::bigint.",
+      "approved_fix": "Read server-signed app_metadata only with a CASE regex guard (^[0-9]{1,18}$) before ::bigint cast, and revoke EXECUTE on SECURITY DEFINER functions from public, anon, and authenticated.",
+      "regression_test": "platform/test/line-console.test.js & platform/test/trial-release-db.test.js",
+      "verified_commit": "771af108a012ecd4922ef383fa2dad42dd34586a",
+      "status": "verified"
+    },
+    {
+      "id": "LES-003",
+      "error_signature": "ENOENT on ../../data_intake_kit during standalone Railway Railpack npm test",
+      "root_cause": "Monorepo-only test file referencing sibling folder ../data_intake_kit was copied into the standalone deployment repository.",
+      "approved_fix": "Keep monorepo-only intake seed tests out of the standalone platform deployment repo and always run npm run check && npm test && npm run build inside an isolated origin/main worktree before pushing.",
+      "regression_test": "Clean origin/main worktree npm test gate (674/676 pass, 0 fail)",
+      "verified_commit": "771af108a012ecd4922ef383fa2dad42dd34586a",
+      "status": "verified"
+    },
+    {
+      "id": "LES-004",
+      "error_signature": "LINE Rich Menu URI cross-LIFF spoofing, path traversal (/..), or orphan menu leak on PNG upload failure",
+      "root_cause": "Allowing arbitrary liff.line.me paths or unpinned .neurohands.site subdomains and failing to DELETE created menus when content upload or DB save failed.",
+      "approved_fix": "Pin allowedLiffId and tenant clientCode subdomain in setup-richmenu.js/line-console.js, reject empty URIs and .. segments, delete created menus on failure, restore prior default menu, and clean up superseded menus after sync.",
+      "regression_test": "platform/test/line-console.test.js (Wave 1-2 security guards)",
+      "verified_commit": "771af108a012ecd4922ef383fa2dad42dd34586a",
+      "status": "verified"
+    },
+    {
+      "id": "LES-005",
+      "error_signature": "LINE webhook drops group join events and blocks all group/room messages",
+      "root_cause": "handleEvent returned early when event.source.userId was absent (join events) and rejected all event.source.type !== 'user'.",
+      "approved_fix": "Handle LINE group/room join, leave, bind <NH-CODE>, mention/keyword/always/off response policies, and per-thread human takeover states via line-group-router.js and conversation-handover.js.",
+      "regression_test": "platform/test/trial-api-and-line-group.test.js",
+      "verified_commit": "pending-u3",
+      "status": "verified"
+    },
+    {
+      "id": "LES-006",
+      "error_signature": "Wrong module import for isFreshRecord (catalog-access.js vs document-parser.js)",
+      "root_cause": "workflow-runtime.js imported isFreshRecord from catalog-access.js instead of document-parser.js, caught immediately by U2 unit test.",
+      "approved_fix": "Always read target module exports before importing; import isFreshRecord from ./document-parser.",
+      "regression_test": "platform/test/trial-workflow-runtime.test.js",
+      "verified_commit": "customer-trial-release",
+      "status": "verified"
+    },
+    {
+      "id": "LES-007",
+      "error_signature": "Fail-open handover/quota DB catch, cross-tenant LINE group re-bind hijack, and 0-charge quota_exceeded reset",
+      "root_cause": "Caught during independent adversarial security review before release: non-missing-table DB errors fell through to AI, bind NH-CODE could overwrite another tenant's active group, and p_messages=0 could reset quota_exceeded to active.",
+      "approved_fix": "Fail closed with C06_DATABASE_DEGRADED_RESPONSE on non-missing-table DB errors, block bind when group belongs to another active tenant, claim activation codes atomically via nh_claim_activation_code RPC, guard 0-charge quota resets, enforce owner_email uniqueness on trial signup, gate /api/trial/lessons, and suppress billing replies in public LINE groups.",
+      "regression_test": "platform/test/trial-release-db.test.js & platform/test/trial-api-and-line-group.test.js",
+      "verified_commit": "customer-trial-release",
+      "status": "verified"
+    }
+  ]
+}

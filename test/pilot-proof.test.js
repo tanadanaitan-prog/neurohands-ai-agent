@@ -28,7 +28,7 @@ async function fixture(t, env = {}) {
   const tables = {
     client_accounts: [{ id: 1, client_code: "KNC", company: "KNC Glass", active: true }, { id: 2, client_code: "OTH", company: "Other client", active: true }],
     activation_codes: [{ id: 1, code: "TEST-KNC-LOCAL-ONLY", client_account_id: 1, department: "sales", status: "active", max_uses: 1, used_count: 0 }],
-    client_agent_bindings: [], clients: [], settings: [], client_documents: [], tool_calls: [], agent_runs: [], agent_memory: [], jarvis_audit_log: [], messages: [], staff_activations: [], jarvis_notes: [],
+    client_agent_bindings: [], clients: [], settings: [], client_documents: [], tool_calls: [], agent_runs: [], agent_memory: [], jarvis_audit_log: [], messages: [], staff_activations: [], jarvis_notes: [], nh_conversation_states: [], nh_tenant_trials: [], nh_line_group_bindings: [], nh_agent_workflows: [],
     agent_registry: [{ id: 1, agent_code: "AGT-001", callsign: "Aria", department: "sales", agent_name: "KNC agent", active: true, customer_facing: true, allowed_tools: ["read_document"], domains: ["sales"], responsibilities: ["Read authorized documents"], objective: "Answer from evidence" }],
   };
   const state = { tables, objects: new Map(), apiRequests: new Map(), requests: [], faults: new Set(), databaseFailures: new Map(), documentCode: null, modelCalls: 0, lineStatus: 429, lineMessages: [] };

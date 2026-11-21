@@ -393,6 +393,19 @@ footer p{margin:4px 0}
 .slots{grid-template-columns:repeat(2,minmax(0,1fr))}
 @container (max-width:560px){.slots{grid-template-columns:minmax(0,1fr)}}
 .slot{overflow-wrap:anywhere}
+.trial-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:14px}
+.trial-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f5f9f6;margin-bottom:14px;font-size:13px}
+.trial-metrics{display:flex;flex-wrap:wrap;gap:10px}
+.trial-pill{padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:600;color:var(--brand-ink)}
+.trial-chat-log{min-height:170px;max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdfb;display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.trial-msg{padding:8px 11px;border-radius:10px;font-size:13.5px;max-width:88%;white-space:pre-wrap;overflow-wrap:anywhere}
+.trial-msg.u{align-self:flex-end;background:#e6f0ff;color:#112340}
+.trial-msg.b{align-self:flex-start;background:#edf6ef;color:#10291a}
+.trial-msg.s{align-self:center;background:#fff4e0;color:#6b4a07;font-size:12.5px}
+.trial-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.trial-code{display:block;padding:9px 11px;border-radius:8px;background:#f3f6f4;border:1px solid var(--line);font-family:ui-monospace,monospace;font-size:12.5px;margin:6px 0;overflow-wrap:anywhere}
+@media (max-width:900px){.trial-grid{grid-template-columns:1fr}}
+@media (max-width:760px){.trial-actions .btn{flex:1 1 120px;min-height:42px}}
 .chip,.chip.is-soon{display:inline-grid;grid-template-columns:minmax(0,auto) auto;align-items:center;column-gap:6px;row-gap:3px;max-width:100%;min-width:0;white-space:normal;vertical-align:top;border-radius:16px;padding:5px 5px 5px 10px}
 .chip .cl{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere;line-height:1.3}
 .chip .soon{grid-column:1;grid-row:2;justify-self:start;margin:0;max-width:100%;white-space:normal}
@@ -513,6 +526,72 @@ footer p{margin:4px 0}
   <div class="card tr"><span class="tag review" data-i18n="tg_review">Protected</span><h3 data-i18n="tr4t"></h3><p data-i18n="tr4"></p><a href="#privacy" data-i18n="tr_more">Read privacy details</a></div>
   <div class="card tr"><span class="tag demo" data-i18n="tg_demo">Secure</span><h3 data-i18n="tr5t"></h3><p data-i18n="tr5"></p></div>
   <div class="card tr"><span class="tag note" data-i18n="tg_note">Verified</span><h3 data-i18n="tr6t"></h3><p data-i18n="tr6"></p></div>
+ </div>
+</div></section>
+
+<section class="block" id="trial-workspace"><div class="wrap">
+ <h2 id="tr-h">Customer Trial Workspace</h2>
+ <p class="lead">Start a controlled 14-day trial, save your drag-and-drop workflow, test it live on this page, deploy to LINE 1:1 and group chats, and pause or take over conversations anytime.</p>
+ <div class="trial-bar" id="trial-allowance-bar" data-testid="trial-allowance-bar">
+  <strong id="trial-status-label">Trial not started yet · 14 days · 200 messages · 50 actions · $0 cap</strong>
+  <div class="trial-metrics" id="trial-metrics">
+   <span class="trial-pill" id="tm-msgs">Messages: 200 / 200</span>
+   <span class="trial-pill" id="tm-acts">Actions: 50 / 50</span>
+   <span class="trial-pill" id="tm-days">Days left: 14</span>
+   <span class="trial-pill" id="tm-state">Thread: AI Active</span>
+  </div>
+ </div>
+ <div class="card" id="trial-signup-card" data-testid="trial-signup-card">
+  <h3>1. Activate your isolated trial workspace</h3>
+  <form id="trial-signup-form" novalidate>
+   <div class="fgrid">
+    <div class="field"><label for="ts-biz">Business name <span class="req">*</span></label><input id="ts-biz" name="businessName" placeholder="e.g. KNC Glass Co., Ltd." autocomplete="organization" required></div>
+    <div class="field"><label for="ts-email">Work email <span class="req">*</span></label><input id="ts-email" name="email" type="email" placeholder="owner@company.com" autocomplete="email" required></div>
+    <div class="field full"><label for="ts-role">First agent role</label><select id="ts-role" name="role"><option value="Aria — Customer Service &amp; Quotes">Aria — Customer Service &amp; Quotes (Recommended)</option><option value="Suri — Sales &amp; Lead Capture">Suri — Sales &amp; Lead Capture</option></select></div>
+   </div>
+   <div class="trial-actions"><button type="submit" class="btn primary" id="ts-submit" data-testid="trial-signup-btn">Start 14-day free trial</button></div>
+   <p class="err" id="ts-err" role="alert"></p>
+  </form>
+ </div>
+ <div class="trial-grid" id="trial-console" data-testid="trial-console" hidden>
+  <div class="card">
+   <h3>2. Workflow permissions &amp; LINE group rules</h3>
+   <div class="field"><label for="tw-instructions">Agent instructions</label><textarea id="tw-instructions" rows="3">Answer product, price, and lead-time questions strictly from approved company knowledge. Never invent discounts or alter orders without human approval.</textarea></div>
+   <div class="field"><label for="tw-group-mode">LINE group-chat response rule</label><select id="tw-group-mode"><option value="mention_only">Mention only (@Neurohands)</option><option value="keyword">Configured keywords or @mention</option><option value="always">Reply to every group message</option><option value="off">Off (1:1 LINE chats only)</option></select></div>
+   <div class="field"><label for="tw-keywords">Group trigger keywords (comma-separated)</label><input id="tw-keywords" value="quote, price, ราคา, lead time"></div>
+   <div class="field"><label class="chk"><input type="checkbox" id="tw-require-approval" checked> <span>Require human approval before discounts or tasks</span></label></div>
+   <div class="trial-actions">
+    <button type="button" class="btn" id="tw-save" data-testid="trial-save-btn">Save built workflow</button>
+    <button type="button" class="btn primary" id="tw-publish" data-testid="trial-publish-btn">Publish to LINE 1:1 &amp; Groups</button>
+   </div>
+   <div id="tw-deploy-box" hidden style="margin-top:12px">
+    <p class="small"><strong>LINE 1:1 chat command:</strong></p>
+    <code class="trial-code" id="tw-code-1to1"></code>
+    <p class="small"><strong>LINE group chat command</strong> (enable Group Access in LINE Official Account Manager; LINE allows one Official Account per group):</p>
+    <code class="trial-code" id="tw-code-group"></code>
+   </div>
+  </div>
+  <div class="card">
+   <h3>3. Live website test &amp; human takeover</h3>
+   <div class="trial-actions">
+    <button type="button" class="btn sm" data-tprompt="Quote 10mm tempered glass 2x3m">Test Quote</button>
+    <button type="button" class="btn sm" data-tprompt="Give 15% discount and create order task">Test Approval Gate</button>
+    <button type="button" class="btn sm" data-tprompt="What is the lead time?">Test Lead Time</button>
+    <button type="button" class="btn sm" data-tprompt="Need human help">Request Human</button>
+   </div>
+   <div class="trial-chat-log" id="tw-chat-log" data-testid="trial-chat-log" aria-live="polite">
+    <div class="trial-msg s">Your agent is ready. Send a test message below — every test uses the same server workflow and trial limits as LINE.</div>
+   </div>
+   <form id="tw-test-form" class="trial-actions">
+    <input id="tw-test-input" type="text" placeholder="Ask your agent a real customer question..." style="flex:1 1 200px;min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:10px" required>
+    <button type="submit" class="btn primary" id="tw-test-send" data-testid="trial-test-send">Send test</button>
+   </form>
+   <div class="trial-actions">
+    <button type="button" class="btn sm" data-handover="pause" data-testid="handover-pause">Pause AI</button>
+    <button type="button" class="btn sm" data-handover="takeover" data-testid="handover-takeover">Human Take Over</button>
+    <button type="button" class="btn sm" data-handover="resume" data-testid="handover-resume">Resume AI</button>
+   </div>
+  </div>
  </div>
 </div></section>
 
@@ -1361,6 +1440,157 @@ if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
    s.onload=function(){if(window.liff){try{Promise.resolve(window.liff.init({liffId:cfg.liffId})).catch(function(){});}catch(e){}}};
    document.head.appendChild(s);
   }).catch(function(){});
+ })();
+
+ (function(){
+  var TRIAL_KEY="nh_trial_session_v1";
+  var session=null;
+  var threadId="web-trial-main";
+  try{session=JSON.parse(sessionStorage.getItem(TRIAL_KEY)||"null");}catch(e){session=null;}
+
+  function el(id){return document.getElementById(id);}
+  function saveSession(next){session=next;try{if(next)sessionStorage.setItem(TRIAL_KEY,JSON.stringify(next));else sessionStorage.removeItem(TRIAL_KEY);}catch(e){}}
+  function appendChat(cls,text){
+   var log=el("tw-chat-log"); if(!log)return;
+   var d=document.createElement("div"); d.className="trial-msg "+cls; d.textContent=text;
+   log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+  function renderTrialBar(trial,handoverState){
+   if(trial){
+    el("trial-status-label").textContent=(session&&session.tenant?session.tenant.company+" ("+session.tenant.clientCode+") · ":"")+"Status: "+String(trial.status||"active").toUpperCase();
+    el("tm-msgs").textContent="Messages: "+(trial.remainingMessages!=null?trial.remainingMessages:0)+" / "+(trial.maxMessages!=null?trial.maxMessages:200);
+    el("tm-acts").textContent="Actions: "+(trial.remainingActions!=null?trial.remainingActions:0)+" / "+(trial.maxActions!=null?trial.maxActions:50);
+    el("tm-days").textContent="Days left: "+(trial.daysLeft!=null?trial.daysLeft:14);
+   }
+   if(handoverState){
+    var labels={ai_active:"AI Active",awaiting_approval:"Awaiting Approval",human_takeover:"Human Takeover",paused:"AI Paused"};
+    el("tm-state").textContent="Thread: "+(labels[handoverState]||handoverState);
+   }
+  }
+  function buildSpecFromCanvas(){
+   var blocks=["instructions","decisions","reply"];
+   if(has("prices")||has("docs")||has("faq")||has("catalog")) blocks.push("knowledge");
+   if(has("quote")||has("prices")) blocks.push("quote");
+   if(has("orders")||has("lead")) blocks.push("lead_time");
+   if(el("tw-require-approval").checked||has("approval")) blocks.push("approval_gate");
+   if(has("handoff")) blocks.push("human_handoff");
+   var kws=String(el("tw-keywords").value||"").split(",").map(function(x){return x.trim();}).filter(Boolean);
+   return {
+    agentCode:"ARIA",
+    name:state.name||"Aria",
+    role:el("ts-role").value||"Aria — Customer Service & Quotes",
+    instructions:el("tw-instructions").value.trim(),
+    blocks:blocks,
+    allowedTools:["get_product_info","get_edging_info","get_lead_time","get_order_status","create_task","request_human"],
+    approvalRequiredTools:el("tw-require-approval").checked?["create_task"]:[],
+    replyStyle:"warm",
+    groupPolicy:{mode:el("tw-group-mode").value||"mention_only",keywords:kws}
+   };
+  }
+  function showActiveWorkspace(refreshServer){
+   if(!session||!session.token)return;
+   el("trial-signup-card").hidden=true;
+   el("trial-console").hidden=false;
+   renderTrialBar(session.trial);
+   if(session.activationCode){
+    el("tw-deploy-box").hidden=false;
+    el("tw-code-1to1").textContent="activate "+session.activationCode;
+    el("tw-code-group").textContent="bind "+session.activationCode;
+   }
+   if(refreshServer){
+    trialFetch("/me").then(function(data){
+     if(data.trial){session.trial=data.trial;saveSession(session);}
+     var wf=(data.workflows||[])[0];
+     var spec=wf&&(wf.published_spec||wf.workflow_spec);
+     if(spec){
+      if(spec.instructions) el("tw-instructions").value=spec.instructions;
+      if(spec.groupPolicy&&spec.groupPolicy.mode) el("tw-group-mode").value=spec.groupPolicy.mode;
+      if(spec.groupPolicy&&Array.isArray(spec.groupPolicy.keywords)) el("tw-keywords").value=spec.groupPolicy.keywords.join(", ");
+     }
+     var th=(data.threads||[]).find(function(x){return x.channel_type==="web"&&x.thread_id===threadId;});
+     renderTrialBar(data.trial,th?th.state:"ai_active");
+    }).catch(function(){});
+   }
+  }
+  function trialFetch(path,opts){
+   var headers=Object.assign({"Content-Type":"application/json"},(opts&&opts.headers)||{});
+   if(session&&session.token) headers.Authorization="Bearer "+session.token;
+   return fetch("/api/trial"+path,Object.assign({},opts,{headers:headers})).then(function(r){
+    return r.json().then(function(d){if(!r.ok)throw new Error(d.error||"Request failed");return d;});
+   });
+  }
+
+  var sf=el("trial-signup-form");
+  if(sf) sf.addEventListener("submit",function(e){
+   e.preventDefault();
+   el("ts-err").textContent="";
+   var biz=el("ts-biz").value.trim(), email=el("ts-email").value.trim(), role=el("ts-role").value;
+   if(biz.length<2){el("ts-err").textContent="Enter a business name (at least 2 characters).";return;}
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){el("ts-err").textContent="Enter a valid work email address.";return;}
+   el("ts-submit").disabled=true;
+   trialFetch("/signup",{method:"POST",body:JSON.stringify({businessName:biz,email:email,role:role})}).then(function(data){
+    saveSession({token:data.token,tenant:data.tenant,trial:data.trial,activationCode:data.activationCode});
+    showActiveWorkspace();
+    toast("14-day trial workspace activated");
+   }).catch(function(err){
+    el("ts-err").textContent=err.message;
+   }).finally(function(){el("ts-submit").disabled=false;});
+  });
+
+  var saveBtn=el("tw-save");
+  if(saveBtn) saveBtn.addEventListener("click",function(){
+   if(!session)return;
+   trialFetch("/workflows/ARIA",{method:"PUT",body:JSON.stringify(buildSpecFromCanvas())}).then(function(){
+    appendChat("s","Workflow blocks, permissions, and LINE group rules saved.");
+   }).catch(function(err){appendChat("s","Save error: "+err.message);});
+  });
+
+  var pubBtn=el("tw-publish");
+  if(pubBtn) pubBtn.addEventListener("click",function(){
+   if(!session)return;
+   trialFetch("/workflows/ARIA/publish",{method:"POST",body:JSON.stringify({spec:buildSpecFromCanvas()})}).then(function(data){
+    el("tw-deploy-box").hidden=false;
+    appendChat("s","Published live for LINE 1:1 & Groups ("+data.lineDeploy.groupPolicy.mode+").");
+   }).catch(function(err){appendChat("s","Publish error: "+err.message);});
+  });
+
+  function sendLiveTest(msg){
+   if(!session||!msg)return;
+   appendChat("u",msg);
+   trialFetch("/workflows/ARIA/test",{method:"POST",body:JSON.stringify({message:msg,threadId:threadId,spec:buildSpecFromCanvas()})}).then(function(data){
+    session.trial=data.trial; saveSession(session);
+    renderTrialBar(data.trial,data.result.handoverState);
+    if(data.result.suppressed){
+     appendChat("s","AI reply suppressed because thread is in "+data.result.handoverState+". Human operator alerted.");
+    } else if(data.result.text){
+     appendChat("b",data.result.text);
+    }
+   }).catch(function(err){appendChat("s","Test error: "+err.message);});
+  }
+
+  var tf=el("tw-test-form");
+  if(tf) tf.addEventListener("submit",function(e){
+   e.preventDefault();
+   var inp=el("tw-test-input"), v=inp.value.trim();
+   if(!v)return;
+   inp.value="";
+   sendLiveTest(v);
+  });
+  document.querySelectorAll("[data-tprompt]").forEach(function(b){
+   b.addEventListener("click",function(){sendLiveTest(b.getAttribute("data-tprompt"));});
+  });
+  document.querySelectorAll("[data-handover]").forEach(function(b){
+   b.addEventListener("click",function(){
+    if(!session)return;
+    var act=b.getAttribute("data-handover");
+    trialFetch("/threads/handover",{method:"POST",body:JSON.stringify({channelType:"web",threadId:threadId,action:act})}).then(function(data){
+     renderTrialBar(session.trial,data.thread.state);
+     appendChat("s","Human handover updated: "+data.thread.state);
+    }).catch(function(err){appendChat("s","Handover error: "+err.message);});
+   });
+  });
+
+  showActiveWorkspace(true);
  })();
 })();
 </script>

@@ -47,6 +47,11 @@ const telemetry = require("./observability/sentry");
 const { createLiffRouter } = require("./lib/liff-router");
 const { createDashboardTelemetry, createDashboardTelemetryRouter } = require("./lib/dashboard-telemetry");
 const { createLineAdminRouter, syncDefaultRichMenus, publishTenantCustomRichMenu, inspectLineConsoleReadiness } = require("./lib/line-console");
+const { createHandoverStore, shouldAiReply } = require("./lib/conversation-handover");
+const { createTrialQuotaService, formatTrialRejection } = require("./lib/trial-quota");
+const { shouldRespondInGroup, stripBotMention, parseGroupBindCommand } = require("./lib/line-group-router");
+const { DEFAULT_ARIA_WORKFLOW, executeWorkflowTurn } = require("./lib/workflow-runtime");
+const { createTrialRouter, createLangSmithTraceHook } = require("./lib/trial-router");
 
 const C06_DATABASE_DEGRADED_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
 const C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID).message;
@@ -81,6 +86,8 @@ const {
   MODEL_TIMEOUT_MS = "15000",
   SUPABASE_TIMEOUT_MS = "15000",
   PROVIDER_FAILURE_TTL_MS = "600000",
+  LANGSMITH_API_KEY = "",
+  LANGSMITH_PROJECT = "neurohands-trial",
   PORT = 3000,
 } = process.env;
 
@@ -481,7 +488,9 @@ async function db(path, options = {}) {
     // Response bodies and query strings can contain customer data or activation codes.
     const failure = await readDatabaseFailure(res, { signal });
     console.error("Supabase request failed", method, path.split("?")[0], res.status, failure);
-    throw databaseOperationError(failure);
+    const err = databaseOperationError(failure);
+    err.httpStatus = res.status;
+    throw err;
   }
   if (res.status === 204) {
     if (method === "POST") throw new Error("Database write was not confirmed");
@@ -1396,9 +1405,40 @@ async function handleMessage(event) {
     return;
   }
 
+  const clientAccountId = bindings[0].client_account_id;
+  try {
+    const threadState = await handoverStore.getState(clientAccountId, "line_user", lineUserId);
+    if (!shouldAiReply(threadState.state)) {
+      await notifyHumanOperator({
+        clientAccountId,
+        channelType: "line_user",
+        threadId: lineUserId,
+        reason: `Customer message while thread is ${threadState.state}`,
+        preview: userText.slice(0, 140),
+      });
+      return;
+    }
+    const trialRow = await db(`nh_tenant_trials?client_account_id=eq.${encodeURIComponent(clientAccountId)}&select=client_account_id&limit=1`);
+    if (trialRow?.[0]) {
+      const charge = await trialQuotaService.consumeAllowance(clientAccountId, { messages: 1, actions: 0, costUsd: 0 });
+      if (!charge.allowed) {
+        const msg = formatTrialRejection(charge.reason);
+        await replyToLine(event.replyToken, msg);
+        await logMessage({ line_user_id: lineUserId, direction: "out", text_content: msg, answered_by: "trial_gate", status: "sent", client_account_id: clientAccountId });
+        return;
+      }
+    }
+  } catch (err) {
+    if (err?.httpStatus !== 404) {
+      console.error("Trial/handover check error:", err?.name || "Error");
+      await replyToLine(event.replyToken, C06_DATABASE_DEGRADED_RESPONSE);
+      return;
+    }
+  }
+
   const ctx = {
     lineUserId,
-    clientAccountId: bindings[0].client_account_id,
+    clientAccountId,
     department,
     allowedTools: [],
     webhookEventId: event.webhookEventId,
@@ -1831,6 +1871,17 @@ async function handleStaffMessage(lineUserId, text, replyToken, event = {}) {
     return send("Closed.");
   }
 
+  const takeoverCmd = /^(pause|takeover|resume):\s*([A-Z0-9_-]+)\s+(\S+)(?:\s+(line_user|line_group|web))?$/i.exec(t);
+  if (takeoverCmd) {
+    const action = takeoverCmd[1].toLowerCase();
+    const acc = (await db(`client_accounts?client_code=eq.${encodeURIComponent(takeoverCmd[2].toUpperCase())}&active=eq.true&select=id,client_code&limit=1`))?.[0];
+    if (!acc) return send("Client account is unavailable.");
+    const threadId = takeoverCmd[3];
+    const channelType = takeoverCmd[4]?.toLowerCase() || (threadId.startsWith("C") || threadId.startsWith("R") ? "line_group" : "line_user");
+    const updated = await handoverStore.transition(acc.id, channelType, threadId, action, { actor: lineUserId, reason: `Operator ${action} via LINE` });
+    return send(`Thread ${threadId} (${acc.client_code}/${channelType}) is now ${updated.state}.`);
+  }
+
   if (/^checklist$/i.test(t)) {
     const rows = await db("jarvis_checklist?status=eq.open&select=id,item&order=created_at.asc");
     return send((rows || []).map((c) => `#${c.id} • ${c.item}`).join("\n") || "Nothing open.");
@@ -2109,6 +2160,41 @@ app.use("/api/dashboard", createDashboardTelemetryRouter({
   }),
 }));
 
+const handoverStore = createHandoverStore({ db });
+const trialQuotaService = createTrialQuotaService({ db });
+const langsmithTraceHook = createLangSmithTraceHook({ apiKey: LANGSMITH_API_KEY, project: LANGSMITH_PROJECT });
+async function notifyHumanOperator({ clientAccountId, channelType, threadId, reason, preview } = {}) {
+  try {
+    await db("escalations", {
+      method: "POST",
+      body: {
+        client_account_id: clientAccountId || null,
+        line_user_id: String(threadId || "unknown").slice(0, 128),
+        reason: `[${channelType || "web"}] ${reason || "Human assistance requested"}${preview ? `: ${preview}` : ""}`.slice(0, 1000),
+        status: "open",
+      },
+    });
+  } catch {}
+  if (FOUNDER_LINE_ID && LINE_CHANNEL_ACCESS_TOKEN) {
+    try {
+      await pushToLine(FOUNDER_LINE_ID, `🔔 Human attention (${channelType || "web"} #${clientAccountId || "-"} / ${threadId || "-"}): ${reason || "Help requested"}`);
+    } catch {}
+  }
+}
+
+app.use("/api/trial", createTrialRouter({
+  db,
+  apiKey: NEUROHANDS_API_KEY,
+  supabaseJwtSecret: SUPABASE_JWT_SECRET,
+  fallbackSecret: WEBHOOK_ENCRYPTION_KEY || NEUROHANDS_API_KEY,
+  founderLineId: FOUNDER_LINE_ID,
+  publicBase: PUBLIC_BASE || "https://neurohands-ai-agent-production.up.railway.app",
+  proposeNote,
+  askModel: (sys, msg) => askAI(sys, msg, { lane: "frontline" }),
+  notifyHuman: notifyHumanOperator,
+  traceHook: langsmithTraceHook,
+}));
+
 app.post("/api/upload/session", asyncRoute(async (req, res) => {
   res.set("Cache-Control", "no-store");
   if (!resumableUploadsEnabled) return res.status(404).json({ error: "Resumable uploads are not enabled" });
@@ -2353,9 +2439,146 @@ app.post("/api/agent/run", asyncRoute(async (req, res) => {
   }
 }));
 
-// ---------- WEBHOOK ----------
+async function handleGroupEvent(event) {
+  const sourceType = event.source.type;
+  const groupId = sourceType === "group" ? event.source.groupId : event.source.roomId;
+  if (!groupId) return;
+
+  if (event.type === "join") {
+    return replyToLine(
+      event.replyToken,
+      "👋 Neurohands joined this group.\n\nTo connect your business AI agent here, send:\nbind NH-YOUR-CODE\n\nNote: LINE allows one Official Account per group."
+    );
+  }
+  if (event.type === "leave") {
+    try {
+      await db(`nh_line_group_bindings?line_group_id=eq.${encodeURIComponent(groupId)}`, {
+        method: "PATCH",
+        body: { active: false, updated_at: new Date().toISOString() },
+      });
+    } catch {}
+    return;
+  }
+  if (event.type !== "message" || event.message?.type !== "text") return;
+
+  const rawText = (event.message.text || "").trim();
+  if (!rawText) return;
+
+  if (/^(?:brief|agents|runs|events|trace:|memory:|code:|codes|whois:|act:)/i.test(rawText)) {
+    return replyToLine(event.replyToken, "Please use a private chat with Neurohands for account access and business information.");
+  }
+
+  const bindCode = parseGroupBindCommand(rawText);
+  if (bindCode) {
+    const hash = crypto.createHash("sha256").update(bindCode).digest("hex");
+    const existingBinding = (await db(`nh_line_group_bindings?line_group_id=eq.${encodeURIComponent(groupId)}&active=eq.true&select=client_account_id&limit=1`))?.[0];
+    const rows = await db(`activation_codes?code_hash=eq.${hash}&select=*&limit=1`);
+    const row = rows?.[0];
+    if (!row || row.status !== "active" || row.used_count >= row.max_uses || (row.expires_at && new Date(row.expires_at) < new Date())) {
+      return replyToLine(event.replyToken, "Invalid or expired activation code. Generate a fresh code from your Neurohands trial workspace.");
+    }
+    if (existingBinding && String(existingBinding.client_account_id) !== String(row.client_account_id)) {
+      return replyToLine(event.replyToken, "This LINE group is already connected to another workspace. The owning workspace must disconnect it first.");
+    }
+    const acc = (await db(`client_accounts?id=eq.${encodeURIComponent(row.client_account_id)}&active=eq.true&select=id,client_code,active&limit=1`))?.[0];
+    if (!acc || acc.active !== true) {
+      return replyToLine(event.replyToken, "This company account is not active.");
+    }
+    let claimed = null;
+    try {
+      claimed = (await db("rpc/nh_claim_activation_code", { method: "POST", body: { p_code_hash: hash } }))?.[0] || null;
+    } catch (err) {
+      if (!/404|42883|PGRST202/i.test(err?.message || "")) throw err;
+      const newUsed = row.used_count + 1;
+      await db(`activation_codes?id=eq.${row.id}&status=eq.active&used_count=eq.${row.used_count}`, {
+        method: "PATCH",
+        body: { used_count: newUsed },
+      });
+      claimed = row;
+    }
+    if (!claimed) {
+      return replyToLine(event.replyToken, "This activation code has already been used or expired.");
+    }
+    const wf = (await db(`nh_agent_workflows?client_account_id=eq.${encodeURIComponent(acc.id)}&status=eq.published&select=id,published_spec,workflow_spec&order=published_at.desc&limit=1`))?.[0];
+    const policy = (wf?.published_spec || wf?.workflow_spec)?.groupPolicy || DEFAULT_ARIA_WORKFLOW.groupPolicy;
+    await db("nh_line_group_bindings?on_conflict=line_group_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+      body: {
+        client_account_id: acc.id,
+        line_group_id: groupId,
+        source_type: sourceType,
+        workflow_id: wf?.id || null,
+        response_mode: policy.mode || "mention_only",
+        trigger_keywords: Array.isArray(policy.keywords) ? policy.keywords : [],
+        active: true,
+        bound_by_line_user_id: event.source.userId || null,
+        updated_at: new Date().toISOString(),
+      },
+    });
+    return replyToLine(
+      event.replyToken,
+      `✅ Connected this LINE ${sourceType} to ${acc.client_code}.\nResponse rule: ${policy.mode || "mention_only"}.\nMention @Neurohands whenever you want the agent to reply.`
+    );
+  }
+
+  const binding = (await db(`nh_line_group_bindings?line_group_id=eq.${encodeURIComponent(groupId)}&active=eq.true&select=*&limit=1`))?.[0];
+  if (!binding) return;
+
+  const decision = shouldRespondInGroup({
+    mode: binding.response_mode,
+    keywords: binding.trigger_keywords,
+    text: rawText,
+    mention: event.message.mention || null,
+  });
+  if (!decision.respond) return;
+
+  const cleanedText = stripBotMention(rawText) || rawText;
+  const wfRow = (await db(`nh_agent_workflows?client_account_id=eq.${encodeURIComponent(binding.client_account_id)}&status=eq.published&select=*&order=published_at.desc&limit=1`))?.[0];
+  const spec = wfRow?.published_spec || wfRow?.workflow_spec || DEFAULT_ARIA_WORKFLOW;
+  const catalogRows = (await db(`glass_types?active=eq.true&client_account_id=eq.${encodeURIComponent(binding.client_account_id)}&order=product_code&limit=30`)) || [];
+  const defaultLead = Number(await getSetting("default_lead_time_days", "7")) || 7;
+
+  const result = await executeWorkflowTurn({
+    spec,
+    tenant: { clientAccountId: binding.client_account_id, clientCode: String(binding.client_account_id), operatorLineUserId: FOUNDER_LINE_ID || null },
+    channelType: "line_group",
+    threadId: groupId,
+    message: cleanedText,
+    catalogRows,
+    defaultLeadTimeDays: defaultLead,
+    handoverStore,
+    trialService: trialQuotaService,
+    proposeNote,
+    askModel: (sys, msg) => askAI(sys, msg, { lane: "frontline" }),
+    notifyHuman: notifyHumanOperator,
+    traceHook: langsmithTraceHook,
+  });
+  if (result.blockedByTrial) {
+    await notifyHumanOperator({
+      clientAccountId: binding.client_account_id,
+      channelType: "line_group",
+      threadId: groupId,
+      reason: `Trial limit reached in LINE group (${result.reason || "quota_exceeded"})`,
+    });
+    return;
+  }
+  if (!result.replied || !result.text) return;
+  await replyToLine(event.replyToken, result.text);
+  await logMessage({
+    line_user_id: event.source.userId || groupId,
+    direction: "out",
+    text_content: result.text,
+    answered_by: `group:${spec.agentCode || "ARIA"}`,
+    status: "sent",
+    client_account_id: binding.client_account_id,
+  });
+}
+
 async function handleEvent(event) {
-  if (!event?.source?.userId) return;
+  if (!event?.source?.type) return;
+  if (event.source.type === "group" || event.source.type === "room") return handleGroupEvent(event);
+  if (!event.source.userId) return;
   if (event.source.type !== "user") return replyToLine(event.replyToken, "Please use a private chat with Neurohands for account access and business information.");
   if (event.type === "message" && event.message?.type === "file") {
     const lineUserId = event.source.userId;
