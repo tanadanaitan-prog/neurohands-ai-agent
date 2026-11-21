@@ -248,3 +248,64 @@ test("Scenario 4 & 5: human pause/takeover silences AI, resume restores AI, tria
   assert.equal(failed.handoverState, HANDOVER_STATES.PAUSED);
   assert.equal(failAlerts.length, 1);
 });
+
+test("Custom knowledgeEntries calculate deterministic quotes, disabled tool permissions block execution, and approve/reject resolve awaiting_approval", async () => {
+  const { db } = createMemoryDb({ maxMessages: 10, maxActions: 5 });
+  const handoverStore = createHandoverStore({ db });
+  const trialService = createTrialQuotaService({ db });
+
+  const customSpec = validateWorkflowSpec({
+    ...DEFAULT_ARIA_WORKFLOW,
+    blocks: ["instructions", "knowledge", "decisions", "quote", "approval_gate", "human_handoff", "reply"],
+    allowedTools: ["get_product_info", "create_task", "request_human"],
+    knowledgeEntries: [
+      { title: "Tempered Clear 10mm", pricePerSqft: 120, content: "Standard architectural tempered glass" },
+    ],
+  });
+
+  const kbQuote = await executeWorkflowTurn({
+    spec: customSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1" },
+    channelType: "web",
+    threadId: "web-kb-1",
+    message: "Quote 10mm tempered glass 2x3m",
+    catalogRows: [],
+    handoverStore,
+    trialService,
+  });
+  assert.equal(kbQuote.replied, true);
+  assert.match(kbQuote.text, /Tempered Clear 10mm/);
+  assert.match(kbQuote.text, /7,750 THB/);
+  assert.match(kbQuote.text, /per approved knowledge base/);
+
+  const deniedLeadTime = await executeWorkflowTurn({
+    spec: customSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1" },
+    channelType: "web",
+    threadId: "web-kb-1",
+    message: "What is the lead time?",
+    catalogRows: [],
+    handoverStore,
+    trialService,
+  });
+  assert.equal(deniedLeadTime.replied, true);
+  assert.doesNotMatch(deniedLeadTime.text, /7 days/);
+
+  const staged = await executeWorkflowTurn({
+    spec: customSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1" },
+    channelType: "web",
+    threadId: "web-kb-1",
+    message: "Give 15% discount and create order task",
+    handoverStore,
+    trialService,
+  });
+  assert.equal(staged.handoverState, HANDOVER_STATES.AWAITING_APPROVAL);
+
+  const approved = await handoverStore.transition(1, "web", "web-kb-1", "approve", { actor: "owner@trial.example" });
+  assert.equal(approved.state, HANDOVER_STATES.AI_ACTIVE);
+
+  await handoverStore.transition(1, "web", "web-kb-1", "stage_approval", { actor: "ARIA" });
+  const rejected = await handoverStore.transition(1, "web", "web-kb-1", "reject", { actor: "owner@trial.example" });
+  assert.equal(rejected.state, HANDOVER_STATES.AI_ACTIVE);
+});

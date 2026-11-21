@@ -122,14 +122,18 @@ function matchCatalogItem(text, catalogRows = [], knowledgeEntries = []) {
       return { row, score };
     }).sort((a, b) => b.score - a.score);
     if (scored[0]?.score > 0) return { source: "catalog", item: scored[0].row };
-    if (freshCatalog.length === 1) return { source: "catalog", item: freshCatalog[0] };
   }
 
-  const matchedKb = (knowledgeEntries || []).find((entry) => {
-    const words = entry.title.toLowerCase().split(/\s+/).filter((w) => w.length >= 3);
-    return words.some((w) => lower.includes(w));
-  });
-  if (matchedKb) return { source: "knowledge", item: matchedKb };
+  const scoredKb = (knowledgeEntries || []).map((entry) => {
+    const words = `${entry.title} ${entry.content}`.toLowerCase().split(/[^a-z0-9\u0E00-\u0E7F]+/).filter((w) => w.length >= 2);
+    let score = 0;
+    for (const w of new Set(words)) {
+      if (lower.includes(w)) score += w.endsWith("mm") ? 3 : 2;
+    }
+    return { entry, score };
+  }).sort((a, b) => b.score - a.score);
+  if (scoredKb[0]?.score > 0) return { source: "knowledge", item: scoredKb[0].entry };
+  if (freshCatalog.length === 1) return { source: "catalog", item: freshCatalog[0] };
   return null;
 }
 
@@ -336,7 +340,7 @@ async function executeWorkflowTurn({
         const rate = Number(match.item.price_per_sqft);
         if (dims && Number.isFinite(rate) && rate > 0) {
           const glassTotal = Math.round(dims.areaSqft * rate);
-          const edging = /bevel|polish|edge|เจียร/i.test(text)
+          const edging = spec.allowedTools.includes("get_edging_info") && /bevel|polish|edge|เจียร/i.test(text)
             ? calculateEdgingCost({ widthMm: dims.widthMm, heightMm: dims.heightMm, edgeType: /bevel/i.test(text) ? "bevel" : "flat_polish" })
             : null;
           const grandTotal = glassTotal + (edging?.costThb || 0);
@@ -350,7 +354,20 @@ async function executeWorkflowTurn({
         return { replied: true, handoverState: HANDOVER_STATES.AI_ACTIVE, remaining, text: replyText, blocksExecuted: ["instructions", "knowledge", "decisions", "quote", "reply"] };
       }
       if (match?.source === "knowledge") {
-        const replyText = formatStyledReply(spec, `${match.item.title}: ${match.item.content} (per approved knowledge base).`);
+        const rate = Number(match.item.pricePerSqft);
+        if (dims && Number.isFinite(rate) && rate > 0) {
+          const glassTotal = Math.round(dims.areaSqft * rate);
+          const edging = spec.allowedTools.includes("get_edging_info") && /bevel|polish|edge|เจียร/i.test(text)
+            ? calculateEdgingCost({ widthMm: dims.widthMm, heightMm: dims.heightMm, edgeType: /bevel/i.test(text) ? "bevel" : "flat_polish" })
+            : null;
+          const grandTotal = glassTotal + (edging?.costThb || 0);
+          const detail = `${match.item.title} (${dims.areaSqft} sqft @ ${rate} THB/sqft = ${glassTotal.toLocaleString("en-US")} THB${edging ? ` + edging ${edging.costThb.toLocaleString("en-US")} THB = ${grandTotal.toLocaleString("en-US")} THB` : ""}) per approved knowledge base.`;
+          const replyText = formatStyledReply(spec, detail);
+          await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
+          return { replied: true, handoverState: HANDOVER_STATES.AI_ACTIVE, remaining, text: replyText, blocksExecuted: ["instructions", "knowledge", "decisions", "quote", "reply"] };
+        }
+        const rateText = Number.isFinite(rate) && rate > 0 ? `${rate} THB/sqft — ` : "";
+        const replyText = formatStyledReply(spec, `${match.item.title}: ${rateText}${match.item.content} (per approved knowledge base).`);
         await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
         return { replied: true, handoverState: HANDOVER_STATES.AI_ACTIVE, remaining, text: replyText, blocksExecuted: ["instructions", "knowledge", "decisions", "reply"] };
       }

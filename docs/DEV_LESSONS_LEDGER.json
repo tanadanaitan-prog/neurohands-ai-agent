@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-11-22T01:25:00+07:00",
+  "updated_at": "2026-11-22T02:16:00+07:00",
   "lessons": [
     {
       "id": "LES-001",
@@ -44,7 +44,7 @@
       "root_cause": "handleEvent returned early when event.source.userId was absent (join events) and rejected all event.source.type !== 'user'.",
       "approved_fix": "Handle LINE group/room join, leave, bind <NH-CODE>, mention/keyword/always/off response policies, and per-thread human takeover states via line-group-router.js and conversation-handover.js.",
       "regression_test": "platform/test/trial-api-and-line-group.test.js",
-      "verified_commit": "pending-u3",
+      "verified_commit": "2865c865ef985e8df6157704e25f2f62b722eb10",
       "status": "verified"
     },
     {
@@ -53,7 +53,7 @@
       "root_cause": "workflow-runtime.js imported isFreshRecord from catalog-access.js instead of document-parser.js, caught immediately by U2 unit test.",
       "approved_fix": "Always read target module exports before importing; import isFreshRecord from ./document-parser.",
       "regression_test": "platform/test/trial-workflow-runtime.test.js",
-      "verified_commit": "customer-trial-release",
+      "verified_commit": "2865c865ef985e8df6157704e25f2f62b722eb10",
       "status": "verified"
     },
     {
@@ -62,7 +62,16 @@
       "root_cause": "Caught during independent adversarial security review before release: non-missing-table DB errors fell through to AI, bind NH-CODE could overwrite another tenant's active group, and p_messages=0 could reset quota_exceeded to active.",
       "approved_fix": "Fail closed with C06_DATABASE_DEGRADED_RESPONSE on non-missing-table DB errors, block bind when group belongs to another active tenant, claim activation codes atomically via nh_claim_activation_code RPC, guard 0-charge quota resets, enforce owner_email uniqueness on trial signup, gate /api/trial/lessons, and suppress billing replies in public LINE groups.",
       "regression_test": "platform/test/trial-release-db.test.js & platform/test/trial-api-and-line-group.test.js",
-      "verified_commit": "customer-trial-release",
+      "verified_commit": "2865c865ef985e8df6157704e25f2f62b722eb10",
+      "status": "verified"
+    },
+    {
+      "id": "LES-008",
+      "error_signature": "UI lessons lookup rendered empty Fix/Check text due to camelCase vs snake_case schema mismatch; new trial tenants lacked deterministic quote calculation from editable knowledge entries",
+      "root_cause": "Frontend renderLessons read item.title/verifiedFix/regressionTest instead of DEV_LESSONS_LEDGER.json snake_case keys (error_signature/approved_fix/regression_test), and workflow-runtime.js only computed width*height quotes for glass_types rows.",
+      "approved_fix": "Read snake_case lesson fields in renderLessons, add deterministic width*height pricing for custom knowledgeEntries in workflow-runtime.js, and verify full UI + API + PGlite PostgreSQL 17 RLS behavior across phone (390x844), tablet (768x1024), and laptop (1440x900) in scripts/verify-trial-pilot.mjs.",
+      "regression_test": "platform/scripts/verify-trial-pilot.mjs & platform/test/trial-workflow-runtime.test.js",
+      "verified_commit": "customer-trial-release-v2",
       "status": "verified"
     }
   ]
