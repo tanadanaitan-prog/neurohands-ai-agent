@@ -80,7 +80,16 @@
       "root_cause": "Independent QA audit caught handleGroupEvent sending the operator approval Flex Card into customer groups, mismatched 16:10 vs 1200x628 (1.91:1) aspect ratios, and multi-line mobile sticky header taller than scroll-margin-top.",
       "approved_fix": "Split buildApprovalFlexCard into audience='customer' (no yes/no buttons, no numeric account ID) vs audience='operator' (1-tap yes/no for FOUNDER_LINE_ID only), align web .guide-media to 1200/628 object-fit:contain and LINE Flex hero to 191:100, compact mobile sticky header + set scroll-margin-top:148px, and hide fixed .mcta inside #trial-workspace.",
       "regression_test": "platform/test/line-flex-cards.test.js & platform/test/trial-api-and-line-group.test.js & platform/scripts/verify-trial-pilot.mjs",
-      "verified_commit": "synchronized-ux-line-flex",
+      "verified_commit": "e1bcd91702cab7736ded8b73c32530013df74cad",
+      "status": "verified"
+    },
+    {
+      "id": "LES-010",
+      "error_signature": "Scrubbed Supabase 409 duplicate errors mapped to 500; TRUNCATE bypassed BEFORE DELETE triggers; hardcoded ok:true health audit; inline blocking LangSmith emitTrace; operator report buttons leaked to external LINE channels",
+      "root_cause": "Three independent Final Governance Auditor subagents (Health, Security, Audit) caught server.js databaseOperationError scrubbing 23505 messages while preserving err.httpStatus=409, GRANT ALL + missing BEFORE TRUNCATE triggers on append-only tables, inline await on 3s LangSmith traces, hardcoded ok:true health responses, and unpinned/un-allowlisted LINE report targets.",
+      "approved_fix": "Detect err.httpStatus===409 for duplicate keys and map 5xx DB outages to 503; attach BEFORE TRUNCATE triggers + GRANT SELECT, INSERT only to service_role + composite supersedes_id FKs; probe real DB/env/admission health in computeOrgRuntimeHealth; make emitTrace fire-and-forget with org LangSmith payload mapping; pin founder channel, enforce U vs C/R prefixes & allowlist checks, split buildReportFlexCard audience='operator'|'external', sanitize public /api/org/roster, and redact PII.",
+      "regression_test": "platform/test/org-learning-db.test.js & platform/test/org-council-and-learning.test.js",
+      "verified_commit": "ai-org-learning-hub",
       "status": "verified"
     }
   ]

@@ -52,6 +52,8 @@ const { createTrialQuotaService, formatTrialRejection } = require("./lib/trial-q
 const { shouldRespondInGroup, stripBotMention, parseGroupBindCommand } = require("./lib/line-group-router");
 const { DEFAULT_ARIA_WORKFLOW, executeWorkflowTurn } = require("./lib/workflow-runtime");
 const { createTrialRouter, createLangSmithTraceHook } = require("./lib/trial-router");
+const { OrgStoreError, createOrgLearningService } = require("./lib/org-learning-store");
+const { createOrgCouncilRouter, validateChannelTarget } = require("./lib/org-council-router");
 const {
   FLEX_BRAND,
   normalizeLineMessages,
@@ -64,6 +66,9 @@ const {
   buildApprovalFlexCard,
   buildHandoverFlexCard,
   buildLeadTimeFlexCard,
+  buildOrgRosterFlexCard,
+  buildReportFlexCard,
+  buildGovernanceAuditFlexCard,
 } = require("./lib/line-flex-cards");
 
 const C06_DATABASE_DEGRADED_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
@@ -1299,7 +1304,7 @@ async function respondAgentWithRace(event, ctx, userText, agent, runner = runAge
     await logMessage({
       line_user_id: event.source.userId,
       direction: "out",
-      text_content: finalText,
+      text_content: typeof finalText === "string" ? finalText : String(finalText?.altText || "[flex]"),
       answered_by: ctx.answeredBy || `agent:${ctx.agentCode || ctx.department}`,
       status: "sent",
       ...(ctx.clientAccountId != null ? { client_account_id: ctx.clientAccountId } : {}),
@@ -1551,6 +1556,10 @@ notes — show your confirmed notes
 pending — show your latest proposal before yes / no
 line status — check LINE webhook, rich menu & LIFF Console readiness
 richmenu: sync — upload & link the Neurohands public/active Rich Menus
+org / teams — view 11-team / 32-agent AI organization card
+report: read [channel] — read latest AI team reports
+report: create <title> | <channel> | <summary> [| <line_id>] — create & dispatch a report
+audit: org — run 3-team Health, Security & Audit governance check
 whois: <ID>
 help`;
 
@@ -1702,6 +1711,73 @@ async function handleStaffMessage(lineUserId, text, replyToken, event = {}) {
         console.error("Rich Menu sync error:", err?.name || "Error");
         const safeMsg = /LINE API|LINE_CHANNEL_ACCESS_TOKEN|Menu payload|Rich Menu/i.test(err?.message || "") ? err.message : "Unexpected internal failure while syncing menus";
         return `🎩 Rich Menu sync failed: ${safeMsg}`;
+      }
+    });
+  }
+  if (/^(?:org|teams)$/i.test(t)) {
+    const publicBase = PUBLIC_BASE || FLEX_BRAND.defaultPublicBase;
+    return replyToLine(replyToken, buildOrgRosterFlexCard(orgLearningService.getRosterSummary(), { publicBase }));
+  }
+  if (/^report:\s*read(?:\s+([a-z_]+))?$/i.test(t)) {
+    const channel = (t.match(/^report:\s*read(?:\s+([a-z_]+))?$/i)?.[1] || "").toLowerCase();
+    const publicBase = PUBLIC_BASE || FLEX_BRAND.defaultPublicBase;
+    return respondAgentWithRace({ replyToken, source: { userId: lineUserId } }, { lineUserId, answeredBy: "jarvis" }, t, null, async () => {
+      try {
+        const { reports } = await orgLearningService.listOrgReports({ channel, limit: 5 });
+        return buildReportFlexCard(reports, { publicBase, audience: "operator" });
+      } catch {
+        return "🎩 Unable to read reports right now. Please retry shortly.";
+      }
+    });
+  }
+  if (/^report:\s*create\s+([\s\S]+)$/i.test(t)) {
+    const rawArgs = t.replace(/^report:\s*create\s+/i, "").trim();
+    const parts = rawArgs.split("|").map((p) => p.trim()).filter(Boolean);
+    if (parts.length < 3) {
+      return send("Format: report: create <title> | <founder|line_user|line_group|web|notion> | <summary> [| <LINE target ID>]");
+    }
+    const [title, rawChannel, summary, rawTarget = ""] = parts;
+    const channel = rawChannel.toLowerCase();
+    const publicBase = PUBLIC_BASE || FLEX_BRAND.defaultPublicBase;
+    return respondAgentWithRace({ replyToken, source: { userId: lineUserId } }, { lineUserId, answeredBy: "jarvis" }, t, null, async () => {
+      try {
+        const dispatchTarget = validateChannelTarget(channel, rawTarget, FOUNDER_LINE_ID);
+        if (dispatchTarget && channel !== "founder") {
+          const allowed = await isAllowedOrgLineTarget(channel, dispatchTarget);
+          if (!allowed) {
+            throw new OrgStoreError(403, "LINE target is not registered as an authorized staff user or active bound group.", "UNREGISTERED_LINE_TARGET");
+          }
+        }
+        const audience = channel === "founder" ? "operator" : "external";
+        const report = await orgLearningService.createOrgReport({
+          title,
+          summary,
+          channel,
+          teamId: "line-biz-console",
+          authorAgentId: "line-channel-tester",
+          deliver: dispatchTarget && dispatchTarget !== lineUserId
+            ? async (rpt) => {
+                await pushToLine(dispatchTarget, buildReportFlexCard(rpt, { publicBase, audience }));
+                return true;
+              }
+            : null,
+        });
+        return buildReportFlexCard(report, { publicBase, audience: "operator" });
+      } catch (err) {
+        const safeMsg = err instanceof OrgStoreError ? err.message : "Unexpected internal failure while creating report";
+        return `🎩 Could not create report: ${safeMsg}`;
+      }
+    });
+  }
+  if (/^audit:\s*org$/i.test(t)) {
+    const publicBase = PUBLIC_BASE || FLEX_BRAND.defaultPublicBase;
+    return respondAgentWithRace({ replyToken, source: { userId: lineUserId } }, { lineUserId, answeredBy: "jarvis" }, t, null, async () => {
+      try {
+        const runtimeHealth = await computeOrgRuntimeHealth();
+        const audit = await orgLearningService.runGovernanceAudit({ runtimeHealth, persist: true });
+        return buildGovernanceAuditFlexCard(audit, { publicBase });
+      } catch {
+        return "🎩 Unable to complete governance audit right now. Please check database and runtime readiness.";
       }
     });
   }
@@ -2192,6 +2268,53 @@ app.use("/api/dashboard", createDashboardTelemetryRouter({
 const handoverStore = createHandoverStore({ db });
 const trialQuotaService = createTrialQuotaService({ db });
 const langsmithTraceHook = createLangSmithTraceHook({ apiKey: LANGSMITH_API_KEY, project: LANGSMITH_PROJECT });
+const orgLearningService = createOrgLearningService({ db, traceHook: langsmithTraceHook });
+
+async function computeOrgRuntimeHealth() {
+  const envReady = [LINE_CHANNEL_SECRET, LINE_CHANNEL_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_KEY, FOUNDER_LINE_ID, NEUROHANDS_API_KEY].every(Boolean);
+  const llmConfigured = Boolean(geminiConfigured() || fallbackBase());
+  let dbReachable = false;
+  if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+    try {
+      const rows = await db("client_accounts?select=id&limit=1");
+      dbReachable = Array.isArray(rows);
+    } catch {
+      dbReachable = false;
+    }
+  }
+  const activeProviderFailures = providerFailures instanceof Map ? providerFailures.size : 0;
+  const ok = Boolean(productionAdmission.ready && envReady && llmConfigured && dbReachable);
+  return {
+    ok,
+    readiness: ok ? "live" : "degraded",
+    admissionReady: Boolean(productionAdmission.ready),
+    envReady,
+    llmConfigured,
+    dbReachable,
+    activeProviderFailures,
+    raceSlaMs: 2500,
+    langsmithConfigured: Boolean(LANGSMITH_API_KEY),
+    lineConfigured: Boolean(LINE_CHANNEL_SECRET && LINE_CHANNEL_ACCESS_TOKEN),
+  };
+}
+
+async function isAllowedOrgLineTarget(channel, targetId) {
+  if (!targetId) return false;
+  if (FOUNDER_LINE_ID && targetId === FOUNDER_LINE_ID) return channel === "founder" || channel === "line_user";
+  try {
+    if (channel === "line_user") {
+      const rows = await db(`staff_activations?line_user_id=eq.${encodeURIComponent(targetId)}&active=eq.true&select=line_user_id&limit=1`);
+      return Array.isArray(rows) && rows.length > 0;
+    }
+    if (channel === "line_group") {
+      const rows = await db(`nh_line_group_bindings?line_group_id=eq.${encodeURIComponent(targetId)}&active=eq.true&select=line_group_id&limit=1`);
+      return Array.isArray(rows) && rows.length > 0;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
 async function notifyHumanOperator({ clientAccountId, channelType, threadId, reason, preview } = {}) {
   try {
     await db("escalations", {
@@ -2234,6 +2357,18 @@ app.use("/api/trial", createTrialRouter({
   askModel: (sys, msg) => askAI(sys, msg, { lane: "frontline" }),
   notifyHuman: notifyHumanOperator,
   traceHook: langsmithTraceHook,
+}));
+
+app.use("/api/org", createOrgCouncilRouter({
+  service: orgLearningService,
+  db,
+  apiKey: NEUROHANDS_API_KEY,
+  pushToLine,
+  founderLineId: FOUNDER_LINE_ID,
+  isAllowedLineTarget: isAllowedOrgLineTarget,
+  publicBase: PUBLIC_BASE || FLEX_BRAND.defaultPublicBase,
+  traceHook: langsmithTraceHook,
+  getRuntimeHealth: computeOrgRuntimeHealth,
 }));
 
 app.post("/api/upload/session", asyncRoute(async (req, res) => {

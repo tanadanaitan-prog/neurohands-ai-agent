@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "after-service",
+  "team_name": "After-Service & Care Team (Separate Role)",
+  "tier": "customer",
+  "manager_agent_id": "after-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "1c38c411-0e84-41d8-a20e-4d4d3c802734",
+      "team_id": "after-service",
+      "pattern_key": "PAT-AFTER-001",
+      "title": "Dedicated Post-Delivery Warranty, Defect Resolution & Satisfaction Care",
+      "standard_playbook": "Handle cracked/damaged delivery claims, warranty verification, replacement staging, and post-installation check-ins inside the isolated After-Service team separate from frontline sales and pre-order inquiries.",
+      "guardrail_rule": "Require order evidence before staging replacement or credit proposals, escalate every financial credit or remake to human approval, and keep post-delivery learning separate from frontline CS.",
+      "source_case_keys": [
+        "CASE-AFT-MGR-001",
+        "CASE-AFT-WRN-001",
+        "CASE-AFT-RET-001"
+      ],
+      "curated_by": "after-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

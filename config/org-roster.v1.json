@@ -1,0 +1,485 @@
+{
+  "schema_version": "1.0.0",
+  "organization": "Neurohands AI Agent Organization",
+  "mission": "From Thailand to the World — Helping humans learn and grow.",
+  "vision": "Build trustworthy, human-in-the-loop AI agent teams for LINE Official Accounts and web operations where every business keeps full ownership of its data.",
+  "updated_at": "2026-11-22T09:56:00+07:00",
+  "principles": [
+    "Non-destructive append-only learning: never erase or duplicate verified records; supersede via linked revisions.",
+    "Strict case-by-case individual learning isolation: each agent owns its own namespace and never mixes cases with another agent.",
+    "One major curated team learning ledger per team, maintained by that team's manager.",
+    "Central Command receives Founder commands, convenes Team Managers to plan and divide work, tracks manager follow-up, and requires final sign-off from Health, Security, and Audit teams.",
+    "Universal multi-LLM readability across GitHub, Supabase, Railway, LangSmith, and Notion."
+  ],
+  "connectors": {
+    "github": { "repo": "https://github.com/tanadanaitan-prog/neurohands-ai-agent", "branch": "main", "role": "Canonical source code, org roster, migrations, tests, and JSON/JSONL learning ledgers" },
+    "supabase": { "project_ref": "darxiaearohhnxiwhcbs", "role": "Multi-tenant PostgreSQL 17, app_metadata RLS, append-only individual & team learning tables, reports, and governance audit logs" },
+    "railway": { "url": "https://neurohands-ai-agent-production.up.railway.app", "role": "24/7 production runtime serving /neurohands, /webhook, /api/trial/*, /api/org/*, /api/dashboard/*, and /assets/guides/*.png" },
+    "line_oa": { "webhook": "/webhook", "rich_menu_spec": "2500x1686 Retina PNG (<250 KB)", "group_policy": "1 Official Account per group; off | mention_only | keyword | always", "role": "1:1 chats, group chats, interactive Flex Cards, Quick Replies, and channel-routed reports" },
+    "langsmith": { "env_var": "LANGSMITH_API_KEY", "role": "Optional non-blocking PII-free trace export for workflow runs, learning updates, and evaluations" },
+    "notion": { "checklist_page_id": "41f1c2ab-14e3-819f-8e2a-fc3e1e3dc07b", "role": "Human & multi-LLM readable executive hub for org chart, requirements, checklist, and synced learning lessons" }
+  },
+  "workflow_protocol": [
+    "1. Founder submits task or command to Central Command.",
+    "2. Central Command convenes relevant Team Managers to discuss constraints, dependencies, and risks.",
+    "3. Central Command divides work into bounded, non-overlapping team assignments with acceptance checks.",
+    "4. Specialist agents execute inside their scope and append case-by-case learnings to their isolated individual namespace.",
+    "5. Each Team Manager verifies accuracy, curates verified patterns into the team's major learning ledger, and reports completion.",
+    "6. Final 3 Governance Teams (Health, Security, Audit) inspect runtime health, RLS/privacy/secrets, and append-only rule compliance before sign-off and channel report dispatch."
+  ],
+  "teams": [
+    {
+      "teamId": "central-command",
+      "name": "Central Executive Command & Strategy Council",
+      "tier": "command",
+      "managerAgentId": "cmd-director",
+      "mission": "Receive Founder commands, lead cross-team strategy discussion, divide work cleanly across Team Managers, and reconcile final verified outcomes.",
+      "channels": ["line_user", "founder", "web", "notion"],
+      "teamLearningFile": "platform/docs/org/learning/teams/central-command.json"
+    },
+    {
+      "teamId": "line-biz-console",
+      "name": "LINE Business & Console Development Team",
+      "tier": "operations",
+      "managerAgentId": "line-manager",
+      "mission": "Connect LINE OA 1:1 & group chats, Rich Menus, Flex Cards, report reading/creation, and multi-channel dispatch with GitHub, Supabase, Railway, and LangSmith.",
+      "channels": ["line_user", "line_group", "founder", "web"],
+      "teamLearningFile": "platform/docs/org/learning/teams/line-biz-console.json"
+    },
+    {
+      "teamId": "website-brand-ux",
+      "name": "Website & Brand Synchronized Specialist Team",
+      "tier": "operations",
+      "managerAgentId": "web-manager",
+      "mission": "Synchronize /neurohands, typography, Midnight Navy + Electric Cyan mood & tone, visual guides, and mission/vision storytelling across phone, tablet, and laptop.",
+      "channels": ["web", "line_user"],
+      "teamLearningFile": "platform/docs/org/learning/teams/website-brand-ux.json"
+    },
+    {
+      "teamId": "business-dx",
+      "name": "Business, Content & Digital Transformation Team",
+      "tier": "operations",
+      "managerAgentId": "dx-manager",
+      "mission": "Polish bilingual content, SOPs, digital transformation workflows, and cross-team operational efficiency.",
+      "channels": ["web", "notion", "line_user"],
+      "teamLearningFile": "platform/docs/org/learning/teams/business-dx.json"
+    },
+    {
+      "teamId": "ai-engineering-arch",
+      "name": "AI Engineering & Architecture Team (FE + BE)",
+      "tier": "operations",
+      "managerAgentId": "eng-manager",
+      "mission": "Architect frontend & backend data structures, zero-error service guardrails, deterministic tests, and structured error-to-fix learning patterns.",
+      "channels": ["web", "founder", "notion"],
+      "teamLearningFile": "platform/docs/org/learning/teams/ai-engineering-arch.json"
+    },
+    {
+      "teamId": "customer-service",
+      "name": "Customer Service Team (Frontline)",
+      "tier": "customer",
+      "managerAgentId": "cs-manager",
+      "mission": "Serve active customer inquiries, grounded price quotes, order status, and lead times with seamless human handover.",
+      "channels": ["line_user", "line_group", "web"],
+      "teamLearningFile": "platform/docs/org/learning/teams/customer-service.json"
+    },
+    {
+      "teamId": "after-service",
+      "name": "After-Service & Care Team (Separate Role)",
+      "tier": "customer",
+      "managerAgentId": "after-manager",
+      "mission": "Handle post-delivery warranty claims, damage/defect resolution, satisfaction follow-ups, and retention care strictly separated from frontline sales/CS.",
+      "channels": ["line_user", "line_group", "web"],
+      "teamLearningFile": "platform/docs/org/learning/teams/after-service.json"
+    },
+    {
+      "teamId": "sales-marketing",
+      "name": "Sales & Marketing Team",
+      "tier": "growth",
+      "managerAgentId": "growth-manager",
+      "mission": "Qualify B2B leads, prepare grounded quotation briefs, craft brand proposals and campaigns, and route discount approvals to humans.",
+      "channels": ["line_user", "line_group", "web", "notion"],
+      "teamLearningFile": "platform/docs/org/learning/teams/sales-marketing.json"
+    },
+    {
+      "teamId": "health-monitor",
+      "name": "Final Governance Team 1 — Health & Reliability",
+      "tier": "governance",
+      "managerAgentId": "health-manager",
+      "mission": "Monitor live uptime (/ready, /version), <2.5s Race SLA, provider circuit breakers, and cross-platform connector health.",
+      "channels": ["founder", "web", "notion"],
+      "teamLearningFile": "platform/docs/org/learning/teams/health-monitor.json"
+    },
+    {
+      "teamId": "security-guard",
+      "name": "Final Governance Team 2 — Security & Privacy",
+      "tier": "governance",
+      "managerAgentId": "sec-manager",
+      "mission": "Verify app_metadata RLS isolation, zero PII/secret/code leaks, path traversal guards, Flex URI allowlists, and fail-closed error handling.",
+      "channels": ["founder", "web", "notion"],
+      "teamLearningFile": "platform/docs/org/learning/teams/security-guard.json"
+    },
+    {
+      "teamId": "audit-compliance",
+      "name": "Final Governance Team 3 — Audit & Command Compliance",
+      "tier": "governance",
+      "managerAgentId": "audit-manager",
+      "mission": "Audit all teams for zero duplication, zero erasure, isolated individual vs team learning integrity, and strict execution under Founder prompts and rules.",
+      "channels": ["founder", "web", "notion"],
+      "teamLearningFile": "platform/docs/org/learning/teams/audit-compliance.json"
+    }
+  ],
+  "agents": [
+    {
+      "agentId": "cmd-director",
+      "displayName": "Neurohands Central Director",
+      "teamId": "central-command",
+      "role": "Executive Coordinator & Final Synthesizer",
+      "isManager": true,
+      "managerAgentId": null,
+      "responsibilities": ["Receive Founder commands", "Chair cross-team planning council", "Require Health, Security, and Audit sign-off before completion"],
+      "channels": ["founder", "line_user", "web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/cmd-director.jsonl"
+    },
+    {
+      "agentId": "cmd-planner",
+      "displayName": "Strategic Task Divider",
+      "teamId": "central-command",
+      "role": "Strategy & Decomposition Specialist",
+      "isManager": false,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Decompose goals into verifiable units", "Assign disjoint ownership boundaries across teams", "Sequence dependencies and acceptance gates"],
+      "channels": ["founder", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/cmd-planner.jsonl"
+    },
+    {
+      "agentId": "cmd-synthesizer",
+      "displayName": "Cross-Team Reconciler",
+      "teamId": "central-command",
+      "role": "Evidence & Multi-Platform Sync Specialist",
+      "isManager": false,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Reconcile multi-team outputs", "Verify parity across GitHub, Supabase, Railway, LangSmith, and Notion", "Compile executive completion reports"],
+      "channels": ["founder", "notion", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/cmd-synthesizer.jsonl"
+    },
+    {
+      "agentId": "line-manager",
+      "displayName": "LINE Ops Manager",
+      "teamId": "line-biz-console",
+      "role": "LINE Business & Console Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Manage LINE OA readiness and Rich Menu sync", "Follow up on 1:1/group tests and report routing", "Curate LINE team major learning ledger"],
+      "channels": ["line_user", "line_group", "founder"],
+      "individualLearningFile": "platform/docs/org/learning/individual/line-manager.jsonl"
+    },
+    {
+      "agentId": "line-console-architect",
+      "displayName": "LINE Console & Flex Architect",
+      "teamId": "line-biz-console",
+      "role": "Rich Menu, LIFF & Flex Message Specialist",
+      "isManager": false,
+      "managerAgentId": "line-manager",
+      "responsibilities": ["Maintain 2500x1686 Retina Rich Menus and JSON bounds", "Design human-friendly LINE Flex Cards & Quick Replies", "Enforce strict LINE Messaging API limits"],
+      "channels": ["line_user", "line_group"],
+      "individualLearningFile": "platform/docs/org/learning/individual/line-console-architect.jsonl"
+    },
+    {
+      "agentId": "line-channel-tester",
+      "displayName": "LINE Channel & Report Specialist",
+      "teamId": "line-biz-console",
+      "role": "1:1/Group Test & Report Dispatch Specialist",
+      "isManager": false,
+      "managerAgentId": "line-manager",
+      "responsibilities": ["Test inviting AI agents into 1:1 and group chats", "Read reports, create structured reports, and dispatch to selected channel", "Verify group mention/keyword/always/off rules"],
+      "channels": ["line_user", "line_group", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/line-channel-tester.jsonl"
+    },
+    {
+      "agentId": "line-connector-sync",
+      "displayName": "Platform Connector Engineer",
+      "teamId": "line-biz-console",
+      "role": "GitHub/Supabase/Railway/LangSmith Integration Specialist",
+      "isManager": false,
+      "managerAgentId": "line-manager",
+      "responsibilities": ["Verify webhook, Supabase, Railway, GitHub, and LangSmith wiring", "Maintain PII-free LangSmith tracing", "Guard connector env hygiene"],
+      "channels": ["founder", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/line-connector-sync.jsonl"
+    },
+    {
+      "agentId": "web-manager",
+      "displayName": "Website & Brand Director",
+      "teamId": "website-brand-ux",
+      "role": "Website Specialist Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Enforce visual brand synchronization between web and LINE", "Follow up on phone/tablet/laptop responsiveness", "Curate Website team major learning ledger"],
+      "channels": ["web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/web-manager.jsonl"
+    },
+    {
+      "agentId": "web-brand-designer",
+      "displayName": "Brand Font, Mood & Visual Designer",
+      "teamId": "website-brand-ux",
+      "role": "Brand Mood, Typography & HTML-to-PNG Visual Specialist",
+      "isManager": false,
+      "managerAgentId": "web-manager",
+      "responsibilities": ["Protect Midnight Navy + Electric Cyan + Crisp White identity", "Produce crisp HTML-to-PNG visual guide cards", "Align visuals to Neurohands mission and vision"],
+      "channels": ["web", "line_user"],
+      "individualLearningFile": "platform/docs/org/learning/individual/web-brand-designer.jsonl"
+    },
+    {
+      "agentId": "web-ux-architect",
+      "displayName": "Guided UX & Responsive Architect",
+      "teamId": "website-brand-ux",
+      "role": "Guided Process Flow & Multi-Device UX Specialist",
+      "isManager": false,
+      "managerAgentId": "web-manager",
+      "responsibilities": ["Maintain clear 4-step drag-and-drop to LINE customer flow", "Verify zero overflow and crisp ergonomics on 390px, 768px, and 1440px", "Eliminate ambiguous setup steps"],
+      "channels": ["web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/web-ux-architect.jsonl"
+    },
+    {
+      "agentId": "dx-manager",
+      "displayName": "Digital Transformation Manager",
+      "teamId": "business-dx",
+      "role": "Business & DX Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Optimize end-to-end cross-team digital workflows", "Ensure customer and operator documentation stays effortless", "Curate Business & DX team major learning ledger"],
+      "channels": ["notion", "web", "founder"],
+      "individualLearningFile": "platform/docs/org/learning/individual/dx-manager.jsonl"
+    },
+    {
+      "agentId": "dx-content-polisher",
+      "displayName": "Bilingual Content & Playbook Polisher",
+      "teamId": "business-dx",
+      "role": "Human-Friendly Bilingual Copy Specialist",
+      "isManager": false,
+      "managerAgentId": "dx-manager",
+      "responsibilities": ["Replace technical AI jargon with plain human English + Thai copy", "Polish onboarding checklists and Notion playbooks", "Keep mission and vision consistent across every touchpoint"],
+      "channels": ["web", "line_user", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/dx-content-polisher.jsonl"
+    },
+    {
+      "agentId": "dx-workflow-optimizer",
+      "displayName": "Cross-Team Process Architect",
+      "teamId": "business-dx",
+      "role": "SOP & Operational Efficiency Specialist",
+      "isManager": false,
+      "managerAgentId": "dx-manager",
+      "responsibilities": ["Map clean handoffs between Sales, CS, After-Service, and Engineering", "Define KPI acceptance benchmarks", "Remove workflow bottlenecks"],
+      "channels": ["notion", "founder"],
+      "individualLearningFile": "platform/docs/org/learning/individual/dx-workflow-optimizer.jsonl"
+    },
+    {
+      "agentId": "eng-manager",
+      "displayName": "Chief AI Architect",
+      "teamId": "ai-engineering-arch",
+      "role": "AI Engineering & Architecture Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Own end-to-end FE + BE data architecture and guardrails", "Verify zero-error releases across automated gates", "Curate AI Engineering major learning ledger"],
+      "channels": ["founder", "web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/eng-manager.jsonl"
+    },
+    {
+      "agentId": "eng-frontend-specialist",
+      "displayName": "Frontend Interactive Engineer",
+      "teamId": "ai-engineering-arch",
+      "role": "Web UI & State Hydration Engineer",
+      "isManager": false,
+      "managerAgentId": "eng-manager",
+      "responsibilities": ["Build resilient DOM/API bindings with zero innerHTML XSS", "Ensure reload state hydration and clean error recovery", "Maintain Studio Live Telemetry & /neurohands JS"],
+      "channels": ["web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/eng-frontend-specialist.jsonl"
+    },
+    {
+      "agentId": "eng-backend-guardrail",
+      "displayName": "Backend Data & Guardrail Engineer",
+      "teamId": "ai-engineering-arch",
+      "role": "PostgreSQL Schema, API & Fail-Closed Guardrail Engineer",
+      "isManager": false,
+      "managerAgentId": "eng-manager",
+      "responsibilities": ["Design normalized PostgreSQL schemas, atomic RPCs, and RLS", "Enforce fail-closed DB/model guards and idempotency", "Keep workflow-runtime deterministic and tested"],
+      "channels": ["web", "line_user", "line_group"],
+      "individualLearningFile": "platform/docs/org/learning/individual/eng-backend-guardrail.jsonl"
+    },
+    {
+      "agentId": "eng-learning-curator",
+      "displayName": "Error & Learning Pattern Curator",
+      "teamId": "ai-engineering-arch",
+      "role": "Regression Test & Development Pattern Specialist",
+      "isManager": false,
+      "managerAgentId": "eng-manager",
+      "responsibilities": ["Convert every bug/error into a verified fix and regression test", "Maintain DEV_LESSONS_LEDGER.json and learning schema integrity", "Prevent recurring engineering mistakes"],
+      "channels": ["notion", "founder"],
+      "individualLearningFile": "platform/docs/org/learning/individual/eng-learning-curator.jsonl"
+    },
+    {
+      "agentId": "cs-manager",
+      "displayName": "Customer Service Manager",
+      "teamId": "customer-service",
+      "role": "Frontline Customer Service Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Oversee active customer response quality and <2.5s SLA", "Manage human takeover and approval escalations", "Curate Customer Service major learning ledger"],
+      "channels": ["line_user", "line_group", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/cs-manager.jsonl"
+    },
+    {
+      "agentId": "cs-aria-frontline",
+      "displayName": "Aria — Frontline Inquiry & Quote Specialist",
+      "teamId": "customer-service",
+      "role": "Customer Inquiry & Grounded Quotation Agent",
+      "isManager": false,
+      "managerAgentId": "cs-manager",
+      "responsibilities": ["Answer product and price questions strictly from approved knowledge", "Compute deterministic sqft + edging quotes", "Hand off to humans immediately when requested"],
+      "channels": ["line_user", "line_group", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/cs-aria-frontline.jsonl"
+    },
+    {
+      "agentId": "cs-order-tracker",
+      "displayName": "Order & Lead-Time Desk Specialist",
+      "teamId": "customer-service",
+      "role": "Order Tracking & Delivery ETA Agent",
+      "isManager": false,
+      "managerAgentId": "cs-manager",
+      "responsibilities": ["Provide tenant-scoped order progress and lead-time updates", "Flag at-risk or urgent orders to operators", "Never guess missing order numbers"],
+      "channels": ["line_user", "line_group", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/cs-order-tracker.jsonl"
+    },
+    {
+      "agentId": "after-manager",
+      "displayName": "After-Service Manager",
+      "teamId": "after-service",
+      "role": "Post-Delivery After-Service Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Keep post-delivery care strictly separate from frontline CS", "Ensure warranty and defect cases reach verified closure", "Curate After-Service major learning ledger"],
+      "channels": ["line_user", "line_group", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/after-manager.jsonl"
+    },
+    {
+      "agentId": "after-warranty-care",
+      "displayName": "Warranty & Claims Care Specialist",
+      "teamId": "after-service",
+      "role": "Post-Delivery Defect, Claim & Replacement Agent",
+      "isManager": false,
+      "managerAgentId": "after-manager",
+      "responsibilities": ["Log cracked/damaged delivery cases with order evidence", "Stage replacement/credit proposals for human approval", "Track resolution SLA cleanly"],
+      "channels": ["line_user", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/after-warranty-care.jsonl"
+    },
+    {
+      "agentId": "after-retention-followup",
+      "displayName": "Post-Installation Follow-Up Specialist",
+      "teamId": "after-service",
+      "role": "Customer Satisfaction & Retention Care Agent",
+      "isManager": false,
+      "managerAgentId": "after-manager",
+      "responsibilities": ["Conduct post-delivery check-ins and gather structured feedback", "Record durable care lessons per customer case", "Trigger repeat-maintenance reminders with consent"],
+      "channels": ["line_user", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/after-retention-followup.jsonl"
+    },
+    {
+      "agentId": "growth-manager",
+      "displayName": "Sales & Marketing Manager",
+      "teamId": "sales-marketing",
+      "role": "Sales & Marketing Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Align lead capture, quotation briefs, and brand campaigns", "Enforce human approval on all discounts and commercial terms", "Curate Sales & Marketing major learning ledger"],
+      "channels": ["line_user", "line_group", "web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/growth-manager.jsonl"
+    },
+    {
+      "agentId": "sales-suri-closer",
+      "displayName": "Suri — Sales Qualification Specialist",
+      "teamId": "sales-marketing",
+      "role": "B2B Lead Qualification & Quotation Brief Agent",
+      "isManager": false,
+      "managerAgentId": "growth-manager",
+      "responsibilities": ["Gather project dimensions, timeline, and budget requirements", "Prepare grounded quotation briefs", "Route discount requests to human approval gate"],
+      "channels": ["line_user", "line_group", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/sales-suri-closer.jsonl"
+    },
+    {
+      "agentId": "mkt-mira-campaigns",
+      "displayName": "Mira — Campaigns & Proposal Specialist",
+      "teamId": "sales-marketing",
+      "role": "B2B Proposal & Brand Campaign Agent",
+      "isManager": false,
+      "managerAgentId": "growth-manager",
+      "responsibilities": ["Turn verified requirements into evidence-grounded proposals", "Draft bilingual LINE & web campaign announcements", "Maintain consistent Neurohands brand voice"],
+      "channels": ["web", "notion", "line_user"],
+      "individualLearningFile": "platform/docs/org/learning/individual/mkt-mira-campaigns.jsonl"
+    },
+    {
+      "agentId": "health-manager",
+      "displayName": "Health & SLA Manager",
+      "teamId": "health-monitor",
+      "role": "Final Governance — Health Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Certify live service health (/ready, /version) and <2.5s Race SLA", "Verify outage drill and circuit-breaker recovery", "Curate Health team major learning ledger"],
+      "channels": ["founder", "web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/health-manager.jsonl"
+    },
+    {
+      "agentId": "health-sla-sentinel",
+      "displayName": "Uptime & Connector Sentinel",
+      "teamId": "health-monitor",
+      "role": "Live Telemetry & Connector Probe Agent",
+      "isManager": false,
+      "managerAgentId": "health-manager",
+      "responsibilities": ["Check GitHub, Supabase, Railway, LINE OA, LangSmith, and Notion connectivity", "Track p95 latency and error rates", "Alert Founder immediately on degradation"],
+      "channels": ["founder", "web"],
+      "individualLearningFile": "platform/docs/org/learning/individual/health-sla-sentinel.jsonl"
+    },
+    {
+      "agentId": "sec-manager",
+      "displayName": "Chief Security Officer Agent",
+      "teamId": "security-guard",
+      "role": "Final Governance — Security Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Enforce zero-trust tenant isolation and app_metadata RLS", "Block any secret, token, PII, or code leak before release", "Curate Security team major learning ledger"],
+      "channels": ["founder", "web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/sec-manager.jsonl"
+    },
+    {
+      "agentId": "sec-rls-redteam",
+      "displayName": "RLS, PDPA & Red-Team Specialist",
+      "teamId": "security-guard",
+      "role": "Adversarial Security & Privacy Auditor",
+      "isManager": false,
+      "managerAgentId": "sec-manager",
+      "responsibilities": ["Audit RLS policies, auth gates, and path traversal defenses", "Verify PDPA redaction and customer-vs-operator Flex card isolation", "Test quota and spend-cap bypass attempts"],
+      "channels": ["founder", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/sec-rls-redteam.jsonl"
+    },
+    {
+      "agentId": "audit-manager",
+      "displayName": "Chief Audit & Compliance Manager",
+      "teamId": "audit-compliance",
+      "role": "Final Governance — Audit Team Manager",
+      "isManager": true,
+      "managerAgentId": "cmd-director",
+      "responsibilities": ["Verify every team performs strictly under Founder prompts and rules", "Guarantee zero duplication and zero erasure across all learning stores", "Issue final compliance sign-off"],
+      "channels": ["founder", "web", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/audit-manager.jsonl"
+    },
+    {
+      "agentId": "audit-rule-verifier",
+      "displayName": "Append-Only & Rule Compliance Auditor",
+      "teamId": "audit-compliance",
+      "role": "Learning Isolation & Evidence Verification Specialist",
+      "isManager": false,
+      "managerAgentId": "audit-manager",
+      "responsibilities": ["Verify individual learning records stay isolated per agent_id", "Verify every team maintains its own curated major learning ledger", "Confirm Notion, GitHub, Supabase, and Railway evidence matches"],
+      "channels": ["founder", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/audit-rule-verifier.jsonl"
+    }
+  ]
+}

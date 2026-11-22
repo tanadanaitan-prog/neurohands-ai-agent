@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "health-monitor",
+  "team_name": "Final Governance Team 1 — Health & Reliability",
+  "tier": "governance",
+  "manager_agent_id": "health-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "5fc84c37-cde4-49b3-a03b-d72f99fbdec8",
+      "team_id": "health-monitor",
+      "pattern_key": "PAT-HEALTH-001",
+      "title": "Continuous Live Readiness, <2.5s Race SLA & 6-Platform Connector Verification",
+      "standard_playbook": "Verify /ready, /version, provider circuit breakers, Railway deployment status, Supabase connectivity, LINE webhook health, GitHub main parity, LangSmith tracing, and Notion hub availability before declaring any release healthy.",
+      "guardrail_rule": "Treat silent 404 model failures, unhandled provider timeouts, or unverified Railway deployments as blocking release failures.",
+      "source_case_keys": [
+        "CASE-HLT-MGR-001",
+        "CASE-HLT-SNT-001"
+      ],
+      "curated_by": "health-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

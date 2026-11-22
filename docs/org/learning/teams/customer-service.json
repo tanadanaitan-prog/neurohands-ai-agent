@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "customer-service",
+  "team_name": "Customer Service Team (Frontline)",
+  "tier": "customer",
+  "manager_agent_id": "cs-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "16091f68-3034-48b3-ae36-f260863e5aab",
+      "team_id": "customer-service",
+      "pattern_key": "PAT-CS-001",
+      "title": "Grounded Frontline Quotations, Exact Lead Times & Instant Human Handover",
+      "standard_playbook": "Answer frontline product, dimension quote, and active order status inquiries strictly from tenant-approved knowledge entries and live DB rows, switching immediately to human_active whenever a customer requests human assistance.",
+      "guardrail_rule": "Never invent unlisted prices, stock, or order numbers; always honor active conversation takeover state before sending any AI reply.",
+      "source_case_keys": [
+        "CASE-CS-MGR-001",
+        "CASE-CS-ARIA-001",
+        "CASE-CS-ORD-001"
+      ],
+      "curated_by": "cs-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

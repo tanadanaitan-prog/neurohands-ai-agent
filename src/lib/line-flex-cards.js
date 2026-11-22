@@ -1220,6 +1220,217 @@ function buildLeadTimeFlexCard({ defaultDays = 7, orderNo, promisedDate, publicB
   });
 }
 
+function buildOrgRosterFlexCard(summary = {}, { publicBase } = {}) {
+  const safe = summary && typeof summary === "object" ? summary : {};
+  const builderUrl = resolvePreviewUrl(undefined, publicBase);
+  const teams = Array.isArray(safe.teams) ? safe.teams.filter((t) => t && typeof t === "object") : [];
+  const teamCount = Number(safe.teamCount || teams.length || 11);
+  const agentCount = Number(safe.agentCount || 32);
+  const govTeams = teams.filter((t) => t.tier === "governance");
+  const coreLines = teams.slice(0, 8).map((t) => `${String(t.name || t.teamId || "Team").split(" (")[0]} (${Array.isArray(t.agents) ? t.agents.length : 0})`);
+  const govLabels = govTeams
+    .map((t) => String(t.teamId || "").split("-")[0].toUpperCase())
+    .filter(Boolean)
+    .join(" • ");
+
+  return makeFlexCard({
+    altText: `Neurohands AI Organization: ${teamCount} teams, ${agentCount} agents (including 3 Governance teams: Health, Security, Audit).`,
+    header: makeHeader({
+      eyebrow: "NEUROHANDS AI ORGANIZATION",
+      title: `${teamCount} Teams • ${agentCount} Agents`,
+      thaiHint: "โครงสร้างทีม AI แยกบทบาทและการเรียนรู้รายบุคคลและรายทีม",
+    }),
+    bodyContents: [
+      makeBadge("APPEND-ONLY • ZERO ERASURE", FLEX_BRAND.success),
+      ...(coreLines.length ? coreLines.map((line) => makeBulletRow(line)) : [makeBulletRow("11 teams configured")]),
+      { type: "separator", margin: "sm" },
+      makeKeyValueRow("Governance", govLabels || "HEALTH • SECURITY • AUDIT"),
+      makeKeyValueRow("Connectors", "GitHub • Supabase • Railway • LINE • LangSmith • Notion"),
+      makeThaiHintBox("พิมพ์ report: read เพื่ออ่านรายงาน หรือ audit: org เพื่อตรวจสุขภาพและความปลอดภัย"),
+    ],
+    footerButtons: [
+      {
+        type: "button",
+        style: "primary",
+        color: FLEX_BRAND.cyan,
+        height: "sm",
+        action: { type: "message", label: "Run 3-Team Audit", text: "audit: org" },
+      },
+      {
+        type: "button",
+        style: "secondary",
+        height: "sm",
+        action: { type: "message", label: "Read Latest Reports", text: "report: read" },
+      },
+    ],
+    quickReplyItems: [
+      { label: "Run Org Audit", text: "audit: org" },
+      { label: "Read Reports", text: "report: read" },
+      { label: "LINE Status", text: "line status" },
+      { label: "Open Builder", uri: builderUrl },
+    ],
+  });
+}
+
+function buildReportFlexCard(reportOrList, { publicBase, audience = "operator" } = {}) {
+  const builderUrl = resolvePreviewUrl(undefined, publicBase);
+  const isOperator = audience === "operator";
+  if (Array.isArray(reportOrList)) {
+    const items = reportOrList.filter((r) => r && typeof r === "object").slice(0, 5);
+    const bodyContents = items.length
+      ? items.flatMap((r) => [
+          makeKeyValueRow(r.report_code || "REPORT", `${r.channel || "founder"} • ${r.delivery_status || "recorded"}`),
+          { type: "text", text: clampText(`${r.title || "-"}: ${r.summary || ""}`, 160), size: "xs", color: FLEX_BRAND.textMuted, wrap: true },
+          { type: "separator", margin: "xs" },
+        ])
+      : [makeBulletRow("No organization reports recorded yet.")];
+    if (isOperator) {
+      bodyContents.push(makeThaiHintBox("สร้างรายงานใหม่: report: create <หัวข้อ> | <channel> | <สรุป>"));
+    }
+    return makeFlexCard({
+      altText: `Neurohands Reports (${items.length} shown). Latest: ${items[0]?.title || "none"}`,
+      header: makeHeader({
+        eyebrow: "NEUROHANDS REPORTS HUB",
+        title: `Latest Reports (${items.length})`,
+        thaiHint: "รายการรายงานล่าสุดจากทีม AI",
+      }),
+      bodyContents,
+      footerButtons: isOperator
+        ? [
+            {
+              type: "button",
+              style: "primary",
+              color: FLEX_BRAND.cyan,
+              height: "sm",
+              action: { type: "message", label: "Org Roster", text: "org" },
+            },
+            {
+              type: "button",
+              style: "secondary",
+              height: "sm",
+              action: { type: "message", label: "Run Org Audit", text: "audit: org" },
+            },
+          ]
+        : [
+            {
+              type: "button",
+              style: "primary",
+              color: FLEX_BRAND.cyan,
+              height: "sm",
+              action: { type: "uri", label: "Open Neurohands", uri: builderUrl },
+            },
+          ],
+      quickReplyItems: isOperator
+        ? [
+            { label: "Org Roster", text: "org" },
+            { label: "Org Audit", text: "audit: org" },
+            { label: "Open Builder", uri: builderUrl },
+          ]
+        : [
+            { label: "Open Builder", uri: builderUrl },
+          ],
+    });
+  }
+
+  const r = reportOrList && typeof reportOrList === "object" ? reportOrList : {};
+  const statusColor = r.delivery_status === "dispatched"
+    ? FLEX_BRAND.success
+    : (r.delivery_status === "delivery_failed" ? FLEX_BRAND.danger : FLEX_BRAND.cyan);
+  return makeFlexCard({
+    altText: `Report ${r.report_code || ""}: ${r.title || "Update"} (${r.channel || "founder"} / ${r.delivery_status || "recorded"})`,
+    header: makeHeader({
+      eyebrow: `REPORT • ${String(r.report_code || "RPT").toUpperCase()}`,
+      title: clampText(r.title || "Executive Report", 80),
+      thaiHint: "รายงานสรุปผลการทำงานของทีม AI",
+    }),
+    bodyContents: [
+      makeBadge(String(r.delivery_status || "recorded").toUpperCase(), statusColor),
+      makeKeyValueRow("Team", r.team_id || "central-command"),
+      makeKeyValueRow("Author", r.author_agent_id || "cmd-synthesizer"),
+      makeKeyValueRow("Channel", r.channel || "founder"),
+      { type: "separator", margin: "sm" },
+      { type: "text", text: clampText(r.summary || "-", 360), size: "sm", color: FLEX_BRAND.textDark, wrap: true },
+    ],
+    footerButtons: isOperator
+      ? [
+          {
+            type: "button",
+            style: "primary",
+            color: FLEX_BRAND.cyan,
+            height: "sm",
+            action: { type: "message", label: "Read All Reports", text: "report: read" },
+          },
+        ]
+      : [
+          {
+            type: "button",
+            style: "primary",
+            color: FLEX_BRAND.cyan,
+            height: "sm",
+            action: { type: "uri", label: "Open Neurohands", uri: builderUrl },
+          },
+        ],
+    quickReplyItems: isOperator
+      ? [
+          { label: "Read Reports", text: "report: read" },
+          { label: "Org Audit", text: "audit: org" },
+          { label: "Org Roster", text: "org" },
+        ]
+      : [
+          { label: "Open Builder", uri: builderUrl },
+        ],
+  });
+}
+
+function buildGovernanceAuditFlexCard(audit = {}, { publicBase } = {}) {
+  const safe = audit && typeof audit === "object" ? audit : {};
+  const builderUrl = resolvePreviewUrl(undefined, publicBase);
+  const overall = String(safe.overall_status || "attention_required");
+  const isPass = overall === "pass";
+  const d = safe.audit_result?.details || {};
+  const sec = safe.security_result?.details || {};
+  return makeFlexCard({
+    altText: `Neurohands 3-Team Governance Audit: ${overall.toUpperCase()} — Health: ${safe.health_result?.status || "-"}, Security: ${safe.security_result?.status || "-"}, Audit: ${safe.audit_result?.status || "-"}`,
+    header: makeHeader({
+      eyebrow: "3-TEAM GOVERNANCE SIGN-OFF",
+      title: isPass ? "Governance Audit Passed" : "Governance Attention Needed",
+      thaiHint: "ผลตรวจสอบจากทีม Health, Security และ Audit",
+      backgroundColor: isPass ? FLEX_BRAND.navy : (overall === "fail" ? FLEX_BRAND.danger : FLEX_BRAND.warning),
+    }),
+    bodyContents: [
+      makeBadge(isPass ? "ALL 3 TEAMS PASSED" : "ACTION REQUIRED", isPass ? FLEX_BRAND.success : FLEX_BRAND.danger),
+      makeKeyValueRow("Health Team", String(safe.health_result?.status || "-").toUpperCase(), { valueColor: safe.health_result?.status === "pass" ? FLEX_BRAND.success : FLEX_BRAND.danger }),
+      makeKeyValueRow("Security Team", String(safe.security_result?.status || "-").toUpperCase(), { valueColor: safe.security_result?.status === "pass" ? FLEX_BRAND.success : FLEX_BRAND.danger }),
+      makeKeyValueRow("Audit Team", String(safe.audit_result?.status || "-").toUpperCase(), { valueColor: safe.audit_result?.status === "pass" ? FLEX_BRAND.success : FLEX_BRAND.warning }),
+      { type: "separator", margin: "sm" },
+      makeKeyValueRow("Teams / Agents", `${d.teamsVerified ?? 11} teams / ${d.agentsVerified ?? 32} agents`),
+      makeKeyValueRow("Duplicates / Leaks", `${(d.duplicateCaseKeys || 0) + (d.duplicatePatternKeys || 0)} dup • ${sec.secretLeakHits ?? 0} secret`),
+      makeKeyValueRow("Cross-Agent Mix", String(d.crossAgentContamination ?? 0)),
+      makeThaiHintBox("ข้อมูลการเรียนรู้แยกอิสระราย Agent และรายทีม ห้ามลบหรือทำซ้ำ"),
+    ],
+    footerButtons: [
+      {
+        type: "button",
+        style: "primary",
+        color: FLEX_BRAND.cyan,
+        height: "sm",
+        action: { type: "message", label: "View Org Roster", text: "org" },
+      },
+      {
+        type: "button",
+        style: "secondary",
+        height: "sm",
+        action: { type: "uri", label: "Open Builder", uri: builderUrl },
+      },
+    ],
+    quickReplyItems: [
+      { label: "Org Roster", text: "org" },
+      { label: "Read Reports", text: "report: read" },
+      { label: "LINE Status", text: "line status" },
+    ],
+  });
+}
+
 module.exports = {
   FLEX_BRAND,
   validateFlexMessage,
@@ -1234,4 +1445,7 @@ module.exports = {
   buildApprovalFlexCard,
   buildHandoverFlexCard,
   buildLeadTimeFlexCard,
+  buildOrgRosterFlexCard,
+  buildReportFlexCard,
+  buildGovernanceAuditFlexCard,
 };

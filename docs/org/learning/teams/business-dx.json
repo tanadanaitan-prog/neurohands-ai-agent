@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "business-dx",
+  "team_name": "Business, Content & Digital Transformation Team",
+  "tier": "operations",
+  "manager_agent_id": "dx-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "2d7fa76f-111b-44d4-a157-e307ac32c20a",
+      "team_id": "business-dx",
+      "pattern_key": "PAT-DX-001",
+      "title": "Human-Friendly Bilingual Guided Playbooks & Clean Cross-Team Handoffs",
+      "standard_playbook": "Translate technical setup into clear 4-step interactive checklists (Sign Up -> Build Agent -> Test on Web -> Connect to LINE) with plain English + Thai copy and documented Notion runbooks.",
+      "guardrail_rule": "Eliminate unexplained acronyms and raw JSON instructions from customer-facing flows; every operational change updates the canonical Notion checklist without erasing prior records.",
+      "source_case_keys": [
+        "CASE-DX-MGR-001",
+        "CASE-DX-CPY-001",
+        "CASE-DX-OPT-001"
+      ],
+      "curated_by": "dx-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

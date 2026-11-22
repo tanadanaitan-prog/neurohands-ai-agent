@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "sales-marketing",
+  "team_name": "Sales & Marketing Team",
+  "tier": "growth",
+  "manager_agent_id": "growth-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "1adec585-9847-4665-a75b-824bbc7421a1",
+      "team_id": "sales-marketing",
+      "pattern_key": "PAT-GROWTH-001",
+      "title": "Evidence-Grounded B2B Qualification, Brand-Aligned Proposals & Discount Gating",
+      "standard_playbook": "Qualify B2B project dimensions, timelines, and specs (Suri), draft brand-synchronized proposals and bilingual campaigns (Mira), and keep every commercial figure traceable to approved price tables.",
+      "guardrail_rule": "Never promise custom discounts, contractual terms, or delivery guarantees without explicit human operator approval.",
+      "source_case_keys": [
+        "CASE-GRW-MGR-001",
+        "CASE-SLS-SUR-001",
+        "CASE-MKT-MIR-001"
+      ],
+      "curated_by": "growth-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

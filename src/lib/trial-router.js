@@ -38,24 +38,41 @@ function createLangSmithTraceHook({ apiKey = "", project = "neurohands-trial", e
   return async (receipt) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
+    const isOrgEvent = Boolean(receipt?.kind);
+    const runName = isOrgEvent ? `neurohands.org_${String(receipt.kind).replace(/[^a-z0-9_]/gi, "")}` : "neurohands.workflow_turn";
+    const inputs = isOrgEvent
+      ? {
+          kind: String(receipt.kind),
+          team_id: String(receipt.teamId || "central-command"),
+          agent_id: String(receipt.agentId || receipt.curatedBy || "cmd-director"),
+          channel: String(receipt.channel || "founder"),
+        }
+      : {
+          channel_type: String(receipt?.channelType || "web"),
+          agent_code: String(receipt?.agentCode || "ARIA"),
+          intent: String(receipt?.intent || "general"),
+        };
+    const outputs = isOrgEvent
+      ? {
+          status: String(receipt.outcome || receipt.deliveryStatus || "recorded"),
+          storage: String(receipt.storage || "supabase"),
+          ref: String(receipt.caseKey || receipt.patternKey || receipt.reportCode || receipt.taskId || "-"),
+        }
+      : {
+          status: String(receipt?.status || "completed"),
+          elapsed_ms: Number(receipt?.elapsedMs || 0),
+        };
     try {
       await fetchImpl(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": key },
         body: JSON.stringify({
           id: crypto.randomUUID(),
-          name: "neurohands.workflow_turn",
+          name: runName,
           run_type: "chain",
           project_name: project || "neurohands-trial",
-          inputs: {
-            channel_type: String(receipt?.channelType || "web"),
-            agent_code: String(receipt?.agentCode || "ARIA"),
-            intent: String(receipt?.intent || "general"),
-          },
-          outputs: {
-            status: String(receipt?.status || "completed"),
-            elapsed_ms: Number(receipt?.elapsedMs || 0),
-          },
+          inputs,
+          outputs,
           start_time: new Date(Date.now() - Number(receipt?.elapsedMs || 0)).toISOString(),
           end_time: new Date().toISOString(),
         }),

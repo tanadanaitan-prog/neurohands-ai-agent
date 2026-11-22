@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "audit-compliance",
+  "team_name": "Final Governance Team 3 — Audit & Command Compliance",
+  "tier": "governance",
+  "manager_agent_id": "audit-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "46df5e66-c0f4-4673-a333-dc77077c5b3d",
+      "team_id": "audit-compliance",
+      "pattern_key": "PAT-AUDIT-001",
+      "title": "Strict Append-Only Non-Destructive Learning & Per-Agent/Per-Team Isolation Compliance",
+      "standard_playbook": "Audit all 11 teams and 32 agents to prove zero duplicated keys, zero erased rows, strict individual case_key isolation per agent_id, manager-curated team patterns, and faithful execution of Founder prompts and rules.",
+      "guardrail_rule": "Block DELETE/UPDATE on learning tables via PostgreSQL immutability trigger (ERRCODE 42501); evolve lessons strictly by appending new records linked via supersedes_id.",
+      "source_case_keys": [
+        "CASE-AUD-MGR-001",
+        "CASE-AUD-VER-001"
+      ],
+      "curated_by": "audit-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

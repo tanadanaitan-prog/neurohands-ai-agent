@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "line-biz-console",
+  "team_name": "LINE Business & Console Development Team",
+  "tier": "operations",
+  "manager_agent_id": "line-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "6abf4f4a-2e0a-4c50-a2d4-d55bb026c8af",
+      "team_id": "line-biz-console",
+      "pattern_key": "PAT-LINE-001",
+      "title": "Retina 2500x1686 Rich Menus, Human-Friendly Flex Cards & Safe 1:1/Group Channel Routing",
+      "standard_playbook": "Serve 2500x1686 (<250 KB) PNG Rich Menus matching Midnight Navy + Electric Cyan branding, send interactive LINE Flex Cards (191:100 hero) with Quick Replies instead of plain text walls, support 1:1 & group testing (off|mention_only|keyword|always), and dispatch reports cleanly to chosen channels.",
+      "guardrail_rule": "Pin allowedLiffId and tenant clientCode subdomains, delete orphan Rich Menus on upload failure, never send operator Approve/Reject buttons to customer groups, and never block LINE webhook replies on optional LangSmith traces.",
+      "source_case_keys": [
+        "CASE-LINE-MGR-001",
+        "CASE-LINE-ARC-001",
+        "CASE-LINE-TST-001",
+        "CASE-LINE-CON-001"
+      ],
+      "curated_by": "line-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

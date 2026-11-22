@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "security-guard",
+  "team_name": "Final Governance Team 2 — Security & Privacy",
+  "tier": "governance",
+  "manager_agent_id": "sec-manager",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "a6de9d1e-f20f-44a7-afff-2e564aa7934f",
+      "team_id": "security-guard",
+      "pattern_key": "PAT-SEC-001",
+      "title": "Zero-Trust app_metadata RLS, Customer-vs-Operator Isolation & Zero Secret Leaks",
+      "standard_playbook": "Audit every migration for app_metadata-only RLS with regex-guarded bigint casts, verify x-api-key/JWT gates on operational endpoints, enforce customer-vs-operator Flex Card separation, and scan all source/learning files for credentials.",
+      "guardrail_rule": "Never trust user_metadata in RLS, never expose operator Approve/Reject postbacks in customer groups, and block any payload containing tokens, keys, or raw private keys.",
+      "source_case_keys": [
+        "CASE-SEC-MGR-001",
+        "CASE-SEC-RED-001"
+      ],
+      "curated_by": "sec-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}

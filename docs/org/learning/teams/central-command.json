@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "team_id": "central-command",
+  "team_name": "Central Executive Command & Strategy Council",
+  "tier": "command",
+  "manager_agent_id": "cmd-director",
+  "updated_at": "2026-11-22T10:00:00+07:00",
+  "patterns": [
+    {
+      "id": "e0214fe1-8432-446e-a0ab-2a7292f82497",
+      "team_id": "central-command",
+      "pattern_key": "PAT-CMD-001",
+      "title": "Council Decomposition Before Execution + Mandatory 3-Team Governance Sign-Off",
+      "standard_playbook": "Every Founder request enters Central Command first, convenes only the relevant Team Managers to divide disjoint file and API ownership, tracks each manager's verification check, and requires independent Health, Security, and Audit sign-off before completion.",
+      "guardrail_rule": "Never mark a release complete without verified command exit code 0 after the final edit and explicit pass status from Health, Security, and Audit.",
+      "source_case_keys": [
+        "CASE-CMD-DIR-001",
+        "CASE-CMD-PLN-001",
+        "CASE-CMD-SYN-001"
+      ],
+      "curated_by": "cmd-director",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T10:00:00+07:00"
+    }
+  ]
+}
