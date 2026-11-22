@@ -150,6 +150,9 @@ function createJarvisTools({ db, isStaff, normalizeDepartment, departments, tool
       }
     } catch (error) {
       if (status !== "blocked") status = "error";
+      if (status === "blocked" || !(error instanceof ToolInputError)) {
+        ctx.hardToolFailed = true;
+      }
       output = { error: error instanceof ToolInputError ? error.message : "Jarvis tool could not complete. No successful result is available." };
     }
     if (status !== "success") ctx.toolFailed = true;
@@ -159,8 +162,12 @@ function createJarvisTools({ db, isStaff, normalizeDepartment, departments, tool
         tool_name: auditName, input: boundedInput(args), output, allowed, status } });
       if (!logged?.[0]?.id) throw new Error("Missing tool evidence");
     } catch {
+      ctx.hardToolFailed = true;
       ctx.toolFailed = true;
       throw new Error("Jarvis tool evidence could not be saved");
+    }
+    if (status === "success" && ctx.proposal && !ctx.hardToolFailed) {
+      ctx.toolFailed = false;
     }
     return output;
   }

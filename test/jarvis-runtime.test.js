@@ -628,3 +628,62 @@ test("Jarvis yes executes founder-approved publish_rich_menu proposal and blocks
   assert.equal(f.tables.jarvis_notes.find((n) => n.id === 502).status, "failed");
   assert.equal(f.tables.tool_calls.at(-1).status, "blocked");
 });
+
+test("Jarvis routes natural update menu, AI agent team, and activation queries to human-friendly Flex Cards and strips raw Markdown", async (t) => {
+  const f = fixture(t);
+  let modelCalls = 0;
+  f.model = async () => {
+    modelCalls += 1;
+    return completion(" Directly at **[Neurohands AI Agent Portal](https://neurohands-ai-agent-production.up.railway.app/neurohands)**.\n* **Hybrid Private-Hardware + Cloud Architecture:** Sensitive business data remains local.");
+  };
+
+  await f.send("show me your update menu");
+  assert.equal(modelCalls, 0);
+  const updateMenuMsg = f.line.at(-1).messages[0];
+  assert.equal(updateMenuMsg.type, "flex");
+  assert.match(updateMenuMsg.altText, /11-Team \/ 32-Agent AI Organization/);
+
+  await f.send("update the ai agent team");
+  assert.equal(modelCalls, 0);
+  const orgMsg = f.line.at(-1).messages[0];
+  assert.equal(orgMsg.type, "flex");
+  assert.match(orgMsg.altText, /11 teams, 32 agents/i);
+
+  await f.send("i want to activate my ai agent name testing 1234567890");
+  assert.equal(modelCalls, 0);
+  const activateMsg = f.line.at(-1).messages[0];
+  assert.equal(activateMsg.type, "flex");
+  assert.match(activateMsg.altText, /Activate Neurohands/i);
+
+  await f.send("update");
+  assert.equal(modelCalls, 0);
+  const updateMsgs = f.line.at(-1).messages;
+  assert.equal(updateMsgs.length, 2);
+  assert.equal(updateMsgs[0].type, "text");
+  assert.equal(updateMsgs[1].type, "flex");
+
+  const mdRun = await f.run("Explain our hybrid architecture briefly");
+  assert.equal(mdRun.ctx.runStatus, "completed");
+  assert.doesNotMatch(mdRun.reply, /\*\*|\[Neurohands AI Agent Portal\]\(/);
+  assert.match(mdRun.reply, /Neurohands AI Agent Portal: https:\/\/neurohands-ai-agent-production\.up\.railway\.app\/neurohands/);
+  assert.match(mdRun.reply, /• Hybrid Private-Hardware \+ Cloud Architecture:/);
+});
+
+test("Jarvis normalizes 'AI Operations' department and recovers when a ToolInputError is followed by a valid proposal", async (t) => {
+  const f = fixture(t);
+  assert.equal(f.gateway.normalizeDepartment("AI Operations"), "operations");
+  assert.equal(f.gateway.normalizeDepartment("After-Service"), "support");
+
+  f.model = async (_call, round) => {
+    if (round === 1) {
+      return toolsResponse([["propose_action", { client_code: "KNC", department: "InvalidDept", tool_name: "create_task", tool_args: { title: "Sync AI Team" } }]]);
+    }
+    return toolsResponse([["propose_action", { client_code: "KNC", department: "AI Operations", tool_name: "create_task", tool_args: { title: "Sync AI Team" } }]]);
+  };
+
+  const res = await f.run("Propose a task for KNC AI Operations");
+  assert.equal(res.ctx.runStatus, "completed");
+  assert.match(res.reply, /Proposal #1:/);
+  assert.equal(f.tables.jarvis_notes.length, 1);
+  assert.equal(f.tables.jarvis_notes[0].department, "operations");
+});

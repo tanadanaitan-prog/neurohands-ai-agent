@@ -147,6 +147,8 @@ async function syncDefaultRichMenus({
   saveSettingFn,
   loadMenuFn = loadMenu,
   fetchImpl = globalThis.fetch,
+  relinkPublicUserIds = [],
+  relinkActiveUserIds = [],
 } = {}) {
   if (!lineChannelAccessToken) throw new Error("LINE_CHANNEL_ACCESS_TOKEN is required");
   if (typeof saveSettingFn !== "function") throw new Error("saveSettingFn is required");
@@ -176,12 +178,28 @@ async function syncDefaultRichMenus({
     await saveSettingFn("richmenu_public_id", publicId);
     await saveSettingFn("richmenu_active_id", activeId);
 
+    const activeSet = new Set((Array.isArray(relinkActiveUserIds) ? relinkActiveUserIds : []).filter(Boolean));
+    const publicSet = new Set((Array.isArray(relinkPublicUserIds) ? relinkPublicUserIds : []).filter((id) => id && !activeSet.has(id)));
+    let relinkedUsers = 0;
+    for (const uid of publicSet) {
+      try {
+        await lineJsonRequest(`https://api.line.me/v2/bot/user/${encodeURIComponent(uid)}/richmenu/${encodeURIComponent(publicId)}`, lineChannelAccessToken, { method: "POST" }, fetchImpl);
+        relinkedUsers += 1;
+      } catch {}
+    }
+    for (const uid of activeSet) {
+      try {
+        await lineJsonRequest(`https://api.line.me/v2/bot/user/${encodeURIComponent(uid)}/richmenu/${encodeURIComponent(activeId)}`, lineChannelAccessToken, { method: "POST" }, fetchImpl);
+        relinkedUsers += 1;
+      } catch {}
+    }
+
     for (const oldId of [prevPublicId, prevActiveId]) {
       if (oldId && oldId !== publicId && oldId !== activeId) {
         await deleteRichMenuQuietly(lineChannelAccessToken, oldId, fetchImpl);
       }
     }
-    return { ok: true, richmenuPublicId: publicId, richmenuActiveId: activeId, linkedDefault: true };
+    return { ok: true, richmenuPublicId: publicId, richmenuActiveId: activeId, linkedDefault: true, relinkedUsers };
   } catch (err) {
     for (const createdId of createdIds) {
       await deleteRichMenuQuietly(lineChannelAccessToken, createdId, fetchImpl);

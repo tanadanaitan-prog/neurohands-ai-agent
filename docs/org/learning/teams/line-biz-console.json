@@ -22,6 +22,21 @@
       "curated_by": "line-manager",
       "supersedes_id": null,
       "created_at": "2026-11-22T10:00:00+07:00"
+    },
+    {
+      "id": "d3e0b140-95a3-4e1c-9f34-62f0d3c14052",
+      "team_id": "line-biz-console",
+      "pattern_key": "PAT-LINE-002",
+      "title": "Startup Rich Menu Theme Sync, Per-User Re-Linking & Plain-Text Markdown Sanitization",
+      "standard_playbook": "Auto-sync the 2500x1686 Midnight Navy + Electric Cyan Rich Menus on server startup whenever richmenu_theme_version changes, re-link FOUNDER_LINE_ID and active bound users, route natural update menu/team/activation phrases directly to visual LINE Flex Cards, and sanitize plain-text replies with stripLineMarkdown.",
+      "guardrail_rule": "Never output raw Markdown (**bold**, ### headings, or [label](url) links) in LINE plain text, and never leave per-user Rich Menu bindings pointing to superseded menu IDs.",
+      "source_case_keys": [
+        "CASE-LINE-ARC-002",
+        "CASE-ENG-BE-002"
+      ],
+      "curated_by": "line-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-22T12:38:00+07:00"
     }
   ]
 }

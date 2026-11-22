@@ -329,6 +329,8 @@ test("Wave 1-2 security guards: URI pinning, rollback/cleanup, weak JWT config, 
     lineChannelAccessToken: "tok",
     getSettingFn: async (k) => (k === "richmenu_public_id" ? "richmenu-old-pub" : k === "richmenu_active_id" ? "richmenu-old-act" : null),
     saveSettingFn: async (k, v) => { savedSettings.set(k, v); },
+    relinkPublicUserIds: ["Ufounder1"],
+    relinkActiveUserIds: ["Uclient1"],
     fetchImpl: async (url, opts = {}) => {
       if (url === "https://api.line.me/v2/bot/richmenu" && opts.method === "POST") {
         return new Response(JSON.stringify({ richMenuId: `richmenu-fresh-${nextMenu++}` }), { status: 200 });
@@ -338,6 +340,7 @@ test("Wave 1-2 security guards: URI pinning, rollback/cleanup, weak JWT config, 
     },
   });
   assert.equal(okSync.richmenuPublicId, "richmenu-fresh-1");
+  assert.equal(okSync.relinkedUsers, 2);
   assert.equal(superseded.length, 2);
   assert.ok(superseded.some((u) => u.endsWith("/richmenu-old-pub")));
   assert.ok(superseded.some((u) => u.endsWith("/richmenu-old-act")));

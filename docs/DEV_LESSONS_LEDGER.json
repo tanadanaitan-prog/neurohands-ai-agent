@@ -98,7 +98,16 @@
       "root_cause": "Caught by Final Governance Security Auditor (nh-security-auditor): parseAfterServiceClaim checked isAfterService independently of requestsRemedy, and after_service intent precedence shadowed approval_action when a message combined a defect word ('cracked') with a discount or order-cancel request.",
       "approved_fix": "Include requestsRemedy in parseAfterServiceClaim.isAfterService and trigger needsAfterServiceApproval whenever intent==='after_service' and either requestsRemedy or hasApprovalKeyword(text) is true (with or without an order number).",
       "regression_test": "platform/test/trial-workflow-runtime.test.js (Separate After-Service role preset captures order evidence and gates warranty replacements, direct refunds, and damaged-order discounts)",
-      "verified_commit": "u29-multi-team-delegation",
+      "verified_commit": "b87344f0bdf35c58a66ae662ac6575cbe13ca86e",
+      "status": "verified"
+    },
+    {
+      "id": "LES-012",
+      "error_signature": "LINE chat showed raw Markdown (**[Label](url)**) and old October white Rich Menu; sticky ctx.toolFailed failed Jarvis run after valid proposal retry",
+      "root_cause": "Live LINE run #83 ('show me your update menu') fell through to free-form LLM plain text with Markdown syntax that LINE does not render; syncDefaultRichMenus only ran on explicit 'richmenu: sync' and did not re-link per-user Rich Menus; run #84 ('update the ai agent team') failed on 'AI Operations' department validation and sticky ctx.toolFailed after proposal #2 succeeded.",
+      "approved_fix": "Auto-sync the 2500x1686 Midnight Navy Rich Menus on startup when richmenu_theme_version changes and re-link FOUNDER_LINE_ID + active client bindings; route natural update menu / AI agent team / activation phrases to LINE Flex Cards; strip Markdown in outputGuardrail (stripLineMarkdown); expand normalizeDepartment ('AI Operations' -> 'operations', 'After-Service' -> 'support'); and clear sticky ToolInputError ctx.toolFailed when a proposal is subsequently saved.",
+      "regression_test": "platform/test/jarvis-runtime.test.js & platform/test/line-console.test.js",
+      "verified_commit": "u30-line-richmenu-and-markdown-fix",
       "status": "verified"
     }
   ]

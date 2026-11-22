@@ -63,8 +63,27 @@ function resolveGuideImageUrl(guideFile, publicBase) {
   return `${resolveHttpsBase(publicBase)}/assets/guides/${guideFile}`;
 }
 
+function stripLineMarkdown(value) {
+  let s = String(value ?? "");
+  if (!s) return "";
+  s = s.replace(/\*\*\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)\*\*([.,;!?])?/g, (_m, label, url) => {
+    const cleanLabel = String(label || "").trim();
+    return !cleanLabel || cleanLabel === url ? url : `${cleanLabel}: ${url}`;
+  });
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, label, url) => {
+    const cleanLabel = String(label || "").trim().replace(/\*\*/g, "");
+    return !cleanLabel || cleanLabel === url ? url : `${cleanLabel}: ${url}`;
+  });
+  s = s.replace(/^[ \t]*#{1,6}[ \t]+/gm, "");
+  s = s.replace(/^[ \t]*\*[ \t]+/gm, "• ");
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, "$1");
+  s = s.replace(/__([^_\n]+)__/g, "$1");
+  s = s.replace(/`([^`\n]+)`/g, "$1");
+  return s;
+}
+
 function clampText(value, maxLen, fallback = "-") {
-  const s = String(value ?? "").replace(/\s+/g, " ").trim();
+  const s = stripLineMarkdown(value).replace(/\s+/g, " ").trim();
   if (!s) return fallback;
   if (s.length <= maxLen) return s;
   return `${s.slice(0, Math.max(1, maxLen - 1)).trimEnd()}…`;
@@ -643,9 +662,11 @@ function buildBrandInfoFlexCard(topic = "about", { publicBase, previewUrl, custo
 
   if (key === "updates") {
     const bodyContents = [
-      makeBulletRow("Interactive LINE AI Agent Builder (English & Thai)"),
+      makeBadge("LIVE • 11 TEAMS • 32 AI AGENTS", FLEX_BRAND.cyan),
+      makeBulletRow("Guided 4-Step Free Trial (14 days • 200 msgs • $0 cap)"),
+      makeBulletRow("Separate Frontline CS (Aria) & After-Service Warranty teams"),
       makeBulletRow("Private Hardware Data Ownership + 24/7 Cloud Backup"),
-      makeBulletRow("1-tap LINE Group connection & Human Takeover controls"),
+      makeBulletRow("6-Platform Sync: GitHub • Supabase • Railway • LINE • LangSmith • Notion"),
     ];
     if (typeof customText === "string" && customText.trim()) {
       const compactNote = clampText(customText, 240, "");
@@ -654,14 +675,14 @@ function buildBrandInfoFlexCard(topic = "about", { publicBase, previewUrl, custo
         bodyContents.push({ type: "text", text: compactNote, size: "xs", color: FLEX_BRAND.textMuted, wrap: true });
       }
     }
-    bodyContents.push(makeThaiHintBox("พิมพ์ demo ได้ทุกเมื่อเพื่อขอนัดสาธิตระบบสำหรับธุรกิจของคุณ"));
+    bodyContents.push(makeThaiHintBox("แตะปุ่มด้านล่างเพื่อเปิดหน้า AI Agent Portal หรือดูโครงสร้างทีม AI ทั้ง 11 ทีม"));
     return makeFlexCard({
-      altText: `Neurohands Updates — Build your own AI Agent for LINE with Private Hardware ownership + 24/7 cloud operation. ${builderUrl}`,
+      altText: `Neurohands Updates — 11-Team / 32-Agent AI Organization, Guided 4-Step Free Trial, and Private Hardware ownership + 24/7 cloud operation. ${builderUrl}`,
       hero: makeHero(FLEX_BRAND.guides.welcome, publicBase),
       header: makeHeader({
-        eyebrow: "LATEST UPDATES",
+        eyebrow: "LATEST UPDATES • MIDNIGHT NAVY V2",
         title: "What's New in Neurohands",
-        thaiHint: "อัปเดตความสามารถล่าสุด",
+        thaiHint: "อัปเดตระบบทีม AI 11 ทีม 32 เอเจนต์ และเมนูใหม่",
       }),
       bodyContents,
       footerButtons: [
@@ -670,19 +691,20 @@ function buildBrandInfoFlexCard(topic = "about", { publicBase, previewUrl, custo
           style: "primary",
           color: FLEX_BRAND.cyan,
           height: "sm",
-          action: { type: "uri", label: "Try Agent Builder", uri: builderUrl },
+          action: { type: "uri", label: "Open AI Agent Portal", uri: builderUrl },
         },
         {
           type: "button",
           style: "secondary",
           height: "sm",
-          action: { type: "message", label: "Book a Demo", text: "demo" },
+          action: { type: "message", label: "View 11-Team AI Org", text: "org" },
         },
       ],
       quickReplyItems: [
         { label: "Open Builder", uri: builderUrl },
-        { label: "Book Demo", text: "demo" },
+        { label: "AI Org Teams", text: "org" },
         { label: "How to Activate", data: "menu=activate", displayText: "How to Activate" },
+        { label: "Book Demo", text: "demo" },
       ],
     });
   }
@@ -1433,6 +1455,7 @@ function buildGovernanceAuditFlexCard(audit = {}, { publicBase } = {}) {
 
 module.exports = {
   FLEX_BRAND,
+  stripLineMarkdown,
   validateFlexMessage,
   normalizeLineMessages,
   buildQuickReplies,
