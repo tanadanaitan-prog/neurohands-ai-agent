@@ -52,6 +52,19 @@ const { createTrialQuotaService, formatTrialRejection } = require("./lib/trial-q
 const { shouldRespondInGroup, stripBotMention, parseGroupBindCommand } = require("./lib/line-group-router");
 const { DEFAULT_ARIA_WORKFLOW, executeWorkflowTurn } = require("./lib/workflow-runtime");
 const { createTrialRouter, createLangSmithTraceHook } = require("./lib/trial-router");
+const {
+  FLEX_BRAND,
+  normalizeLineMessages,
+  buildWelcomeFlexCard,
+  buildBrandInfoFlexCard,
+  buildActivationGuideCard,
+  buildGroupJoinCard,
+  buildGroupBoundCard,
+  buildQuoteFlexCard,
+  buildApprovalFlexCard,
+  buildHandoverFlexCard,
+  buildLeadTimeFlexCard,
+} = require("./lib/line-flex-cards");
 
 const C06_DATABASE_DEGRADED_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_ID).message;
 const C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_RESPONSE = getCustomerSafeResponse(C06_DATABASE_DEGRADED_NO_SIDE_EFFECT_ID).message;
@@ -531,24 +544,28 @@ function verifySignature(rawBody, signature) {
   try { return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature)); } catch { return false; }
 }
 
-async function replyToLine(replyToken, text) {
-  if (!replyToken || !text) return false;
+async function replyToLine(replyToken, payload) {
+  if (!replyToken || !payload) return false;
+  const messages = normalizeLineMessages(payload);
+  if (!messages.length) return false;
   const response = await fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}` },
-    body: JSON.stringify({ replyToken, messages: [{ type: "text", text: String(text).slice(0, 4900) }] }),
+    body: JSON.stringify({ replyToken, messages }),
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) throw new Error(`LINE reply rejected (${response.status})`);
   return true;
 }
 
-async function pushToLine(userId, text) {
-  if (!userId || !text) return false;
+async function pushToLine(userId, payload) {
+  if (!userId || !payload) return false;
+  const messages = normalizeLineMessages(payload);
+  if (!messages.length) return false;
   const response = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}` },
-    body: JSON.stringify({ to: userId, messages: [{ type: "text", text: String(text).slice(0, 4900) }] }),
+    body: JSON.stringify({ to: userId, messages }),
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) throw new Error(`LINE push rejected (${response.status})`);
@@ -2116,6 +2133,18 @@ app.get("/assets/tus-4.3.1.min.js", (req, res) => {
   res.type("application/javascript").sendFile(TUS_BROWSER_FILE);
 });
 
+const GUIDES_ASSET_DIR = path.resolve(__dirname, "../assets/guides");
+app.get("/assets/guides/:file", (req, res) => {
+  const file = String(req.params.file || "");
+  if (!/^[a-z0-9-]+\.png$/.test(file)) return res.status(404).end();
+  const fullPath = path.resolve(GUIDES_ASSET_DIR, file);
+  if (!fullPath.startsWith(GUIDES_ASSET_DIR + path.sep) || !fs.existsSync(fullPath)) {
+    return res.status(404).end();
+  }
+  res.set({ "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
+  return res.type("image/png").sendFile(fullPath);
+});
+
 app.get(["/neurohands", "/website", "/preview"], (_req, res) => {
   res.set({
     "Cache-Control": "no-store",
@@ -2177,7 +2206,19 @@ async function notifyHumanOperator({ clientAccountId, channelType, threadId, rea
   } catch {}
   if (FOUNDER_LINE_ID && LINE_CHANNEL_ACCESS_TOKEN) {
     try {
-      await pushToLine(FOUNDER_LINE_ID, `🔔 Human attention (${channelType || "web"} #${clientAccountId || "-"} / ${threadId || "-"}): ${reason || "Help requested"}`);
+      const approvalMatch = /^Approval proposal #(\S+)/i.exec(String(reason || "").trim());
+      if (approvalMatch) {
+        await pushToLine(FOUNDER_LINE_ID, buildApprovalFlexCard({
+          proposalId: approvalMatch[1],
+          summary: preview || reason,
+          clientCode: clientAccountId ? `#${clientAccountId}` : undefined,
+          channelType,
+          threadId,
+          publicBase: PUBLIC_BASE || FLEX_BRAND.defaultPublicBase,
+        }));
+      } else {
+        await pushToLine(FOUNDER_LINE_ID, `🔔 Human attention (${channelType || "web"} #${clientAccountId || "-"} / ${threadId || "-"}): ${reason || "Help requested"}`);
+      }
     } catch {}
   }
 }
@@ -2447,7 +2488,7 @@ async function handleGroupEvent(event) {
   if (event.type === "join") {
     return replyToLine(
       event.replyToken,
-      "👋 Neurohands joined this group.\n\nTo connect your business AI agent here, send:\nbind NH-YOUR-CODE\n\nNote: LINE allows one Official Account per group."
+      buildGroupJoinCard({ publicBase: PUBLIC_BASE || FLEX_BRAND.defaultPublicBase, previewUrl: NEUROHANDS_PREVIEW_URL })
     );
   }
   if (event.type === "leave") {
@@ -2488,13 +2529,14 @@ async function handleGroupEvent(event) {
     try {
       claimed = (await db("rpc/nh_claim_activation_code", { method: "POST", body: { p_code_hash: hash } }))?.[0] || null;
     } catch (err) {
-      if (!/404|42883|PGRST202/i.test(err?.message || "")) throw err;
+      if (!(err?.httpStatus === 404 || /404|42883|PGRST202/i.test(err?.message || ""))) throw err;
       const newUsed = row.used_count + 1;
-      await db(`activation_codes?id=eq.${row.id}&status=eq.active&used_count=eq.${row.used_count}`, {
+      const patched = await db(`activation_codes?id=eq.${row.id}&status=eq.active&used_count=eq.${row.used_count}`, {
         method: "PATCH",
+        headers: { Prefer: "return=representation" },
         body: { used_count: newUsed },
       });
-      claimed = row;
+      claimed = patched?.[0] || null;
     }
     if (!claimed) {
       return replyToLine(event.replyToken, "This activation code has already been used or expired.");
@@ -2518,7 +2560,13 @@ async function handleGroupEvent(event) {
     });
     return replyToLine(
       event.replyToken,
-      `✅ Connected this LINE ${sourceType} to ${acc.client_code}.\nResponse rule: ${policy.mode || "mention_only"}.\nMention @Neurohands whenever you want the agent to reply.`
+      buildGroupBoundCard({
+        sourceType,
+        clientCode: acc.client_code,
+        responseMode: policy.mode || "mention_only",
+        publicBase: PUBLIC_BASE || FLEX_BRAND.defaultPublicBase,
+        previewUrl: NEUROHANDS_PREVIEW_URL,
+      })
     );
   }
 
@@ -2564,7 +2612,31 @@ async function handleGroupEvent(event) {
     return;
   }
   if (!result.replied || !result.text) return;
-  await replyToLine(event.replyToken, result.text);
+  const publicBase = PUBLIC_BASE || FLEX_BRAND.defaultPublicBase;
+  let groupReply = result.text;
+  if (result.quoteData) {
+    groupReply = buildQuoteFlexCard(result.quoteData, {
+      agentName: spec.name,
+      altText: result.text,
+      publicBase,
+    });
+  } else if (result.requiresApproval) {
+    groupReply = buildApprovalFlexCard({
+      proposalId: result.proposalId,
+      agentName: spec.name,
+      audience: "customer",
+      publicBase,
+    });
+  } else if (result.handedOff) {
+    groupReply = buildHandoverFlexCard({
+      agentName: spec.name,
+      reason: "Customer requested human assistance",
+      threadId: groupId,
+      publicBase,
+      previewUrl: NEUROHANDS_PREVIEW_URL,
+    });
+  }
+  await replyToLine(event.replyToken, groupReply);
   await logMessage({
     line_user_id: event.source.userId || groupId,
     direction: "out",
@@ -2573,6 +2645,45 @@ async function handleGroupEvent(event) {
     status: "sent",
     client_account_id: binding.client_account_id,
   });
+}
+
+async function buildPostbackFlexReply(event) {
+  const userId = event.source.userId;
+  const menu = new URLSearchParams(event.postback?.data || "").get("menu");
+  const publicBase = PUBLIC_BASE || FLEX_BRAND.defaultPublicBase;
+  if (["about", "services", "projects", "contact", "quote", "support"].includes(menu)) {
+    return buildBrandInfoFlexCard(menu, { publicBase, previewUrl: NEUROHANDS_PREVIEW_URL });
+  }
+  if (menu === "activate") {
+    return buildActivationGuideCard({ publicBase, previewUrl: NEUROHANDS_PREVIEW_URL });
+  }
+  if (menu === "updates") {
+    const customText = await getSetting("public_updates", "");
+    return buildBrandInfoFlexCard("updates", { publicBase, previewUrl: NEUROHANDS_PREVIEW_URL, customText });
+  }
+  if (menu === "lead_time") {
+    const defaultDays = await getSetting("default_lead_time_days", "7");
+    return buildLeadTimeFlexCard({ defaultDays, publicBase });
+  }
+  if (menu === "agent") {
+    const bindings = await getBindings(userId);
+    const agent = await getAgent(bindings[0]?.department || "business");
+    const memoryCount = bindings[0]?.client_account_id && userId
+      ? ((await db(`agent_memory?client_account_id=eq.${encodeURIComponent(bindings[0].client_account_id)}&line_user_id=eq.${encodeURIComponent(userId)}&active=eq.true&select=id`)) || []).length
+      : 0;
+    return buildBrandInfoFlexCard("agent", {
+      publicBase,
+      previewUrl: NEUROHANDS_PREVIEW_URL,
+      agentSummary: {
+        name: agent.callsign || agent.agent_name,
+        code: agent.agent_code || "-",
+        domains: agent.domains || [],
+        manager: agent.manager || "Jarvis",
+        memoryCount,
+      },
+    });
+  }
+  return null;
 }
 
 async function handleEvent(event) {
@@ -2588,9 +2699,16 @@ async function handleEvent(event) {
     return;
   }
   if (event.type === "message" && event.message?.type === "text") return handleMessage(event);
-  if (event.type === "postback") return handlePostback(event);
+  if (event.type === "postback") {
+    const flexCard = await buildPostbackFlexReply(event);
+    if (flexCard) return replyToLine(event.replyToken, flexCard);
+    return handlePostback(event);
+  }
   if (event.type === "follow") {
-    return replyToLine(event.replyToken, "Welcome to Neurohands.\n\nUse the menu below to learn about us.\n\nIf you have an activation code, tap GET STARTED.");
+    return replyToLine(
+      event.replyToken,
+      buildWelcomeFlexCard({ publicBase: PUBLIC_BASE || FLEX_BRAND.defaultPublicBase, previewUrl: NEUROHANDS_PREVIEW_URL })
+    );
   }
 }
 

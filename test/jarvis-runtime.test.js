@@ -603,7 +603,7 @@ test("Jarvis yes executes founder-approved publish_rich_menu proposal and blocks
     source_run_id: null,
     tool_args: {
       targetLineUserId: "Utenant-target-1",
-      menuPayload: { size: { width: 1664, height: 928 }, selected: false, name: "Founder Menu", chatBarText: "Neurohands", areas: [] },
+      menuPayload: { size: { width: 2500, height: 1686 }, selected: false, name: "Founder Menu", chatBarText: "Neurohands", areas: [] },
     },
   });
 

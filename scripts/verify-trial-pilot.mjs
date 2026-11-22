@@ -382,6 +382,56 @@ async function runDeviceJourney({ send, evaluate, consoleErrors }, url, device) 
   await evaluate("document.getElementById('tw-publish').click()");
   await until(() => evaluate("!document.getElementById('tw-deploy-box').hidden && document.getElementById('tw-code-group').textContent.startsWith('bind NH-')"), `${device.name} LINE publish codes`);
 
+  const checkboxAudit = await evaluate(`(() => {
+    const ids = ['tw-perm-quote','tw-perm-lead','tw-perm-task','tw-perm-human','tw-require-approval'];
+    return ids.every((id) => {
+      const box = document.getElementById(id);
+      if (!box) return false;
+      const r = box.getBoundingClientRect();
+      return r.width > 0 && r.width <= 24 && r.height > 0 && r.height <= 24;
+    });
+  })()`);
+  assert.equal(checkboxAudit, true, `${device.name} checkbox alignment check failed`);
+
+  const journeyVisible = await evaluate("!!document.querySelector('[data-testid=\"trial-journey-steps\"]') && !!document.getElementById('step-ind-4')");
+  assert.equal(journeyVisible, true, `${device.name} 4-step journey progress bar missing`);
+
+  const copyOk = await evaluate(`(() => {
+    const btn = document.querySelector('[data-copy-target="tw-code-1to1"]');
+    if (!btn) return false;
+    btn.click();
+    return true;
+  })()`);
+  assert.equal(copyOk, true, `${device.name} 1-click copy button missing`);
+
+  await evaluate("document.getElementById('tw-card-step4')?.scrollIntoView({ behavior: 'instant', block: 'start' })");
+  await until(() => evaluate(`(() => {
+    const imgs = Array.from(document.querySelectorAll('#tw-card-step4 img[src*="/assets/guides/"]'));
+    return imgs.length === 3 && imgs.every((img) => img.complete && img.naturalWidth === 1200);
+  })()`), `${device.name} Step 4 visual guide PNGs loaded`);
+
+  if (process.env.PILOT_SHOTS_DIR) {
+    fs.mkdirSync(process.env.PILOT_SHOTS_DIR, { recursive: true });
+    await evaluate(`(() => {
+      const skip = Array.from(document.querySelectorAll('button')).find((b) => /skip tour/i.test(b.textContent));
+      if (skip) skip.click();
+      document.getElementById('trial-workspace').scrollIntoView({ behavior: 'instant', block: 'start' });
+    })()`);
+    await sleep(250);
+    const shot1 = await send("Page.captureScreenshot", { format: "png" });
+    fs.writeFileSync(path.join(process.env.PILOT_SHOTS_DIR, `v2_pilot_${device.name}_workspace.png`), Buffer.from(shot1.data, "base64"));
+    if (device.name === "laptop") {
+      await evaluate("document.getElementById('top').scrollIntoView({ behavior: 'instant', block: 'start' })");
+      await sleep(200);
+      const shotHero = await send("Page.captureScreenshot", { format: "png" });
+      fs.writeFileSync(path.join(process.env.PILOT_SHOTS_DIR, "v2_pilot_laptop_hero.png"), Buffer.from(shotHero.data, "base64"));
+      await evaluate("document.getElementById('tw-card-step4').scrollIntoView({ behavior: 'instant', block: 'start' })");
+      await sleep(200);
+      const shotStep4 = await send("Page.captureScreenshot", { format: "png" });
+      fs.writeFileSync(path.join(process.env.PILOT_SHOTS_DIR, "v2_pilot_laptop_step4_guides.png"), Buffer.from(shotStep4.data, "base64"));
+    }
+  }
+
   await evaluate(`(() => {
     document.getElementById('tw-lessons-q').value = 'quota';
     document.getElementById('tw-lessons-btn').click();
@@ -416,6 +466,13 @@ async function main() {
   const app = express();
   app.use(express.json());
   app.get("/neurohands", (_req, res) => res.type("html").send(fs.readFileSync(BUILDER_HTML, "utf8")));
+  app.get("/assets/guides/:file", (req, res) => {
+    const file = String(req.params.file || "");
+    if (!/^[a-z0-9-]+\.png$/.test(file)) return res.status(404).end();
+    const full = path.join(PLATFORM_DIR, "assets", "guides", file);
+    if (!fs.existsSync(full)) return res.status(404).end();
+    res.type("png").send(fs.readFileSync(full));
+  });
   app.get("/api/liff/config", (_req, res) => res.json({ liffEnabled: false, liffId: "" }));
   app.use("/api/trial", createTrialRouter({
     db,

@@ -1,7 +1,7 @@
 {
   "size": {
-    "width": 1664,
-    "height": 928
+    "width": 2500,
+    "height": 1686
   },
   "selected": false,
   "name": "Neurohands Client Menu",
@@ -9,10 +9,10 @@
   "areas": [
     {
       "bounds": {
-        "x": 201,
-        "y": 170,
-        "width": 380,
-        "height": 268
+        "x": 64,
+        "y": 290,
+        "width": 764,
+        "height": 640
       },
       "action": {
         "type": "postback",
@@ -21,10 +21,10 @@
     },
     {
       "bounds": {
-        "x": 642,
-        "y": 170,
-        "width": 382,
-        "height": 268
+        "x": 868,
+        "y": 290,
+        "width": 764,
+        "height": 640
       },
       "action": {
         "type": "postback",
@@ -33,10 +33,10 @@
     },
     {
       "bounds": {
-        "x": 1084,
-        "y": 170,
-        "width": 381,
-        "height": 268
+        "x": 1672,
+        "y": 290,
+        "width": 764,
+        "height": 640
       },
       "action": {
         "type": "postback",
@@ -45,10 +45,10 @@
     },
     {
       "bounds": {
-        "x": 201,
-        "y": 501,
-        "width": 380,
-        "height": 267
+        "x": 64,
+        "y": 970,
+        "width": 764,
+        "height": 640
       },
       "action": {
         "type": "postback",
@@ -57,10 +57,10 @@
     },
     {
       "bounds": {
-        "x": 642,
-        "y": 501,
-        "width": 382,
-        "height": 267
+        "x": 868,
+        "y": 970,
+        "width": 764,
+        "height": 640
       },
       "action": {
         "type": "postback",
@@ -69,10 +69,10 @@
     },
     {
       "bounds": {
-        "x": 1084,
-        "y": 501,
-        "width": 381,
-        "height": 267
+        "x": 1672,
+        "y": 970,
+        "width": 764,
+        "height": 640
       },
       "action": {
         "type": "postback",

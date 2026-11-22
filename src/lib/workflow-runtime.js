@@ -339,15 +339,36 @@ async function executeWorkflowTurn({
       if (match?.source === "catalog") {
         const rate = Number(match.item.price_per_sqft);
         if (dims && Number.isFinite(rate) && rate > 0) {
+          const itemName = match.item.glass_name || match.item.product_code;
           const glassTotal = Math.round(dims.areaSqft * rate);
           const edging = spec.allowedTools.includes("get_edging_info") && /bevel|polish|edge|เจียร/i.test(text)
-            ? calculateEdgingCost({ widthMm: dims.widthMm, heightMm: dims.heightMm, edgeType: /bevel/i.test(text) ? "bevel" : "flat_polish" })
+            ? calculateEdgingCost({
+                widthCm: dims.widthMm / 10,
+                heightCm: dims.heightMm / 10,
+                ratePerMeter: /bevel/i.test(text) ? 60 : 35,
+              })
             : null;
-          const grandTotal = glassTotal + (edging?.costThb || 0);
-          const detail = `${match.item.glass_name || match.item.product_code} (${dims.areaSqft} sqft @ ${rate} THB/sqft = ${glassTotal.toLocaleString("en-US")} THB${edging ? ` + edging ${edging.costThb.toLocaleString("en-US")} THB = ${grandTotal.toLocaleString("en-US")} THB` : ""}) per current price list.`;
+          const edgingCostThb = edging ? Math.round(edging.totalBaht ?? edging.costThb ?? 0) : 0;
+          const grandTotal = glassTotal + edgingCostThb;
+          const detail = `${itemName} (${dims.areaSqft} sqft @ ${rate} THB/sqft = ${glassTotal.toLocaleString("en-US")} THB${edgingCostThb > 0 ? ` + edging ${edgingCostThb.toLocaleString("en-US")} THB = ${grandTotal.toLocaleString("en-US")} THB` : ""}) per current price list.`;
           const replyText = formatStyledReply(spec, detail);
           await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
-          return { replied: true, handoverState: HANDOVER_STATES.AI_ACTIVE, remaining, text: replyText, blocksExecuted: ["instructions", "knowledge", "decisions", "quote", "reply"] };
+          return {
+            replied: true,
+            handoverState: HANDOVER_STATES.AI_ACTIVE,
+            remaining,
+            text: replyText,
+            quoteData: {
+              itemName,
+              areaSqft: dims.areaSqft,
+              ratePerSqft: rate,
+              glassTotalThb: glassTotal,
+              edgingCostThb,
+              grandTotalThb: grandTotal,
+              sourceLabel: "Current price list",
+            },
+            blocksExecuted: ["instructions", "knowledge", "decisions", "quote", "reply"],
+          };
         }
         const replyText = formatStyledReply(spec, `${match.item.glass_name || match.item.product_code}: ${match.item.price_per_sqft} THB/sqft per current price list. Share width × height for an instant total.`);
         await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
@@ -356,15 +377,36 @@ async function executeWorkflowTurn({
       if (match?.source === "knowledge") {
         const rate = Number(match.item.pricePerSqft);
         if (dims && Number.isFinite(rate) && rate > 0) {
+          const itemName = match.item.title;
           const glassTotal = Math.round(dims.areaSqft * rate);
           const edging = spec.allowedTools.includes("get_edging_info") && /bevel|polish|edge|เจียร/i.test(text)
-            ? calculateEdgingCost({ widthMm: dims.widthMm, heightMm: dims.heightMm, edgeType: /bevel/i.test(text) ? "bevel" : "flat_polish" })
+            ? calculateEdgingCost({
+                widthCm: dims.widthMm / 10,
+                heightCm: dims.heightMm / 10,
+                ratePerMeter: /bevel/i.test(text) ? 60 : 35,
+              })
             : null;
-          const grandTotal = glassTotal + (edging?.costThb || 0);
-          const detail = `${match.item.title} (${dims.areaSqft} sqft @ ${rate} THB/sqft = ${glassTotal.toLocaleString("en-US")} THB${edging ? ` + edging ${edging.costThb.toLocaleString("en-US")} THB = ${grandTotal.toLocaleString("en-US")} THB` : ""}) per approved knowledge base.`;
+          const edgingCostThb = edging ? Math.round(edging.totalBaht ?? edging.costThb ?? 0) : 0;
+          const grandTotal = glassTotal + edgingCostThb;
+          const detail = `${itemName} (${dims.areaSqft} sqft @ ${rate} THB/sqft = ${glassTotal.toLocaleString("en-US")} THB${edgingCostThb > 0 ? ` + edging ${edgingCostThb.toLocaleString("en-US")} THB = ${grandTotal.toLocaleString("en-US")} THB` : ""}) per approved knowledge base.`;
           const replyText = formatStyledReply(spec, detail);
           await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
-          return { replied: true, handoverState: HANDOVER_STATES.AI_ACTIVE, remaining, text: replyText, blocksExecuted: ["instructions", "knowledge", "decisions", "quote", "reply"] };
+          return {
+            replied: true,
+            handoverState: HANDOVER_STATES.AI_ACTIVE,
+            remaining,
+            text: replyText,
+            quoteData: {
+              itemName,
+              areaSqft: dims.areaSqft,
+              ratePerSqft: rate,
+              glassTotalThb: glassTotal,
+              edgingCostThb,
+              grandTotalThb: grandTotal,
+              sourceLabel: "Approved knowledge base",
+            },
+            blocksExecuted: ["instructions", "knowledge", "decisions", "quote", "reply"],
+          };
         }
         const rateText = Number.isFinite(rate) && rate > 0 ? `${rate} THB/sqft — ` : "";
         const replyText = formatStyledReply(spec, `${match.item.title}: ${rateText}${match.item.content} (per approved knowledge base).`);

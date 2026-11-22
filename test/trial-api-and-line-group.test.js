@@ -6,6 +6,7 @@ const crypto = require("node:crypto");
 const http = require("node:http");
 const express = require("express");
 const { createTrialRouter, createLangSmithTraceHook } = require("../src/lib/trial-router");
+const { validateFlexMessage } = require("../src/lib/line-flex-cards");
 
 const PRIVATE = "fixture-secret-never-print-this-1234";
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
@@ -41,6 +42,7 @@ function createMockTrialDb() {
     messages: [],
     escalations: [],
     jarvis_notes: [],
+    jarvis_audit_log: [],
     staff_activations: [{ id: 1, line_user_id: "Ufounder1", role: "admin", active: true }],
     client_agent_bindings: [],
     clients: [],
@@ -344,7 +346,10 @@ test("LINE group webhook supports join, bind NH-CODE, mention_only silence, @men
   const groupId = "Cgroup1234567890abcdef1234567890";
 
   await gateway.handleEvent({ type: "join", replyToken: "rt-join", source: { type: "group", groupId } });
-  assert.match(lineReplies.at(-1).messages[0].text, /bind NH-YOUR-CODE/);
+  const joinMsg = lineReplies.at(-1).messages[0];
+  assert.equal(joinMsg.type, "flex");
+  assert.equal(validateFlexMessage(joinMsg).valid, true);
+  assert.match(joinMsg.altText, /bind NH-YOUR-CODE/);
 
   await gateway.handleEvent({
     type: "message",
@@ -352,7 +357,10 @@ test("LINE group webhook supports join, bind NH-CODE, mention_only silence, @men
     source: { type: "group", groupId, userId: "Uowner1" },
     message: { type: "text", text: `bind ${bindCode}` },
   });
-  assert.match(lineReplies.at(-1).messages[0].text, /Connected this LINE group to KNC/);
+  const bindMsg = lineReplies.at(-1).messages[0];
+  assert.equal(bindMsg.type, "flex");
+  assert.equal(validateFlexMessage(bindMsg).valid, true);
+  assert.match(bindMsg.altText, /Connected this LINE group to KNC/);
   assert.equal(tables.nh_line_group_bindings.length, 1);
 
   const hijackCode = "NH-HIJACK999999";
@@ -396,7 +404,15 @@ test("LINE group webhook supports join, bind NH-CODE, mention_only silence, @men
       mention: { mentionees: [{ index: 0, length: 11, type: "user", isSelf: true }] },
     },
   });
-  assert.match(lineReplies.at(-1).messages[0].text, /Tempered Clear 10mm/);
+  const quoteMsg = lineReplies.at(-1).messages[0];
+  assert.equal(quoteMsg.type, "flex");
+  assert.equal(validateFlexMessage(quoteMsg).valid, true);
+  assert.match(quoteMsg.altText, /Tempered Clear 10mm/);
+  assert.match(JSON.stringify(quoteMsg.contents.body), /Total THB/);
+  assert.deepEqual(
+    quoteMsg.quickReply.items.map((item) => item.action.label),
+    ["Talk to Human", "Lead Time", "New Quote"],
+  );
   assert.equal(tables.nh_tenant_trials[0].used_messages, 1);
 
   await gateway.handleEvent({
@@ -439,6 +455,69 @@ test("LINE group webhook supports join, bind NH-CODE, mention_only silence, @men
     },
   });
   assert.match(lineReplies.at(-1).messages[0].text, /7 days/);
+
+  const beforeApproval = lineReplies.length;
+  await gateway.handleEvent({
+    type: "message",
+    replyToken: "rt-approval",
+    source: { type: "group", groupId, userId: "Umember1" },
+    message: {
+      type: "text",
+      text: "@Neurohands give 15% discount and create order task",
+      mention: { mentionees: [{ index: 0, length: 11, type: "user", isSelf: true }] },
+    },
+  });
+  const approvalGroupPayload = lineReplies.slice(beforeApproval).find((p) => p.replyToken === "rt-approval");
+  assert.ok(approvalGroupPayload);
+  assert.equal(approvalGroupPayload.messages[0].type, "flex");
+  assert.equal(validateFlexMessage(approvalGroupPayload.messages[0]).valid, true);
+  assert.match(approvalGroupPayload.messages[0].altText, /Approval requested/i);
+  assert.equal(
+    approvalGroupPayload.messages[0].contents.footer.contents.some((btn) => ["yes", "no"].includes(btn.action.text)),
+    false,
+    "Customer group approval card must not include operator Approve/Reject buttons",
+  );
+  assert.equal(
+    approvalGroupPayload.messages[0].quickReply.items.some((item) => ["yes", "no"].includes(item.action.text)),
+    false,
+    "Customer group approval Quick Replies must not include operator Approve/Reject actions",
+  );
+  assert.doesNotMatch(JSON.stringify(approvalGroupPayload.messages[0].contents.body), /Workspace/);
+
+  const founderApprovalPush = lineReplies.slice(beforeApproval).find((p) => p.to === "Ufounder1");
+  assert.ok(founderApprovalPush);
+  assert.equal(founderApprovalPush.messages[0].type, "flex");
+  assert.equal(validateFlexMessage(founderApprovalPush.messages[0]).valid, true);
+  assert.deepEqual(
+    founderApprovalPush.messages[0].contents.footer.contents.map((btn) => ({ label: btn.action.label, text: btn.action.text })),
+    [
+      { label: "Approve", text: "yes" },
+      { label: "Reject", text: "no" },
+    ],
+  );
+
+  await gateway.handleEvent({
+    type: "message",
+    replyToken: "rt-resume-2",
+    source: { type: "user", userId: "Ufounder1" },
+    message: { type: "text", text: `resume: KNC ${groupId}` },
+  });
+  const beforeHandover = lineReplies.length;
+  await gateway.handleEvent({
+    type: "message",
+    replyToken: "rt-human",
+    source: { type: "group", groupId, userId: "Umember1" },
+    message: {
+      type: "text",
+      text: "@Neurohands talk to human please",
+      mention: { mentionees: [{ index: 0, length: 11, type: "user", isSelf: true }] },
+    },
+  });
+  const handoverPayload = lineReplies.slice(beforeHandover).find((p) => p.replyToken === "rt-human");
+  assert.ok(handoverPayload);
+  assert.equal(handoverPayload.messages[0].type, "flex");
+  assert.equal(validateFlexMessage(handoverPayload.messages[0]).valid, true);
+  assert.match(handoverPayload.messages[0].altText, /paused automated replies/i);
 });
 
 test("neurohands-builder.html compiles cleanly with responsive breakpoints, trial UI controls, and zero code leaks", () => {

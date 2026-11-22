@@ -26,10 +26,10 @@ const SAMPLE_BUTTONS = [
   { type: "uri", uri: NEUROHANDS_PREVIEW_URL },
 ];
 
-test("buildCustomRichMenuPayload enforces 6 buttons, 1664x928 bounds, and strict URI allowlist", () => {
+test("buildCustomRichMenuPayload enforces 6 buttons, 2500x1686 bounds, and strict URI allowlist", () => {
   const built = buildCustomRichMenuPayload({ name: "KNC Glass Menu", chatBarText: "KNC Menu", buttons: SAMPLE_BUTTONS });
-  assert.equal(built.size.width, 1664);
-  assert.equal(built.size.height, 928);
+  assert.equal(built.size.width, 2500);
+  assert.equal(built.size.height, 1686);
   assert.equal(built.areas.length, 6);
   assert.equal(built.areas[2].action.uri, "https://knc-showroom.neurohands.site/catalog");
 
@@ -41,7 +41,7 @@ test("buildCustomRichMenuPayload enforces 6 buttons, 1664x928 bounds, and strict
   }, /untrusted URI/i);
   assert.throws(() => {
     const outOfBounds = [...SAMPLE_BUTTONS];
-    outOfBounds[0] = { type: "postback", data: "menu=about", bounds: { x: 1600, y: 0, width: 200, height: 100 } };
+    outOfBounds[0] = { type: "postback", data: "menu=about", bounds: { x: 2400, y: 0, width: 200, height: 100 } };
     buildCustomRichMenuPayload({ buttons: outOfBounds });
   }, /bounds exceed/i);
 });

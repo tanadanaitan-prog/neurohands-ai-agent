@@ -4,17 +4,17 @@ const express = require("express");
 const { loadMenu, isValidRichMenuAction, NEUROHANDS_PREVIEW_URL } = require("../../scripts/setup-richmenu");
 const { equalSecret, extractApiKey } = require("./security");
 
-const DEFAULT_WIDTH = 1664;
-const DEFAULT_HEIGHT = 928;
+const DEFAULT_WIDTH = 2500;
+const DEFAULT_HEIGHT = 1686;
 const TENANT_SITE_URI_RE = /^https:\/\/([a-z0-9-]+)\.neurohands\.site(?:\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]*)?$/;
 
 const DEFAULT_SLOTS = Object.freeze([
-  { x: 292, y: 177, width: 324, height: 278 },
-  { x: 675, y: 177, width: 324, height: 278 },
-  { x: 1057, y: 177, width: 325, height: 278 },
-  { x: 292, y: 499, width: 324, height: 278 },
-  { x: 675, y: 499, width: 324, height: 278 },
-  { x: 1057, y: 499, width: 325, height: 278 },
+  { x: 64, y: 290, width: 764, height: 640 },
+  { x: 868, y: 290, width: 764, height: 640 },
+  { x: 1672, y: 290, width: 764, height: 640 },
+  { x: 64, y: 970, width: 764, height: 640 },
+  { x: 868, y: 970, width: 764, height: 640 },
+  { x: 1672, y: 970, width: 764, height: 640 },
 ]);
 
 function isAllowedTenantMenuAction(action, { allowedLiffId = "", allowedClientCode = "" } = {}) {

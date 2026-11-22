@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "updated_at": "2026-11-22T02:16:00+07:00",
+  "updated_at": "2026-11-22T09:18:00+07:00",
   "lessons": [
     {
       "id": "LES-001",
@@ -71,7 +71,16 @@
       "root_cause": "Frontend renderLessons read item.title/verifiedFix/regressionTest instead of DEV_LESSONS_LEDGER.json snake_case keys (error_signature/approved_fix/regression_test), and workflow-runtime.js only computed width*height quotes for glass_types rows.",
       "approved_fix": "Read snake_case lesson fields in renderLessons, add deterministic width*height pricing for custom knowledgeEntries in workflow-runtime.js, and verify full UI + API + PGlite PostgreSQL 17 RLS behavior across phone (390x844), tablet (768x1024), and laptop (1440x900) in scripts/verify-trial-pilot.mjs.",
       "regression_test": "platform/scripts/verify-trial-pilot.mjs & platform/test/trial-workflow-runtime.test.js",
-      "verified_commit": "customer-trial-release-v2",
+      "verified_commit": "699b0327e5b5ce93630b6c7ccc7bcca69da4b741",
+      "status": "verified"
+    },
+    {
+      "id": "LES-009",
+      "error_signature": "LINE group approval reply exposed operator Approve/Reject buttons; 16:10 object-fit:cover cropped 1200x628 guide PNGs; mobile sticky header clipped #trial-workspace title",
+      "root_cause": "Independent QA audit caught handleGroupEvent sending the operator approval Flex Card into customer groups, mismatched 16:10 vs 1200x628 (1.91:1) aspect ratios, and multi-line mobile sticky header taller than scroll-margin-top.",
+      "approved_fix": "Split buildApprovalFlexCard into audience='customer' (no yes/no buttons, no numeric account ID) vs audience='operator' (1-tap yes/no for FOUNDER_LINE_ID only), align web .guide-media to 1200/628 object-fit:contain and LINE Flex hero to 191:100, compact mobile sticky header + set scroll-margin-top:148px, and hide fixed .mcta inside #trial-workspace.",
+      "regression_test": "platform/test/line-flex-cards.test.js & platform/test/trial-api-and-line-group.test.js & platform/scripts/verify-trial-pilot.mjs",
+      "verified_commit": "synchronized-ux-line-flex",
       "status": "verified"
     }
   ]
