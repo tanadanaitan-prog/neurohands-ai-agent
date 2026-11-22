@@ -485,8 +485,26 @@ footer p{margin:4px 0}
 .deploy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}
 .deploy-box-item{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#F8FAFC}
 .deploy-box-item p{margin:0 0 6px}
-@media (max-width:900px){.trial-grid{grid-template-columns:1fr}.journey-bar{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-grid{grid-template-columns:1fr}.connect-grid{grid-template-columns:1fr}.deploy-grid{grid-template-columns:1fr}}
-@media (max-width:760px){.trial-checks{grid-template-columns:1fr}.trial-actions .btn{flex:1 1 120px;min-height:42px}.journey-bar{grid-template-columns:1fr;padding:8px}.hero-oa-pill{margin-left:0}#trial-signup-card,.trial-grid>.card{padding:16px}.builder-bridge{padding:16px}.connect-bridge{padding:16px}}
+#nh-org-hub{margin-top:18px;padding:20px 22px;border:1px solid rgba(15,140,232,.26);background:#FFFFFF}
+#nh-org-hub h3{margin:0 0 6px;font-size:18px;color:var(--brand-navy)}
+.org-hub-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.org-pill{padding:5px 11px;border-radius:999px;background:#060D28;color:#E0F2FE;border:1px solid rgba(56,189,248,.38);font-size:12.5px;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.org-pill.gov{background:#0B173D;color:#38BDF8}
+.org-pill.sync{background:#EAF4FE;color:#060D28;border-color:rgba(15,140,232,.35)}
+.org-hub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.org-team-card{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#F8FBFF;display:flex;flex-direction:column;gap:6px;min-width:0;overflow-wrap:anywhere}
+.org-team-card.tier-governance{border-color:rgba(15,140,232,.42);background:linear-gradient(180deg,#F0F8FF 0%,#FFFFFF 100%)}
+.org-team-card.tier-command{border-color:#060D28;background:linear-gradient(180deg,#060D28 0%,#0B173D 100%);color:#FFFFFF}
+.org-team-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+.org-team-top strong{font-size:13.5px;line-height:1.35;color:var(--brand-navy);min-width:0;overflow-wrap:anywhere}
+.org-team-card.tier-command .org-team-top strong{color:#FFFFFF}
+.org-tier-badge{flex:none;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:#EAF4FE;color:#0F8CE8;border:1px solid rgba(15,140,232,.3)}
+.org-team-card.tier-governance .org-tier-badge{background:#060D28;color:#38BDF8;border-color:#38BDF8}
+.org-team-card.tier-command .org-tier-badge{background:#0F8CE8;color:#FFFFFF;border-color:#38BDF8}
+.org-team-meta{font-size:12px;color:var(--muted);line-height:1.4;min-width:0;overflow-wrap:anywhere}
+.org-team-card.tier-command .org-team-meta{color:#BAE6FD}
+@media (max-width:900px){.trial-grid{grid-template-columns:1fr}.journey-bar{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-grid{grid-template-columns:1fr}.connect-grid{grid-template-columns:1fr}.deploy-grid{grid-template-columns:1fr}.org-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.trial-checks{grid-template-columns:1fr}.trial-actions .btn{flex:1 1 120px;min-height:42px}.journey-bar{grid-template-columns:1fr;padding:8px}.hero-oa-pill{margin-left:0}#trial-signup-card,.trial-grid>.card,#nh-org-hub{padding:16px}.builder-bridge{padding:16px}.connect-bridge{padding:16px}.org-hub-grid{grid-template-columns:1fr}}
 .chip,.chip.is-soon{display:inline-grid;grid-template-columns:minmax(0,auto) auto;align-items:center;column-gap:6px;row-gap:3px;max-width:100%;min-width:0;white-space:normal;vertical-align:top;border-radius:16px;padding:5px 5px 5px 10px}
 .chip .cl{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere;line-height:1.3}
 .chip .soon{grid-column:1;grid-row:2;justify-self:start;margin:0;max-width:100%;white-space:normal}
@@ -683,7 +701,7 @@ footer p{margin:4px 0}
    <div class="fgrid">
     <div class="field"><label for="ts-biz">Business name <span class="req">*</span></label><input id="ts-biz" name="businessName" placeholder="e.g. Siam Glass Co., Ltd." autocomplete="organization" required></div>
     <div class="field"><label for="ts-email">Work email <span class="req">*</span></label><input id="ts-email" name="email" type="email" placeholder="owner@company.com" autocomplete="email" required></div>
-    <div class="field full"><label for="ts-role">First agent role</label><select id="ts-role" name="role"><option value="Aria — Customer Service &amp; Quotes">Aria — Customer Service &amp; Quotes (Recommended)</option><option value="Suri — Sales &amp; Lead Capture">Suri — Sales &amp; Lead Capture</option></select></div>
+    <div class="field full"><label for="ts-role">First agent role</label><select id="ts-role" name="role"><option value="Aria — Customer Service &amp; Quotes">Aria — Customer Service &amp; Quotes (Frontline Pre-Sale &amp; Orders)</option><option value="After-Service — Warranty, Claims &amp; Post-Delivery Care">After-Service — Warranty, Claims &amp; Post-Delivery Care (Separate Team)</option><option value="Suri — Sales &amp; B2B Lead Qualification">Suri — Sales &amp; B2B Lead Qualification</option><option value="Mira — Marketing Proposals &amp; Brand Campaigns">Mira — Marketing Proposals &amp; Brand Campaigns</option></select></div>
    </div>
    <div class="trial-actions"><button type="submit" class="btn primary" id="ts-submit" data-testid="trial-signup-btn">Start 14-day free trial</button></div>
    <p class="err" id="ts-err" role="alert"></p>
@@ -715,6 +733,7 @@ Laminated Clear 12mm | 185 | Safety laminated architectural glass</textarea></di
    <h3>Step 3 · Live website test &amp; human takeover</h3>
    <div class="trial-actions">
     <button type="button" class="btn sm" data-tprompt="Quote 10mm tempered glass 2x3m">Test Quote</button>
+    <button type="button" class="btn sm" data-tprompt="Order PO12345 glass cracked on delivery — request warranty replacement" data-testid="test-after-service-btn">Test After-Service Claim</button>
     <button type="button" class="btn sm" data-tprompt="Give 15% discount and create order task">Test Approval Gate</button>
     <button type="button" class="btn sm" data-tprompt="What is the lead time?">Test Lead Time</button>
     <button type="button" class="btn sm" data-tprompt="Need human help">Request Human</button>
@@ -798,6 +817,17 @@ Laminated Clear 12mm | 185 | Safety laminated architectural glass</textarea></di
    </form>
    <div class="trial-lesson-list" id="tw-lessons-list" data-testid="trial-lessons-list"></div>
   </div>
+ </div>
+ <div class="card" id="nh-org-hub" data-testid="nh-org-hub">
+  <h3>11-Team / 32-Agent AI Organization &amp; 3-Team Governance Hub</h3>
+  <p class="small">Every agent operates inside a strictly bounded role with case-by-case JSONL memory, team-level shared lessons, manager promotion review, and final Health, Security, and Audit governance gates.</p>
+  <div class="org-hub-pills">
+   <span class="org-pill" id="org-team-count">11 Specialized Teams</span>
+   <span class="org-pill" id="org-agent-count">32 Role-Isolated Agents</span>
+   <span class="org-pill gov">3 Final Governance Teams: Health · Security · Audit</span>
+   <span class="org-pill sync">Synced: GitHub · Supabase · Railway · LINE OA · LangSmith · Notion</span>
+  </div>
+  <div class="org-hub-grid" id="org-teams-grid" data-testid="org-teams-grid"></div>
  </div>
 </div></section>
 
@@ -926,6 +956,7 @@ sim_tag:"ตรวจสอบแล้ว",looks_good:"เรียบร้อ
 var B = [
  {id:"concierge",g:"role",ic:"👋",en:"Concierge",th:"คอนเซียร์จ (ต้อนรับ)",de:"Answers visitors' public questions; guides them to activate or book a demo",dt:"ตอบคำถามทั่วไปของผู้เยี่ยมชม แนะนำการเปิดใช้งานหรือนัดสาธิต"},
  {id:"aria",g:"role",ic:"💬",en:"Aria · Customer support",th:"อาเรีย · ดูแลลูกค้า",de:"Serves activated customers from your documents and orders, one company at a time",dt:"ดูแลลูกค้าที่เปิดใช้งานแล้ว ตอบจากเอกสารและคำสั่งซื้อของบริษัทนั้นเท่านั้น"},
+ {id:"after",g:"role",st:"partial",ic:"🛠️",en:"After-Service · Warranty & Care",th:"บริการหลังการขาย · เคลมและดูแล",de:"Dedicated post-delivery warranty, defect & replacement team separate from frontline sales",dt:"ทีมดูแลหลังส่งมอบแยกเฉพาะ: รับเรื่องเคลม กระจกแตกร้าว และส่งเจ้าของอนุมัติก่อนเปลี่ยนบาน"},
  {id:"jarvis",g:"role",pg:"owner",ic:"🧭",en:"Jarvis · Owner assistant",th:"จาร์วิส · ผู้ช่วยเจ้าของ",de:"Owner executive assistant in LINE: daily briefs, customer memory, calendar reminders, tasks, uploads, and approvals",dt:"ผู้ช่วยส่วนตัวของเจ้าของใน LINE: สรุปงาน ความจำลูกค้า นัดหมายปฏิทิน งานเอกสาร และการอนุมัติ"},
  {id:"suri",g:"role",st:"soon",ic:"🧾",en:"Sales · Suri",th:"ฝ่ายขาย · สุรี",de:"Gathers requirements and prepares a quotation brief",dt:"รวบรวมความต้องการและเตรียมร่างใบเสนอราคา"},
  {id:"mira",g:"role",st:"soon",ic:"📣",en:"Marketing · Mira",th:"ฝ่ายการตลาด · มิรา",de:"Turns confirmed requirements into a proposal draft",dt:"นำความต้องการที่ยืนยันแล้วมาทำเป็นร่างข้อเสนอ"},
@@ -955,6 +986,7 @@ var B = [
 var REC = {
  concierge:["faq","answer","leads","handoff","friendly","lang_both","emoji_some","hours","pdpa"],
  aria:["docs","faq","answer","order","handoff","friendly","lang_th","emoji_some","approval","pdpa"],
+ after:["docs","faq","answer","order","handoff","formal","lang_th","emoji_none","approval","pdpa"],
  jarvis:["docs","summary","approval","formal","lang_th","emoji_none"],
  suri:["catalog","prices","quote","leads","handoff","formal","lang_both","emoji_none","approval","pdpa"],
  mira:["catalog","faq","answer","leads","friendly","lang_both","emoji_some","approval","pdpa"]
@@ -1311,6 +1343,7 @@ function renderPreview(){
   var greet={
    concierge:[S("Hello! Welcome to "+shopEn+". Ask me anything about our products and services.","สวัสดีค่ะ ยินดีต้อนรับสู่"+shopTh+" สอบถามเรื่องสินค้าและบริการได้เลยนะคะ"),S("Good day, and welcome to "+shopEn+". How may I assist you?","สวัสดีค่ะ ยินดีต้อนรับสู่"+shopTh+" ไม่ทราบว่าให้ช่วยเรื่องใดคะ")],
    aria:[S("Hi Khun Nida, welcome back! I can help with your orders and documents.","สวัสดีค่ะคุณนิดา ยินดีต้อนรับกลับมานะคะ ให้ช่วยเรื่องคำสั่งซื้อหรือเอกสารได้เลยค่ะ"),S("Good day, Khun Nida. I can assist with your orders and company documents.","สวัสดีค่ะคุณนิดา ดิฉันช่วยตรวจสอบคำสั่งซื้อและเอกสารของบริษัทคุณได้ค่ะ")],
+   after:[S("Hello, I'm from After-Service Care. Please share your order number and defect photo so we can verify your warranty.","สวัสดีค่ะ จากทีมบริการหลังการขายค่ะ รบกวนแจ้งเลขคำสั่งซื้อและรูปถ่ายจุดที่เสียหายเพื่อตรวจสอบการรับประกันนะคะ"),S("Good day. This is the After-Service Care team. Please provide your order number and delivery evidence for warranty verification.","สวัสดีค่ะ ทีมบริการหลังการขาย กรุณาแจ้งหมายเลขคำสั่งซื้อและหลักฐานเพื่อดำเนินการตรวจสอบการรับประกันค่ะ")],
    suri:[S("Hi! I'm Suri from sales. Tell me what you need and I'll prepare a quotation brief.","สวัสดีค่ะ สุรีจากฝ่ายขายค่ะ บอกความต้องการมาได้เลย เดี๋ยวสุรีเตรียมร่างใบเสนอราคาให้นะคะ"),S("Good day. I'm Suri from the sales team. Please share your requirements and I will prepare a quotation brief.","สวัสดีค่ะ ดิฉันสุรีจากฝ่ายขาย กรุณาแจ้งความต้องการ ดิฉันจะจัดเตรียมร่างใบเสนอราคาให้ค่ะ")],
    mira:[S("Hi! I'm Mira from marketing. I can turn your ideas into a proposal.","สวัสดีค่ะ มิราจากฝ่ายการตลาดค่ะ มิราช่วยเปลี่ยนไอเดียของคุณให้เป็นข้อเสนอได้นะคะ"),S("Good day. I'm Mira from marketing. I can prepare a proposal from your confirmed requirements.","สวัสดีค่ะ ดิฉันมิราจากฝ่ายการตลาด ยินดีจัดทำข้อเสนอจากความต้องการที่ยืนยันแล้วค่ะ")]
   }[r];
@@ -1416,6 +1449,7 @@ function renderCaps(){
  function d(a,b){D.push(en?a:b);} function n(a,b){N.push(en?a:b);}
  var roleTxt={concierge:["Greet new visitors, answer public questions about your business, and guide them to activate or book a demo.","ต้อนรับผู้เยี่ยมชมใหม่ ตอบคำถามทั่วไปเกี่ยวกับธุรกิจ และแนะนำให้เปิดใช้งานหรือนัดสาธิต"],
   aria:["Serve activated customers using only their own company's documents and orders.","ดูแลลูกค้าที่เปิดใช้งานแล้ว โดยใช้เอกสารและคำสั่งซื้อของบริษัทลูกค้ารายนั้นเท่านั้น"],
+  after:["Handle post-delivery warranty claims, defect evidence, and satisfaction follow-ups in a dedicated After-Service team separate from frontline sales.","ดูแลเรื่องการรับประกันหลังส่งมอบ หลักฐานการเคลม และการติดตามความพึงพอใจโดยทีมบริการหลังการขายแยกจากทีมขายหน้าบ้าน"],
   jarvis:["Act as the owner's console in LINE: summaries, customer memory, calendar reminders, tasks, uploads, and approvals.","ทำหน้าที่เป็นคอนโซลของเจ้าของใน LINE: สรุปงาน ความจำลูกค้า นัดหมายปฏิทิน งานเอกสาร และการอนุมัติ"],
   suri:["Gather customer requirements and prepare a quotation brief for your sales staff.","รวบรวมความต้องการของลูกค้าและเตรียมร่างใบเสนอราคาให้ฝ่ายขาย"],
   mira:["Turn confirmed requirements into a proposal draft for your team to review.","นำความต้องการที่ยืนยันแล้วมาทำเป็นร่างข้อเสนอให้ทีมตรวจสอบ"]};
@@ -1895,6 +1929,12 @@ if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
    trialFetch("/signup",{method:"POST",body:JSON.stringify({businessName:biz,email:email,role:role})}).then(function(data){
     saveSession({token:data.token,tenant:data.tenant,trial:data.trial,activationCode:data.activationCode,journeyStage:2});
     showActiveWorkspace();
+    var spec=data.workflow&&data.workflow.workflow_spec;
+    if(spec){
+     if(spec.instructions&&el("tw-instructions")) el("tw-instructions").value=spec.instructions;
+     if(spec.groupPolicy&&Array.isArray(spec.groupPolicy.keywords)&&el("tw-keywords")) el("tw-keywords").value=spec.groupPolicy.keywords.join(", ");
+     if(spec.groupPolicy&&spec.groupPolicy.mode&&el("tw-group-mode")) el("tw-group-mode").value=spec.groupPolicy.mode;
+    }
     updateJourneySteps(2);
     toast("14-day trial workspace activated");
    }).catch(function(err){
@@ -1992,6 +2032,63 @@ if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
     var box=el("tw-lessons-list"); if(box) box.textContent="Lessons lookup error: "+err.message;
    });
   });
+
+  var DEFAULT_ORG_TEAMS=[
+   {teamId:"central-command",name:"Central Executive Command & Strategy Council",tier:"command",managerAgentId:"cmd-director",agentCount:3},
+   {teamId:"line-biz-console",name:"LINE Business & Console Development Team",tier:"operations",managerAgentId:"line-manager",agentCount:4},
+   {teamId:"website-brand-ux",name:"Website & Brand Specialist Team",tier:"operations",managerAgentId:"web-manager",agentCount:3},
+   {teamId:"business-dx",name:"Business & Digital Transformation Team",tier:"operations",managerAgentId:"dx-manager",agentCount:3},
+   {teamId:"ai-engineering-arch",name:"AI Engineering & Architecture Team (FE + BE)",tier:"operations",managerAgentId:"eng-manager",agentCount:4},
+   {teamId:"customer-service",name:"Customer Service Team (Frontline)",tier:"operations",managerAgentId:"cs-manager",agentCount:3},
+   {teamId:"after-service",name:"After-Service & Care Team (Separate Role)",tier:"operations",managerAgentId:"after-manager",agentCount:3},
+   {teamId:"sales-marketing",name:"Sales & Marketing Team",tier:"operations",managerAgentId:"growth-manager",agentCount:3},
+   {teamId:"health-monitor",name:"Final Governance — Health & Reliability Team",tier:"governance",managerAgentId:"health-manager",agentCount:2},
+   {teamId:"security-guard",name:"Final Governance — Security & Privacy Team",tier:"governance",managerAgentId:"sec-manager",agentCount:2},
+   {teamId:"audit-compliance",name:"Final Governance — Audit & Command Compliance Team",tier:"governance",managerAgentId:"audit-manager",agentCount:2}
+  ];
+  function renderOrgRoster(payload){
+   var grid=el("org-teams-grid");
+   if(!grid)return;
+   var teams=(payload&&Array.isArray(payload.teams)&&payload.teams.length)?payload.teams:DEFAULT_ORG_TEAMS;
+   var totalTeams=(payload&&(payload.teamCount||payload.totalTeams))||teams.length;
+   var totalAgents=(payload&&(payload.agentCount||payload.totalAgents))||teams.reduce(function(sum,tm){
+    var c=typeof tm.agentCount==="number"?tm.agentCount:(Array.isArray(tm.agents)?tm.agents.length:3);
+    return sum+c;
+   },0);
+   if(el("org-team-count")) el("org-team-count").textContent=totalTeams+" Specialized Teams";
+   if(el("org-agent-count")) el("org-agent-count").textContent=totalAgents+" Role-Isolated Agents";
+   grid.textContent="";
+   teams.forEach(function(tm){
+    var tier=String(tm.tier||tm.category||"operations").toLowerCase();
+    var teamId=String(tm.teamId||tm.id||"team");
+    var card=document.createElement("div");
+    card.className="org-team-card tier-"+tier;
+    card.setAttribute("data-team-id",teamId);
+    var top=document.createElement("div");
+    top.className="org-team-top";
+    var title=document.createElement("strong");
+    title.textContent=String(tm.name||tm.teamName||tm.title||teamId);
+    var badge=document.createElement("span");
+    badge.className="org-tier-badge";
+    badge.textContent=tier;
+    top.appendChild(title);
+    top.appendChild(badge);
+    var mgrId=String(tm.managerAgentId||tm.managerId||tm.manager_id||(tm.manager&&(tm.manager.id||tm.manager.name))||"manager");
+    var agCount=typeof tm.agentCount==="number"?tm.agentCount:(Array.isArray(tm.agents)?tm.agents.length:3);
+    var meta1=document.createElement("div");
+    meta1.className="org-team-meta";
+    meta1.textContent="Manager: "+mgrId+" · "+agCount+" agents";
+    var meta2=document.createElement("div");
+    meta2.className="org-team-meta";
+    meta2.textContent="Learning: Case-by-Case JSONL + Team JSON";
+    card.appendChild(top);
+    card.appendChild(meta1);
+    card.appendChild(meta2);
+    grid.appendChild(card);
+   });
+  }
+  renderOrgRoster({teams:DEFAULT_ORG_TEAMS,teamCount:11,agentCount:32});
+  fetch("/api/org/roster").then(function(r){return r.ok?r.json():null;}).then(function(d){if(d)renderOrgRoster(d);}).catch(function(){});
 
   wireGuideImages();
   showActiveWorkspace(true);

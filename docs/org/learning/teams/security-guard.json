@@ -4,7 +4,7 @@
   "team_name": "Final Governance Team 2 — Security & Privacy",
   "tier": "governance",
   "manager_agent_id": "sec-manager",
-  "updated_at": "2026-11-22T10:00:00+07:00",
+  "updated_at": "2026-11-22T11:18:00+07:00",
   "patterns": [
     {
       "id": "a6de9d1e-f20f-44a7-afff-2e564aa7934f",
@@ -20,6 +20,22 @@
       "curated_by": "sec-manager",
       "supersedes_id": null,
       "created_at": "2026-11-22T10:00:00+07:00"
+    },
+    {
+      "id": "c12e1683-163d-4ab3-afa6-a33606cd6b09",
+      "team_id": "security-guard",
+      "pattern_key": "PAT-SEC-002",
+      "title": "Non-Destructive Live RLS Policy Evolution & Zero-Warning Supabase Security Posture",
+      "standard_playbook": "Evolve live production RLS policies in-place with ALTER POLICY using server-signed app_metadata and regex-guarded bigint casts, run RPCs as SECURITY INVOKER where service_role/RLS permits, and verify 0 ERROR / 0 WARN on Supabase Security Advisor.",
+      "guardrail_rule": "Never use destructive DROP/TRUNCATE on live production learning or tenant tables, and never leave any Security Advisor ERROR or WARN unresolved.",
+      "source_case_keys": [
+        "CASE-SEC-MGR-001",
+        "CASE-SEC-MGR-002",
+        "CASE-SEC-RED-001"
+      ],
+      "curated_by": "sec-manager",
+      "supersedes_id": "a6de9d1e-f20f-44a7-afff-2e564aa7934f",
+      "created_at": "2026-11-22T11:18:00+07:00"
     }
   ]
 }

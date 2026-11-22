@@ -89,7 +89,16 @@
       "root_cause": "Three independent Final Governance Auditor subagents (Health, Security, Audit) caught server.js databaseOperationError scrubbing 23505 messages while preserving err.httpStatus=409, GRANT ALL + missing BEFORE TRUNCATE triggers on append-only tables, inline await on 3s LangSmith traces, hardcoded ok:true health responses, and unpinned/un-allowlisted LINE report targets.",
       "approved_fix": "Detect err.httpStatus===409 for duplicate keys and map 5xx DB outages to 503; attach BEFORE TRUNCATE triggers + GRANT SELECT, INSERT only to service_role + composite supersedes_id FKs; probe real DB/env/admission health in computeOrgRuntimeHealth; make emitTrace fire-and-forget with org LangSmith payload mapping; pin founder channel, enforce U vs C/R prefixes & allowlist checks, split buildReportFlexCard audience='operator'|'external', sanitize public /api/org/roster, and redact PII.",
       "regression_test": "platform/test/org-learning-db.test.js & platform/test/org-council-and-learning.test.js",
-      "verified_commit": "ai-org-learning-hub",
+      "verified_commit": "3de721558d66cc231d0729b088ceb2cea271f438",
+      "status": "verified"
+    },
+    {
+      "id": "LES-011",
+      "error_signature": "Direct refund/replacement requests without a defect keyword or combined after_service + discount requests bypassed human approval gate",
+      "root_cause": "Caught by Final Governance Security Auditor (nh-security-auditor): parseAfterServiceClaim checked isAfterService independently of requestsRemedy, and after_service intent precedence shadowed approval_action when a message combined a defect word ('cracked') with a discount or order-cancel request.",
+      "approved_fix": "Include requestsRemedy in parseAfterServiceClaim.isAfterService and trigger needsAfterServiceApproval whenever intent==='after_service' and either requestsRemedy or hasApprovalKeyword(text) is true (with or without an order number).",
+      "regression_test": "platform/test/trial-workflow-runtime.test.js (Separate After-Service role preset captures order evidence and gates warranty replacements, direct refunds, and damaged-order discounts)",
+      "verified_commit": "u29-multi-team-delegation",
       "status": "verified"
     }
   ]

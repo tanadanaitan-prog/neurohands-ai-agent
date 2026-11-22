@@ -12,6 +12,8 @@ const require = createRequire(import.meta.url);
 const express = require("express");
 const { PGlite } = require("@electric-sql/pglite");
 const { createTrialRouter } = require("../src/lib/trial-router");
+const { createOrgLearningService } = require("../src/lib/org-learning-store");
+const { createOrgCouncilRouter } = require("../src/lib/org-council-router");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLATFORM_DIR = path.resolve(__dirname, "..");
@@ -440,6 +442,30 @@ async function runDeviceJourney({ send, evaluate, consoleErrors }, url, device) 
   const lessonCardText = await evaluate("document.querySelector('#tw-lessons-list .trial-lesson-item').textContent");
   assert.match(lessonCardText, /LES-007:.*Fix: \S+.*Check: \S+/, `${device.name} lesson card missing fields: ${lessonCardText}`);
 
+  await until(() => evaluate("document.querySelectorAll('#org-teams-grid .org-team-card').length === 11"), `${device.name} 11-team AI org hub`);
+  const orgAudit = await evaluate(`(() => {
+    const cards = Array.from(document.querySelectorAll('#org-teams-grid .org-team-card'));
+    const ids = cards.map((c) => c.getAttribute('data-team-id'));
+    const roleOptions = Array.from(document.querySelectorAll('#ts-role option')).map((o) => o.value);
+    return {
+      count: cards.length,
+      hasAfterService: ids.includes('after-service'),
+      hasCustomerService: ids.includes('customer-service'),
+      hasGovernance: ids.includes('health-monitor') && ids.includes('security-guard') && ids.includes('audit-compliance'),
+      teamLabel: document.getElementById('org-team-count')?.textContent,
+      agentLabel: document.getElementById('org-agent-count')?.textContent,
+      roleOptionCount: roleOptions.length,
+      hasAfterServiceRoleOption: roleOptions.some((v) => v.includes('After-Service')),
+    };
+  })()`);
+  assert.equal(orgAudit.count, 11, `${device.name} expected 11 org team cards`);
+  assert.equal(orgAudit.hasAfterService, true, `${device.name} missing separate after-service team card`);
+  assert.equal(orgAudit.hasCustomerService, true, `${device.name} missing customer-service team card`);
+  assert.equal(orgAudit.hasGovernance, true, `${device.name} missing 3 governance team cards`);
+  assert.equal(orgAudit.teamLabel, "11 Specialized Teams");
+  assert.equal(orgAudit.agentLabel, "32 Role-Isolated Agents");
+  assert.equal(orgAudit.hasAfterServiceRoleOption, true, `${device.name} missing After-Service role option`);
+
   await send("Page.reload", { ignoreCache: true });
   await until(() => evaluate("!document.getElementById('trial-console').hidden && document.getElementById('tw-group-mode').value === 'keyword' && document.getElementById('tw-perm-lead').checked === false"), `${device.name} state hydrated after reload`);
   assert.equal(await evaluate("document.getElementById('tm-msgs').textContent"), "Messages: 197 / 200");
@@ -474,6 +500,11 @@ async function main() {
     res.type("png").send(fs.readFileSync(full));
   });
   app.get("/api/liff/config", (_req, res) => res.json({ liffEnabled: false, liffId: "" }));
+  app.use("/api/org", createOrgCouncilRouter({
+    service: createOrgLearningService(),
+    apiKey: ["pilot", "org", "test", "123456"].join("-"),
+    founderLineId: "UfounderPilot",
+  }));
   app.use("/api/trial", createTrialRouter({
     db,
     supabaseJwtSecret: jwtSecret,

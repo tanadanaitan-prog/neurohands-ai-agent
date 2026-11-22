@@ -6,7 +6,14 @@ const assert = require("node:assert/strict");
 const { HANDOVER_STATES, shouldAiReply, createHandoverStore } = require("../src/lib/conversation-handover");
 const { createTrialQuotaService } = require("../src/lib/trial-quota");
 const { shouldRespondInGroup, stripBotMention, parseGroupBindCommand } = require("../src/lib/line-group-router");
-const { DEFAULT_ARIA_WORKFLOW, validateWorkflowSpec, executeWorkflowTurn } = require("../src/lib/workflow-runtime");
+const {
+  DEFAULT_ARIA_WORKFLOW,
+  ROLE_WORKFLOW_PRESETS,
+  resolveRolePreset,
+  parseAfterServiceClaim,
+  validateWorkflowSpec,
+  executeWorkflowTurn,
+} = require("../src/lib/workflow-runtime");
 
 function createMemoryDb({ maxMessages = 3, maxActions = 1, spendingCapUsd = 0, expired = false } = {}) {
   const trials = new Map([
@@ -308,4 +315,99 @@ test("Custom knowledgeEntries calculate deterministic quotes, disabled tool perm
   await handoverStore.transition(1, "web", "web-kb-1", "stage_approval", { actor: "ARIA" });
   const rejected = await handoverStore.transition(1, "web", "web-kb-1", "reject", { actor: "owner@trial.example" });
   assert.equal(rejected.state, HANDOVER_STATES.AI_ACTIVE);
+});
+
+test("Separate After-Service role preset captures order evidence and gates warranty replacements behind human approval", async () => {
+  const { db } = createMemoryDb({ maxMessages: 10, maxActions: 5 });
+  const handoverStore = createHandoverStore({ db });
+  const trialService = createTrialQuotaService({ db });
+  const proposals = [];
+
+  const afterSpec = validateWorkflowSpec(resolveRolePreset("After-Service — Warranty, Claims & Post-Delivery Care"));
+  assert.equal(afterSpec.name, "After-Service Care");
+  assert.ok(afterSpec.groupPolicy.keywords.includes("warranty"));
+  assert.equal(resolveRolePreset("Suri — Sales").name, "Suri");
+  assert.equal(resolveRolePreset("Mira — Marketing").name, "Mira");
+  assert.equal(ROLE_WORKFLOW_PRESETS.after_service.role, "After-Service — Warranty, Claims & Post-Delivery Care");
+
+  const parsed = parseAfterServiceClaim("Order PO12345 glass cracked on delivery — request warranty replacement");
+  assert.equal(parsed.isAfterService, true);
+  assert.equal(parsed.orderNumber, "PO12345");
+  assert.equal(parsed.requestsRemedy, true);
+
+  const missingOrder = await executeWorkflowTurn({
+    spec: afterSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1" },
+    channelType: "web",
+    threadId: "web-after-1",
+    message: "My tempered glass panel arrived cracked on delivery",
+    handoverStore,
+    trialService,
+  });
+  assert.equal(missingOrder.replied, true);
+  assert.equal(missingOrder.afterServiceClaim.orderNumber, null);
+  assert.equal(missingOrder.afterServiceClaim.stagedForApproval, false);
+  assert.match(missingOrder.text, /share your order number/i);
+
+  const stagedClaim = await executeWorkflowTurn({
+    spec: afterSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1", operatorLineUserId: "Ufounder1" },
+    channelType: "web",
+    threadId: "web-after-1",
+    message: "Order PO12345 glass cracked on delivery — request warranty replacement",
+    handoverStore,
+    trialService,
+    proposeNote: async (content, cat, proposer, toolName, toolArgs, accountId, domain) => {
+      proposals.push({ content, toolName, toolArgs, accountId, domain });
+      return 77;
+    },
+  });
+  assert.equal(stagedClaim.requiresApproval, true);
+  assert.equal(stagedClaim.proposalId, 77);
+  assert.equal(stagedClaim.handoverState, HANDOVER_STATES.AWAITING_APPROVAL);
+  assert.equal(stagedClaim.afterServiceClaim.orderNumber, "PO12345");
+  assert.equal(stagedClaim.afterServiceClaim.stagedForApproval, true);
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].domain, "after_service");
+  assert.equal(proposals[0].toolArgs.orderNumber, "PO12345");
+
+  await handoverStore.transition(1, "web", "web-after-1", "approve", { actor: "owner@trial.example" });
+
+  const directRefund = await executeWorkflowTurn({
+    spec: afterSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1", operatorLineUserId: "Ufounder1" },
+    channelType: "web",
+    threadId: "web-after-1",
+    message: "Order PO12345 — please issue a refund",
+    handoverStore,
+    trialService,
+    proposeNote: async (content, cat, proposer, toolName, toolArgs, accountId, domain) => {
+      proposals.push({ content, toolName, toolArgs, accountId, domain });
+      return 78;
+    },
+  });
+  assert.equal(directRefund.requiresApproval, true);
+  assert.equal(directRefund.proposalId, 78);
+  assert.equal(directRefund.handoverState, HANDOVER_STATES.AWAITING_APPROVAL);
+  assert.equal(directRefund.afterServiceClaim.orderNumber, "PO12345");
+
+  await handoverStore.transition(1, "web", "web-after-1", "approve", { actor: "owner@trial.example" });
+
+  const damagedDiscount = await executeWorkflowTurn({
+    spec: afterSpec,
+    tenant: { clientAccountId: 1, clientCode: "TRIAL1", operatorLineUserId: "Ufounder1" },
+    channelType: "web",
+    threadId: "web-after-1",
+    message: "Glass is cracked, give me a 20% discount",
+    handoverStore,
+    trialService,
+    proposeNote: async (content, cat, proposer, toolName, toolArgs, accountId, domain) => {
+      proposals.push({ content, toolName, toolArgs, accountId, domain });
+      return 79;
+    },
+  });
+  assert.equal(damagedDiscount.requiresApproval, true);
+  assert.equal(damagedDiscount.proposalId, 79);
+  assert.equal(damagedDiscount.handoverState, HANDOVER_STATES.AWAITING_APPROVAL);
+  assert.equal(proposals.length, 3);
 });

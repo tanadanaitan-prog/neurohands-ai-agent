@@ -35,6 +35,45 @@ const DEFAULT_ARIA_WORKFLOW = Object.freeze({
   groupPolicy: { mode: "mention_only", keywords: ["quote", "price", "ราคา", "lead time"] },
 });
 
+const ROLE_WORKFLOW_PRESETS = Object.freeze({
+  customer_service: DEFAULT_ARIA_WORKFLOW,
+  after_service: Object.freeze({
+    ...DEFAULT_ARIA_WORKFLOW,
+    name: "After-Service Care",
+    role: "After-Service — Warranty, Claims & Post-Delivery Care",
+    instructions: "Handle post-delivery warranty claims, cracked or damaged glass reports, and satisfaction follow-ups strictly separate from frontline sales. Capture order number and defect evidence first, and route every replacement or credit request to human approval.",
+    groupPolicy: { mode: "mention_only", keywords: ["warranty", "damaged", "cracked", "claim", "เคลม", "แตกร้าว", "ประกัน"] },
+  }),
+  sales_quote: Object.freeze({
+    ...DEFAULT_ARIA_WORKFLOW,
+    name: "Suri",
+    role: "Suri — Sales & B2B Lead Qualification",
+    instructions: "Qualify B2B project dimensions, glass thickness, quantity, and target delivery dates from approved price lists. Never promise custom discounts or contractual terms without human approval.",
+    groupPolicy: { mode: "mention_only", keywords: ["quote", "project", "bulk", "ราคาโครงการ", "ใบเสนอราคา"] },
+  }),
+  marketing_campaign: Object.freeze({
+    ...DEFAULT_ARIA_WORKFLOW,
+    name: "Mira",
+    role: "Mira — Marketing Proposals & Brand Campaigns",
+    instructions: "Draft brand-synchronized B2B proposals and bilingual campaign outlines grounded in approved product specifications and 'From Thailand to the World — Helping humans learn and grow.' Route formal proposals for human approval.",
+    groupPolicy: { mode: "mention_only", keywords: ["proposal", "campaign", "ข้อเสนอ", "แคมเปญ"] },
+  }),
+});
+
+function resolveRolePreset(roleOrKey = "") {
+  const r = String(roleOrKey || "").trim().toLowerCase();
+  if (r.includes("after-service") || r.includes("after_service") || r.includes("warranty")) {
+    return ROLE_WORKFLOW_PRESETS.after_service;
+  }
+  if (r.includes("suri") || r.includes("sales")) {
+    return ROLE_WORKFLOW_PRESETS.sales_quote;
+  }
+  if (r.includes("mira") || r.includes("marketing")) {
+    return ROLE_WORKFLOW_PRESETS.marketing_campaign;
+  }
+  return ROLE_WORKFLOW_PRESETS.customer_service;
+}
+
 function validateWorkflowSpec(raw = {}) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new RangeError("Workflow specification must be an object");
@@ -137,10 +176,25 @@ function matchCatalogItem(text, catalogRows = [], knowledgeEntries = []) {
   return null;
 }
 
+function hasApprovalKeyword(text) {
+  return /(?:discount|ส่วนลด|cancel\s*order|ยกเลิกออเดอร์|create\s*(?:a\s*)?(?:order\s*)?task|follow[\s-]*up\s*task|สั่งสร้างงาน)/i.test(String(text || ""));
+}
+
+function parseAfterServiceClaim(text) {
+  const t = String(text || "").trim();
+  const orderMatch = t.match(/\b((?:PO|ORD|DG|DB|DA|DH|SO|INV|DO)[-_]?\d{3,10})\b/i);
+  const orderNumber = orderMatch ? orderMatch[1].toUpperCase() : null;
+  const hasDefectKeyword = /(?:warranty|claim|cracked|damaged|chip(?:ped)?|defect|shattered|broken\s+on\s+delivery|after[\s-]*service|เคลม|รับประกัน|กระจกแตก|กระจกร้าว|บิ่น|เสียหาย)/i.test(t);
+  const requestsRemedy = /(?:replace(?:ment)?|remake|refund|credit|compensat|เคลมเปลี่ยน|เปลี่ยนบาน|คืนเงิน|ชดเชย)/i.test(t);
+  const isAfterService = hasDefectKeyword || requestsRemedy;
+  return { isAfterService, orderNumber, requestsRemedy };
+}
+
 function detectIntent(text) {
   const t = String(text || "").trim();
   if (/(?:human|staff|operator|agent\s*help|talk to (?:a )?person|คนจริง|พนักงาน|ติดต่อเจ้าหน้าที่|ขอคุยกับคน)/i.test(t)) return "human_help";
-  if (/(?:discount|ส่วนลด|cancel\s*order|ยกเลิกออเดอร์|create\s*(?:a\s*)?(?:order\s*)?task|follow[\s-]*up\s*task|สั่งสร้างงาน)/i.test(t)) return "approval_action";
+  if (parseAfterServiceClaim(t).isAfterService) return "after_service";
+  if (hasApprovalKeyword(t)) return "approval_action";
   if (/(?:lead\s*time|delivery\s*time|how\s*long|กี่วัน|ระยะเวลาผลิต)/i.test(t)) return "lead_time";
   if (/(?:quote|price|cost|estimate|ราคา|ใบเสนอราคา|เท่าไหร่)/i.test(t) || parseQuoteDimensions(t)) return "quote";
   return "general";
@@ -244,7 +298,14 @@ async function executeWorkflowTurn({
     return { replied: true, handedOff: true, handoverState, text: replyText, blocksExecuted: ["instructions", "decisions", "human_handoff", "reply"] };
   }
 
-  const needsApproval = intent === "approval_action" && (hasBlock("approval_gate") || spec.approvalRequiredTools.includes("create_task"));
+  const afterClaim = intent === "after_service" ? parseAfterServiceClaim(text) : null;
+  const hasApprovalGate = hasBlock("approval_gate") || spec.approvalRequiredTools.includes("create_task");
+  const needsAfterServiceApproval = Boolean(
+    intent === "after_service" &&
+    (afterClaim?.requestsRemedy || hasApprovalKeyword(text)) &&
+    hasApprovalGate
+  );
+  const needsApproval = (intent === "approval_action" && hasApprovalGate) || needsAfterServiceApproval;
   if (needsApproval) {
     let remaining = null;
     if (trialService) {
@@ -261,23 +322,30 @@ async function executeWorkflowTurn({
         };
       }
     }
+    const domain = needsAfterServiceApproval ? "after_service" : "sales";
+    const orderTag = afterClaim?.orderNumber ? ` [Order ${afterClaim.orderNumber}]` : "";
     let proposalId = null;
     if (typeof proposeNote === "function") {
+      const noteText = needsAfterServiceApproval
+        ? `After-service warranty approval (${tenant.clientCode || tenant.clientAccountId}/${spec.agentCode})${orderTag}: ${text.slice(0, 260)}`
+        : `Approval requested (${tenant.clientCode || tenant.clientAccountId}/${spec.agentCode}): ${text.slice(0, 300)}`;
       proposalId = await proposeNote(
-        `Approval requested (${tenant.clientCode || tenant.clientAccountId}/${spec.agentCode}): ${text.slice(0, 300)}`,
+        noteText,
         "general",
         tenant.operatorLineUserId || threadId,
         "create_task",
-        { title: text.slice(0, 200), domain: "sales" },
+        { title: text.slice(0, 200), domain, ...(afterClaim?.orderNumber ? { orderNumber: afterClaim.orderNumber } : {}) },
         tenant.clientAccountId,
-        "sales",
+        domain,
       );
     }
     let handoverState = HANDOVER_STATES.AWAITING_APPROVAL;
     if (handoverStore) {
       const updated = await handoverStore.transition(tenant.clientAccountId, channelType, threadId, "stage_approval", {
         actor: spec.agentCode,
-        reason: "Approval required before executing action or discount",
+        reason: needsAfterServiceApproval
+          ? `After-service warranty replacement/credit approval${orderTag}`
+          : "Approval required before executing action or discount",
       });
       handoverState = updated.state;
     }
@@ -292,12 +360,15 @@ async function executeWorkflowTurn({
     }
     const replyText = formatStyledReply(
       spec,
-      `This request requires human approval before execution${proposalId ? ` (Proposal #${proposalId})` : ""}. A human operator has been notified and will confirm shortly.`
+      needsAfterServiceApproval
+        ? `After-Service claim logged${afterClaim?.orderNumber ? ` for Order ${afterClaim.orderNumber}` : ""}. Because warranty replacements, credits, or discounts require human approval${proposalId ? ` (Proposal #${proposalId})` : ""}, our After-Service team has been notified and will confirm shortly.`
+        : `This request requires human approval before execution${proposalId ? ` (Proposal #${proposalId})` : ""}. A human operator has been notified and will confirm shortly.`
     );
     await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "awaiting_approval", elapsedMs: Date.now() - startedAt });
     return {
       replied: true,
       requiresApproval: true,
+      ...(needsAfterServiceApproval ? { afterServiceClaim: { orderNumber: afterClaim?.orderNumber || null, requestsRemedy: true, stagedForApproval: true } } : {}),
       proposalId,
       handoverState,
       remaining,
@@ -327,6 +398,27 @@ async function executeWorkflowTurn({
   }
 
   try {
+    if (intent === "after_service") {
+      const orderNumber = afterClaim?.orderNumber || null;
+      const bodyText = orderNumber
+        ? `After-Service Care: Logged warranty case for Order ${orderNumber}. Please attach photo evidence of the delivery condition so our dedicated After-Service team can verify and resolve your claim.`
+        : "After-Service Care: Please share your order number (e.g. PO12345 or DG-1042) and photo evidence of the issue so our dedicated After-Service team can verify your warranty and stage a resolution.";
+      const replyText = formatStyledReply(spec, bodyText);
+      await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
+      return {
+        replied: true,
+        handoverState: HANDOVER_STATES.AI_ACTIVE,
+        remaining,
+        afterServiceClaim: {
+          orderNumber,
+          requestsRemedy: Boolean(afterClaim?.requestsRemedy),
+          stagedForApproval: false,
+        },
+        text: replyText,
+        blocksExecuted: ["instructions", "decisions", "reply"],
+      };
+    }
+
     if (intent === "lead_time" && hasBlock("lead_time") && spec.allowedTools.includes("get_lead_time")) {
       const replyText = formatStyledReply(spec, `Standard production lead time is ${defaultLeadTimeDays} days. Share your order number for an order-specific date.`);
       await emitOptionalTrace(traceHook, { clientAccountId: tenant.clientAccountId, agentCode: spec.agentCode, channelType, intent, status: "completed", elapsedMs: Date.now() - startedAt });
@@ -467,6 +559,9 @@ async function executeWorkflowTurn({
 module.exports = {
   BLOCK_CATALOG,
   DEFAULT_ARIA_WORKFLOW,
+  ROLE_WORKFLOW_PRESETS,
+  resolveRolePreset,
+  parseAfterServiceClaim,
   validateWorkflowSpec,
   parseQuoteDimensions,
   detectIntent,

@@ -132,6 +132,78 @@ const AGENT_SEED_CASES = {
   "audit-rule-verifier": { case_key: "CASE-AUD-VER-001", title: "Verify zero cross-agent mixing and 100% individual + team coverage on every audit", context_summary: "32 agents across 11 teams maintain separate individual JSONL ledgers and curated team JSON files.", observation: "Accidental writes to the wrong agent file or duplicate keys silently corrupt future LLM retrieval.", verified_action: "Audit every individual JSONL and team JSON file for agent_id/team_id purity, zero duplicate keys, zero secrets, and 100% roster coverage.", evidence_ref: "platform/test/org-council-and-learning.test.js", outcome: "verified", severity: "high" },
 };
 
+const WAVE2_AGENT_CASES = [
+  {
+    agent_id: "after-warranty-care",
+    case_key: "CASE-AFT-WRN-002",
+    supersedes_case_key: "CASE-AFT-WRN-001",
+    title: "Enforce deterministic After-Service order evidence check and warranty replacement approval gate",
+    context_summary: "Post-delivery warranty claims must stay separated from frontline sales quotes and require order evidence before staging replacements.",
+    observation: "Added ROLE_WORKFLOW_PRESETS.after_service and parseAfterServiceClaim in workflow-runtime.js to detect warranty/defect claims, prompt for missing order numbers, and gate replacement/credit remedies.",
+    verified_action: "When an after_service claim includes an order number and requests a replacement or credit, stage a domain='after_service' approval proposal and transition the thread to awaiting_approval.",
+    evidence_ref: "U29 / platform/src/lib/workflow-runtime.js & test/trial-workflow-runtime.test.js",
+    outcome: "improved",
+    severity: "high",
+  },
+  {
+    agent_id: "web-ux-architect",
+    case_key: "CASE-WEB-UX-002",
+    supersedes_case_key: "CASE-WEB-UX-001",
+    title: "Hydrate live 11-Team / 32-Agent AI Organization Hub on /neurohands with canonical teamId bindings",
+    context_summary: "Customers and operators inspecting /neurohands need clear visibility into the 11 specialized teams, separate After-Service role, and 3 Final Governance teams.",
+    observation: "Added #nh-org-hub and 4 role preset options in neurohands-builder.html, binding directly to canonical teamId and managerAgentId fields from GET /api/org/roster.",
+    verified_action: "Render all 11 team cards using safe DOM creation (document.createElement + textContent) with 0px horizontal overflow across 390x844, 768x1024, and 1440x900 viewports.",
+    evidence_ref: "U29 / platform/assets/neurohands-builder.html & scripts/verify-trial-pilot.mjs",
+    outcome: "improved",
+    severity: "medium",
+  },
+  {
+    agent_id: "sec-manager",
+    case_key: "CASE-SEC-MGR-002",
+    supersedes_case_key: "CASE-SEC-MGR-001",
+    title: "Achieve 0 ERROR and 0 WARN on live Supabase Security Advisor via non-destructive ALTER POLICY and SECURITY INVOKER",
+    context_summary: "Applying migrations on live Supabase darxiaearohhnxiwhcbs required eliminating legacy user_metadata RLS policies without destructive DROP commands.",
+    observation: "In-place ALTER POLICY and ALTER FUNCTION ... SECURITY INVOKER updated all live policies and RPCs non-destructively without triggering confirmation cancellations.",
+    verified_action: "Use non-destructive ALTER POLICY to enforce app_metadata-only tenant guards and verify 0 ERROR / 0 WARN via Supabase Security Advisor.",
+    evidence_ref: "U28-U29 / Supabase darxiaearohhnxiwhcbs (12/12 migrations live)",
+    outcome: "improved",
+    severity: "critical",
+  },
+  {
+    agent_id: "cmd-director",
+    case_key: "CASE-CMD-DIR-002",
+    supersedes_case_key: "CASE-CMD-DIR-001",
+    title: "Coordinate multi-team delegation wave across operational specialists and 3 Final Governance Auditors",
+    context_summary: "Founder requested full multi-agent delegation across all teams to complete Neurohands with synchronized learning across Notion, Supabase, GitHub, Railway, and LangSmith.",
+    observation: "Disjoint slices (Slice A workflow-runtime role parity, Slice B /neurohands 11-Team Org Hub, Slice C Wave-2 append-only learning, and 3-Team Governance Audit) prevented file conflicts.",
+    verified_action: "Verify each delegated slice with deterministic tests before advancing and record append-only Wave-2 learnings linked via supersedes_id.",
+    evidence_ref: "U29 / ai_org_learning_hub_plan.md",
+    outcome: "verified",
+    severity: "high",
+  },
+];
+
+const WAVE2_TEAM_PATTERNS = [
+  {
+    team_id: "after-service",
+    pattern_key: "PAT-AFTER-002",
+    supersedes_pattern_key: "PAT-AFTER-001",
+    title: "Deterministic Order-Evidence Capture & Human-Gated Warranty Remedy Execution",
+    standard_playbook: "Provision After-Service workflows with dedicated warranty instructions and keywords, extract order numbers via parseAfterServiceClaim, prompt for order ID + defect photo when missing, and stage domain='after_service' approval proposals whenever replacement or credit is requested.",
+    guardrail_rule: "Never auto-approve warranty replacements or credits without an order reference and explicit human operator approval.",
+    source_case_keys: ["CASE-AFT-MGR-001", "CASE-AFT-WRN-001", "CASE-AFT-WRN-002", "CASE-AFT-RET-001"],
+  },
+  {
+    team_id: "security-guard",
+    pattern_key: "PAT-SEC-002",
+    supersedes_pattern_key: "PAT-SEC-001",
+    title: "Non-Destructive Live RLS Policy Evolution & Zero-Warning Supabase Security Posture",
+    standard_playbook: "Evolve live production RLS policies in-place with ALTER POLICY using server-signed app_metadata and regex-guarded bigint casts, run RPCs as SECURITY INVOKER where service_role/RLS permits, and verify 0 ERROR / 0 WARN on Supabase Security Advisor.",
+    guardrail_rule: "Never use destructive DROP/TRUNCATE on live production learning or tenant tables, and never leave any Security Advisor ERROR or WARN unresolved.",
+    source_case_keys: ["CASE-SEC-MGR-001", "CASE-SEC-MGR-002", "CASE-SEC-RED-001"],
+  },
+];
+
 function readJsonl(filePath) {
   if (!fs.existsSync(filePath)) return [];
   return fs.readFileSync(filePath, "utf8")
@@ -293,6 +365,37 @@ function main() {
     individualAdded += 1;
   }
 
+  const wave2Iso = "2026-11-22T11:18:00+07:00";
+  for (const w2 of WAVE2_AGENT_CASES) {
+    const agent = roster.agentById.get(w2.agent_id);
+    if (!agent) throw new Error(`Unknown wave2 agent ${w2.agent_id}`);
+    const filePath = path.join(indDir, `${agent.agentId}.jsonl`);
+    const existing = readJsonl(filePath);
+    if (existing.some((r) => r.case_key === w2.case_key)) {
+      individualSkipped += 1;
+      continue;
+    }
+    const row = {
+      id: deterministicUuid(`ind:${agent.agentId}:${w2.case_key}`),
+      agent_id: agent.agentId,
+      team_id: agent.teamId,
+      case_key: w2.case_key,
+      title: w2.title,
+      context_summary: w2.context_summary,
+      observation: w2.observation,
+      verified_action: w2.verified_action,
+      evidence_ref: w2.evidence_ref,
+      outcome: w2.outcome,
+      severity: w2.severity,
+      supersedes_id: w2.supersedes_case_key
+        ? deterministicUuid(`ind:${agent.agentId}:${w2.supersedes_case_key}`)
+        : null,
+      created_at: wave2Iso,
+    };
+    fs.appendFileSync(filePath, `${JSON.stringify(row)}\n`, "utf8");
+    individualAdded += 1;
+  }
+
   for (const team of roster.teams) {
     const seed = TEAM_SEED_PATTERNS[team.teamId];
     if (!seed) throw new Error(`Missing team seed for ${team.teamId}`);
@@ -329,6 +432,34 @@ function main() {
     }
   }
 
+  for (const w2 of WAVE2_TEAM_PATTERNS) {
+    const team = roster.teamById.get(w2.team_id);
+    if (!team) throw new Error(`Unknown wave2 team ${w2.team_id}`);
+    const filePath = path.join(teamDir, `${team.teamId}.json`);
+    const doc = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    if (doc.patterns.some((p) => p.pattern_key === w2.pattern_key)) {
+      teamSkipped += 1;
+      continue;
+    }
+    doc.patterns.push({
+      id: deterministicUuid(`team:${team.teamId}:${w2.pattern_key}`),
+      team_id: team.teamId,
+      pattern_key: w2.pattern_key,
+      title: w2.title,
+      standard_playbook: w2.standard_playbook,
+      guardrail_rule: w2.guardrail_rule,
+      source_case_keys: w2.source_case_keys,
+      curated_by: team.managerAgentId,
+      supersedes_id: w2.supersedes_pattern_key
+        ? deterministicUuid(`team:${team.teamId}:${w2.supersedes_pattern_key}`)
+        : null,
+      created_at: wave2Iso,
+    });
+    doc.updated_at = wave2Iso;
+    fs.writeFileSync(filePath, `${JSON.stringify(doc, null, 2)}\n`, "utf8");
+    teamAdded += 1;
+  }
+
   const existingReports = readJsonl(REPORTS_PATH);
   let reportsAdded = 0;
   if (!existingReports.some((r) => r.report_code === "RPT-BASELINE-001")) {
@@ -345,7 +476,23 @@ function main() {
       created_at: nowIso,
     };
     fs.appendFileSync(REPORTS_PATH, `${JSON.stringify(baseline)}\n`, "utf8");
-    reportsAdded = 1;
+    reportsAdded += 1;
+  }
+  if (!existingReports.some((r) => r.report_code === "RPT-COMPLETE-002")) {
+    const completionReport = {
+      id: deterministicUuid("report:RPT-COMPLETE-002"),
+      report_code: "RPT-COMPLETE-002",
+      team_id: "central-command",
+      author_agent_id: "cmd-synthesizer",
+      channel: "founder",
+      title: "Neurohands Full 11-Team / 32-Agent Project Completion & Multi-Platform Sync",
+      summary: "Completed multi-agent delegation across Central Command, 7 Operational Teams (including separate Frontline Customer Service vs After-Service & Sales/Marketing), and 3 Final Governance Teams (Health, Security, Audit) with 12/12 live Supabase migrations (0 ERROR / 0 WARN), live /neurohands 11-Team Hub, and synchronized GitHub, Supabase, Railway, LangSmith, and Notion ledgers.",
+      metrics: { teams: roster.teams.length, agents: roster.agents.length, individual_cases: 36, team_patterns: 13, supabase_migrations_live: 12, security_advisor_warnings: 0 },
+      delivery_status: "recorded",
+      created_at: wave2Iso,
+    };
+    fs.appendFileSync(REPORTS_PATH, `${JSON.stringify(completionReport)}\n`, "utf8");
+    reportsAdded += 1;
   }
 
   fs.writeFileSync(HANDBOOK_PATH, renderHandbook(roster), "utf8");

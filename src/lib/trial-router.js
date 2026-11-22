@@ -9,7 +9,14 @@ const { equalSecret, extractApiKey } = require("./security");
 const { createHandoverStore, CHANNEL_TYPES } = require("./conversation-handover");
 const { DEFAULT_TRIAL_LIMITS, createTrialQuotaService } = require("./trial-quota");
 const { GROUP_MODES, normalizeGroupPolicy } = require("./line-group-router");
-const { BLOCK_CATALOG, DEFAULT_ARIA_WORKFLOW, validateWorkflowSpec, executeWorkflowTurn } = require("./workflow-runtime");
+const {
+  BLOCK_CATALOG,
+  DEFAULT_ARIA_WORKFLOW,
+  ROLE_WORKFLOW_PRESETS,
+  resolveRolePreset,
+  validateWorkflowSpec,
+  executeWorkflowTurn,
+} = require("./workflow-runtime");
 
 const LESSONS_FILE = path.join(__dirname, "../../docs/DEV_LESSONS_LEDGER.json");
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -189,6 +196,7 @@ function createTrialRouter({
       ok: true,
       blocks: BLOCK_CATALOG,
       defaultWorkflow: DEFAULT_ARIA_WORKFLOW,
+      rolePresets: ROLE_WORKFLOW_PRESETS,
       defaultTrialLimits: DEFAULT_TRIAL_LIMITS,
       groupModes: GROUP_MODES,
       lineNote: "LINE Official Account group chats require Group Access enabled in LINE Official Account Manager, and LINE allows only one Official Account per group.",
@@ -232,7 +240,8 @@ function createTrialRouter({
     if (!account?.id) throw new TrialHttpError(503, "Could not provision trial account");
 
     const trial = await trialService.provisionTrial(account.id, { ...DEFAULT_TRIAL_LIMITS, ownerEmail: email });
-    const initialSpec = validateWorkflowSpec({ ...DEFAULT_ARIA_WORKFLOW, role });
+    const preset = resolveRolePreset(role);
+    const initialSpec = validateWorkflowSpec({ ...preset, role });
     const createdWf = await db("nh_agent_workflows", {
       method: "POST",
       headers: { Prefer: "return=representation" },
