@@ -2298,6 +2298,18 @@ app.get("/assets/guides/:file", (req, res) => {
   return res.type("image/png").sendFile(fullPath);
 });
 
+const BRAND_ASSET_DIR = path.resolve(__dirname, "../assets/brand");
+app.get("/assets/brand/:file", (req, res) => {
+  const file = String(req.params.file || "");
+  if (!/^[a-z0-9-]+\.png$/.test(file)) return res.status(404).end();
+  const fullPath = path.resolve(BRAND_ASSET_DIR, file);
+  if (!fullPath.startsWith(BRAND_ASSET_DIR + path.sep) || !fs.existsSync(fullPath)) {
+    return res.status(404).end();
+  }
+  res.set({ "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" });
+  return res.type("image/png").sendFile(fullPath);
+});
+
 app.get(["/neurohands", "/website", "/preview"], (_req, res) => {
   res.set({
     "Cache-Control": "no-store",

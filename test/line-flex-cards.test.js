@@ -271,9 +271,20 @@ test("GET /assets/guides/:file serves allowlisted guide PNGs with caching and bl
     "/assets/guides/GUIDE-WELCOME.PNG",
     "/assets/guides/nonexistent-guide.png",
     "/assets/guides/nested/guide-welcome.png",
+    "/assets/brand/..%2Fserver.js",
+    "/assets/brand/nonexistent.png",
   ]) {
     const res = await fetch(`${base}${badPath}`);
     assert.equal(res.status, 404, `Expected 404 for ${badPath}`);
+  }
+
+  for (const brandFile of ["line-oa-cover.png", "line-oa-avatar.png"]) {
+    const res = await fetch(`${base}/assets/brand/${brandFile}`);
+    assert.equal(res.status, 200, `Expected 200 for ${brandFile}`);
+    assert.match(res.headers.get("content-type") || "", /image\/png/);
+    assert.equal(res.headers.get("x-content-type-options"), "nosniff");
+    const bytes = Buffer.from(await res.arrayBuffer());
+    assert.deepEqual(bytes.subarray(0, 4), Buffer.from([0x89, 0x50, 0x4e, 0x47]), `${brandFile} must be a PNG`);
   }
 });
 
