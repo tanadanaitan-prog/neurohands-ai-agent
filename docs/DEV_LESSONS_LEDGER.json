@@ -107,7 +107,16 @@
       "root_cause": "Live LINE run #83 ('show me your update menu') fell through to free-form LLM plain text with Markdown syntax that LINE does not render; syncDefaultRichMenus only ran on explicit 'richmenu: sync' and did not re-link per-user Rich Menus; run #84 ('update the ai agent team') failed on 'AI Operations' department validation and sticky ctx.toolFailed after proposal #2 succeeded.",
       "approved_fix": "Auto-sync the 2500x1686 Midnight Navy Rich Menus on startup when richmenu_theme_version changes and re-link FOUNDER_LINE_ID + active client bindings; route natural update menu / AI agent team / activation phrases to LINE Flex Cards; strip Markdown in outputGuardrail (stripLineMarkdown); expand normalizeDepartment ('AI Operations' -> 'operations', 'After-Service' -> 'support'); and clear sticky ToolInputError ctx.toolFailed when a proposal is subsequently saved.",
       "regression_test": "platform/test/jarvis-runtime.test.js & platform/test/line-console.test.js",
-      "verified_commit": "u30-line-richmenu-and-markdown-fix",
+      "verified_commit": "c1ca356b2fdba895e2039a622893d3b8424feba9",
+      "status": "verified"
+    },
+    {
+      "id": "LES-013",
+      "error_signature": "Opaque white-background JPEG logo clashed with Midnight Navy header in mobile view and forced dark mode; light gradient hero text dimmed on Edge iOS Dark Mode",
+      "root_cause": "neurohands-builder.html embedded an opaque white-background JPEG for #logo-img and #favicon inside a white .logo pill and .tour-mark box, leaving a stark white rectangle inside the Midnight Navy header on mobile dark mode, while #E0F2FE in .hero h1 em inverted to dull slate.",
+      "approved_fix": "Replace #logo-img with a transparent 480x78 RGBA PNG of the official glowing cyan handshake + white NEUROHANDS wordmark on a transparent .logo anchor, replace #favicon/.tour-mark with a 96x96 Midnight Navy + Electric Cyan rounded-square icon PNG, set .flogo on a matching Midnight Navy pill, add meta theme-color #060D28, keep mobile .hero h1 em in luminous #38BDF8, and verify on Phone/Tablet/Laptop in verify-trial-pilot.mjs.",
+      "regression_test": "platform/scripts/verify-trial-pilot.mjs (logoAudit across 390x844, 768x1024, 1440x900) & platform/test/trial-api-and-line-group.test.js",
+      "verified_commit": "u31-mobile-logo-brand-sync",
       "status": "verified"
     }
   ]

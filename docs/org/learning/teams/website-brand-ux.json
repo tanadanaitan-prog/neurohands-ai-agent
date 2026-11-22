@@ -21,6 +21,20 @@
       "curated_by": "web-manager",
       "supersedes_id": null,
       "created_at": "2026-11-22T10:00:00+07:00"
+    },
+    {
+      "id": "f5a2d362-b7c5-403e-9b56-84b2f5e36174",
+      "team_id": "website-brand-ux",
+      "pattern_key": "PAT-WEB-002",
+      "title": "Transparent Dark-Surface Brand Assets & Forced-Dark-Mode Immunity on Mobile",
+      "standard_playbook": "Always embed transparent RGBA PNG/SVG brand wordmarks for dark Midnight Navy headers, pair footer wordmarks with a matching Midnight Navy pill, set <meta name='theme-color' content='#060D28'>, and verify mobile hero & logo transparency automatically in verify-trial-pilot.mjs.",
+      "guardrail_rule": "Never embed opaque white-background JPEGs inside dark Midnight Navy headers, tour cards, or mobile dark-mode surfaces.",
+      "source_case_keys": [
+        "CASE-WEB-DES-002"
+      ],
+      "curated_by": "web-manager",
+      "supersedes_id": null,
+      "created_at": "2026-11-23T00:16:00+07:00"
     }
   ]
 }

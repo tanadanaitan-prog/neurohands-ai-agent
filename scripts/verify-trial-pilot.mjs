@@ -315,6 +315,38 @@ async function runDeviceJourney({ send, evaluate, consoleErrors }, url, device) 
   const overflowBefore = await evaluate("document.documentElement.scrollWidth - window.innerWidth");
   assert.ok(overflowBefore <= 1, `${device.name} overflow before signup: ${overflowBefore}px`);
 
+  const logoAudit = await evaluate(`(() => {
+    const a = document.querySelector('a.logo');
+    const img = document.getElementById('logo-img');
+    const flogo = document.getElementById('footer-logo');
+    if (!a || !img || !flogo) return null;
+    const aBg = getComputedStyle(a).backgroundColor;
+    const fBg = getComputedStyle(flogo).backgroundImage;
+    return {
+      isPng: img.src.startsWith('data:image/png;base64,'),
+      complete: img.complete && img.naturalWidth === 480 && img.naturalHeight === 78,
+      headerTransparent: aBg === 'rgba(0, 0, 0, 0)',
+      footerNavyGrad: fBg.includes('gradient'),
+      logoWidth: Math.round(img.getBoundingClientRect().width),
+      logoHeight: Math.round(img.getBoundingClientRect().height),
+    };
+  })()`);
+  assert.ok(logoAudit && logoAudit.isPng && logoAudit.complete, `${device.name} logo PNG failed check: ${JSON.stringify(logoAudit)}`);
+  assert.equal(logoAudit.headerTransparent, true, `${device.name} header .logo must be transparent, got ${JSON.stringify(logoAudit)}`);
+  assert.equal(logoAudit.footerNavyGrad, true, `${device.name} footer logo must sit on Midnight Navy pill`);
+
+  if (process.env.PILOT_SHOTS_DIR && device.name === "phone") {
+    fs.mkdirSync(process.env.PILOT_SHOTS_DIR, { recursive: true });
+    await evaluate(`(() => {
+      const skip = document.querySelector('[data-testid="tour-skip"]');
+      if (skip) skip.click();
+      window.scrollTo(0, 0);
+    })()`);
+    await sleep(220);
+    const shotPhoneHero = await send("Page.captureScreenshot", { format: "png" });
+    fs.writeFileSync(path.join(process.env.PILOT_SHOTS_DIR, "v2_pilot_phone_hero.png"), Buffer.from(shotPhoneHero.data, "base64"));
+  }
+
   const paletteWorks = await evaluate(`(() => {
     const btn = document.querySelector('.pblock');
     if (!btn) return false;
