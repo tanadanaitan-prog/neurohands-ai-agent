@@ -134,6 +134,7 @@ const agentApiIdempotency = createAgentApiIdempotency({ db });
 const sentry = telemetry.createSentry({ env: process.env });
 
 const app = express();
+app.set("trust proxy", 1);
 app.use("/webhook", express.raw({ type: "*/*", limit: "1mb" }));
 // Preserve uploaded bytes even when the sender supplies a JSON content type.
 app.use((req, res, next) => req.path === "/api/upload" ? next() : express.json()(req, res, next));
@@ -469,12 +470,12 @@ async function callFallbackChat(bodyExtra, allowToolCalls = Boolean(bodyExtra.to
 
 const NEUROHANDS_PREVIEW_URL = "https://neurohands-ai-agent-production.up.railway.app/neurohands";
 const RICHMENU_THEME_VERSION = "2026-11-22-midnight-navy-v2";
-const DEFAULT_PUBLIC_UPDATES = `📢 Neurohands Updates\n\n1. 11-Team / 32-Agent AI Organization & Guided 4-Step Free Trial:\n${NEUROHANDS_PREVIEW_URL}\nDesign and test your custom AI agent team (Frontline Customer Service Aria, separate After-Service Warranty Care, Sales & Quotes Suri, Marketing Mira, and Jarvis Human Approval Gate) in English & Thai.\n\n2. Private Hardware Data Ownership + 24/7 Cloud Operation:\nYour company's business data, catalogs, and documents are stored and saved on your own private hardware, while our cloud platform keeps your LINE agent running 24/7 with automatic backup.\n\n3. 6-Platform Sync: GitHub • Supabase • Railway • LINE OA • LangSmith • Notion.\nSend the word demo anytime to book a tailored walkthrough.`;
+const DEFAULT_PUBLIC_UPDATES = `📢 Neurohands Updates\n\n1. 11-Team / 35-Agent AI Organization & Guided 4-Step Free Trial:\n${NEUROHANDS_PREVIEW_URL}\nDesign and test your custom AI agent team (Frontline Customer Service Aria, separate After-Service Warranty Care, Sales & Quotes Suri, Marketing Mira, and Jarvis Human Approval Gate) in English & Thai.\n\n2. Private Hardware Data Ownership + 24/7 Cloud Operation:\nYour company's business data, catalogs, and documents are stored and saved on your own private hardware, while our cloud platform keeps your LINE agent running 24/7 with automatic backup.\n\n3. 6-Platform Sync: GitHub • Supabase • Railway • LINE OA • LangSmith • Notion.\nSend the word demo anytime to book a tailored walkthrough.`;
 
 const BRAND_COPY = {
-  about: `Neurohands — Custom AI Agent Platform for LINE.\n\nWe build your own custom AI agent team (Aria for frontline customer service & orders, separate After-Service for warranty & claims, Suri for sales quotes, Mira for marketing, and Jarvis for owner approvals) inside your LINE Official Account, backed by our 11-Team / 32-Agent AI Organization.\n\n🔒 Private Hardware Data Storage + 24/7 Cloud Operation:\n• Private Hardware Storage: Your company's business data, catalogs, and documents are stored and saved on your own private hardware so you keep full ownership.\n• 24/7 Cloud Operation & Backup: Our cloud platform keeps your LINE AI agent running around the clock with automatic backup.\n\n🧩 Design & preview your custom AI agent:\n${NEUROHANDS_PREVIEW_URL}`,
+  about: `Neurohands — Custom AI Agent Platform for LINE.\n\nWe build your own custom AI agent team (Aria for frontline customer service & orders, separate After-Service for warranty & claims, Suri for sales quotes, Mira for marketing, and Jarvis for owner approvals) inside your LINE Official Account, backed by our 11-Team / 35-Agent AI Organization.\n\n🔒 Private Hardware Data Storage + 24/7 Cloud Operation:\n• Private Hardware Storage: Your company's business data, catalogs, and documents are stored and saved on your own private hardware so you keep full ownership.\n• 24/7 Cloud Operation & Backup: Our cloud platform keeps your LINE AI agent running around the clock with automatic backup.\n\n🧩 Design & preview your custom AI agent:\n${NEUROHANDS_PREVIEW_URL}`,
   services: `What Neurohands Does for Your Business\n\n• 24/7 frontline AI customer service (enquiries, live order tracking) + separate After-Service team (warranty, defect evidence & claims)\n• Automated B2B quotations & sales follow-up with owner Approval Gate (Jarvis)\n• Verified business document & catalog answers\n• Private-Hardware Data Storage: Save and store your own operational data on your private hardware, paired with 24/7 cloud operation and backup\n\n👉 Build & preview your custom LINE AI agent:\n${NEUROHANDS_PREVIEW_URL}`,
-  projects: `Neurohands Custom AI Agent Builder\n\n• Interactive LINE AI Agent Builder:\n${NEUROHANDS_PREVIEW_URL}\n• 11-Team / 32-Agent AI Organization tailored for Glass & Aluminium, Building Materials, Auto Parts, and B2B businesses\n• Private Hardware + Cloud Platform: Keep your company's data saved on your own private hardware while your AI agent serves customers 24/7 on LINE\n• 3 Final Governance Teams: Health, Security, and Audit`,
+  projects: `Neurohands Custom AI Agent Builder\n\n• Interactive LINE AI Agent Builder:\n${NEUROHANDS_PREVIEW_URL}\n• 11-Team / 35-Agent AI Organization tailored for Glass & Aluminium, Building Materials, Auto Parts, and B2B businesses\n• Private Hardware + Cloud Platform: Keep your company's data saved on your own private hardware while your AI agent serves customers 24/7 on LINE\n• 3 Final Governance Teams: Health, Security, and Audit`,
   contact: `Contact Neurohands\n\nLINE Official Account: this chat\nHours: 08:00–18:00, Monday–Saturday (Bangkok time)\nInteractive Builder & Docs: ${NEUROHANDS_PREVIEW_URL}\nBook a demo: send demo in chat`,
   activate: `Get started\n\n🧩 Build & preview your custom AI agent online:\n${NEUROHANDS_PREVIEW_URL}\n\n✔ Existing client:\nUse the full private activation code supplied by your team. Send the word activate, a space, then the complete code beginning NH-.\n\nCopy the full code, not its shortened hint. Keep it private.\n\n✚ New to Neurohands:\nsend the word: demo\nand our team will arrange a tailored demo within business hours (08:00–18:00, Mon–Sat).`,
 };
@@ -2947,7 +2948,18 @@ app.post("/webhook", asyncRoute(async (req, res) => {
   webhookInbox.wake();
 }));
 
-app.get("/", (_, res) => res.send("Neurohands v3.10 agent gateway is running"));
+const CUSTOM_DOMAIN_HOSTS = new Set(["www.neurohands.com", "neurohands.com"]);
+function isCustomDomainHost(req) {
+  const host = String(req.hostname || "").trim().toLowerCase().replace(/\.+$/, "");
+  return CUSTOM_DOMAIN_HOSTS.has(host);
+}
+
+app.get("/", (req, res) => {
+  if (isCustomDomainHost(req)) {
+    return res.redirect(302, "/neurohands#trial-workspace");
+  }
+  return res.send("Neurohands v3.10 agent gateway is running");
+});
 app.get("/version", (_, res) => res.json({ version: "3.10.0", commit: process.env.RAILWAY_GIT_COMMIT_SHA || "unknown" }));
 app.get("/ready", asyncRoute(async (_, res) => {
   res.set("Cache-Control", "no-store");

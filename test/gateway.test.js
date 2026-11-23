@@ -39,7 +39,7 @@ async function serve(t, app) {
     const req = http.request({ hostname: "127.0.0.1", port: server.address().port, path, method, headers }, (res) => {
       let text = "";
       res.on("data", (chunk) => { text += chunk; });
-      res.on("end", () => resolve({ status: res.statusCode, text }));
+      res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, text }));
     });
     req.on("error", reject);
     req.end(body);
@@ -244,4 +244,36 @@ test("secret comparison and modern/legacy Supabase headers", () => {
   assert.deepEqual(supabaseHeaders("sb_secret_test-only"), { apikey: "sb_secret_test-only" });
   assert.deepEqual(supabaseHeaders("legacy-test-jwt"), { apikey: "legacy-test-jwt", Authorization: "Bearer legacy-test-jwt" });
   assert.throws(() => supabaseHeaders(""), /required/);
+});
+
+test("host-aware root routing redirects www.neurohands.com and neurohands.com to /neurohands#trial-workspace while preserving default gateway health", async (t) => {
+  const { app } = loadGateway();
+  const request = await serve(t, app);
+
+  const localRoot = await request("/");
+  assert.equal(localRoot.status, 200);
+  assert.equal(localRoot.text, "Neurohands v3.10 agent gateway is running");
+
+  const railwayRoot = await request("/", { headers: { host: "neurohands-ai-agent-production.up.railway.app" } });
+  assert.equal(railwayRoot.status, 200);
+  assert.equal(railwayRoot.text, "Neurohands v3.10 agent gateway is running");
+
+  const untrustedRoot = await request("/", { headers: { host: "evil.example.com" } });
+  assert.equal(untrustedRoot.status, 200);
+  assert.equal(untrustedRoot.text, "Neurohands v3.10 agent gateway is running");
+
+  for (const domainHeaders of [
+    { host: "www.Neurohands.com" },
+    { host: "neurohands.com" },
+    { host: "www.neurohands.com:443" },
+    { host: "internal-railway-hop", "x-forwarded-host": "www.neurohands.com" },
+  ]) {
+    const res = await request("/", { headers: domainHeaders });
+    assert.equal(res.status, 302, `Expected 302 for ${JSON.stringify(domainHeaders)}`);
+    assert.equal(res.headers.location, "/neurohands#trial-workspace");
+  }
+
+  const versionRes = await request("/version", { headers: { host: "www.neurohands.com" } });
+  assert.equal(versionRes.status, 200);
+  assert.match(versionRes.text, /"version":"3\.10\.0"/);
 });

@@ -823,11 +823,11 @@ Laminated Clear 12mm | 185 | Safety laminated architectural glass</textarea></di
   </div>
  </div>
  <div class="card" id="nh-org-hub" data-testid="nh-org-hub">
-  <h3>11-Team / 32-Agent AI Organization &amp; 3-Team Governance Hub</h3>
+  <h3>11-Team / 35-Agent AI Organization &amp; 3-Team Governance Hub</h3>
   <p class="small">Every agent operates inside a strictly bounded role with case-by-case JSONL memory, team-level shared lessons, manager promotion review, and final Health, Security, and Audit governance gates.</p>
   <div class="org-hub-pills">
    <span class="org-pill" id="org-team-count">11 Specialized Teams</span>
-   <span class="org-pill" id="org-agent-count">32 Role-Isolated Agents</span>
+   <span class="org-pill" id="org-agent-count">35 Role-Isolated Agents</span>
    <span class="org-pill gov">3 Final Governance Teams: Health · Security · Audit</span>
    <span class="org-pill sync">Synced: GitHub · Supabase · Railway · LINE OA · LangSmith · Notion</span>
   </div>
@@ -1683,7 +1683,7 @@ document.getElementById("pr-clear").addEventListener("click",function(){
 });
 
 load(); renderAll(); route();
-if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
+if(!tourSeen()&&location.hash!=="#privacy"&&location.hash!=="#trial-workspace") tourOpen(0);
 (function(){
  var b=document.getElementById("m-cta"); if(!b||!("IntersectionObserver" in window)) return;
  var vis={};
@@ -2040,8 +2040,8 @@ if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
   var DEFAULT_ORG_TEAMS=[
    {teamId:"central-command",name:"Central Executive Command & Strategy Council",tier:"command",managerAgentId:"cmd-director",agentCount:3},
    {teamId:"line-biz-console",name:"LINE Business & Console Development Team",tier:"operations",managerAgentId:"line-manager",agentCount:4},
-   {teamId:"website-brand-ux",name:"Website & Brand Specialist Team",tier:"operations",managerAgentId:"web-manager",agentCount:3},
-   {teamId:"business-dx",name:"Business & Digital Transformation Team",tier:"operations",managerAgentId:"dx-manager",agentCount:3},
+   {teamId:"website-brand-ux",name:"Website & Brand Specialist Team",tier:"operations",managerAgentId:"web-manager",agentCount:5},
+   {teamId:"business-dx",name:"Business & Digital Transformation Team",tier:"operations",managerAgentId:"dx-manager",agentCount:4},
    {teamId:"ai-engineering-arch",name:"AI Engineering & Architecture Team (FE + BE)",tier:"operations",managerAgentId:"eng-manager",agentCount:4},
    {teamId:"customer-service",name:"Customer Service Team (Frontline)",tier:"operations",managerAgentId:"cs-manager",agentCount:3},
    {teamId:"after-service",name:"After-Service & Care Team (Separate Role)",tier:"operations",managerAgentId:"after-manager",agentCount:3},
@@ -2091,7 +2091,7 @@ if(!tourSeen()&&location.hash!=="#privacy") tourOpen(0);
     grid.appendChild(card);
    });
   }
-  renderOrgRoster({teams:DEFAULT_ORG_TEAMS,teamCount:11,agentCount:32});
+  renderOrgRoster({teams:DEFAULT_ORG_TEAMS,teamCount:11,agentCount:35});
   fetch("/api/org/roster").then(function(r){return r.ok?r.json():null;}).then(function(d){if(d)renderOrgRoster(d);}).catch(function(){});
 
   wireGuideImages();

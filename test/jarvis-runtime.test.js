@@ -641,13 +641,13 @@ test("Jarvis routes natural update menu, AI agent team, and activation queries t
   assert.equal(modelCalls, 0);
   const updateMenuMsg = f.line.at(-1).messages[0];
   assert.equal(updateMenuMsg.type, "flex");
-  assert.match(updateMenuMsg.altText, /11-Team \/ 32-Agent AI Organization/);
+  assert.match(updateMenuMsg.altText, /11-Team \/ 35-Agent AI Organization/);
 
   await f.send("update the ai agent team");
   assert.equal(modelCalls, 0);
   const orgMsg = f.line.at(-1).messages[0];
   assert.equal(orgMsg.type, "flex");
-  assert.match(orgMsg.altText, /11 teams, 32 agents/i);
+  assert.match(orgMsg.altText, /11 teams, 35 agents/i);
 
   await f.send("i want to activate my ai agent name testing 1234567890");
   assert.equal(modelCalls, 0);

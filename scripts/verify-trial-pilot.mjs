@@ -495,7 +495,7 @@ async function runDeviceJourney({ send, evaluate, consoleErrors }, url, device) 
   assert.equal(orgAudit.hasCustomerService, true, `${device.name} missing customer-service team card`);
   assert.equal(orgAudit.hasGovernance, true, `${device.name} missing 3 governance team cards`);
   assert.equal(orgAudit.teamLabel, "11 Specialized Teams");
-  assert.equal(orgAudit.agentLabel, "32 Role-Isolated Agents");
+  assert.equal(orgAudit.agentLabel, "35 Role-Isolated Agents");
   assert.equal(orgAudit.hasAfterServiceRoleOption, true, `${device.name} missing After-Service role option`);
 
   await send("Page.reload", { ignoreCache: true });

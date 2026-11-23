@@ -2,7 +2,7 @@
 
 > **Mission:** From Thailand to the World — Helping humans learn and grow.  
 > **Vision:** Build trustworthy, human-in-the-loop AI agent teams for LINE Official Accounts and web operations where every business keeps full ownership of its data.  
-> **Schema Version:** `1.0.0` · **Teams:** 11 · **Agents:** 32
+> **Schema Version:** `1.0.0` · **Teams:** 11 · **Agents:** 35
 
 ## 1. Non-Destructive Governance Principles
 
@@ -38,8 +38,8 @@
 | --- | --- | --- | --- | ---: | --- |
 | `central-command` | Central Executive Command & Strategy Council | `command` | `cmd-director` | 3 | `platform/docs/org/learning/teams/central-command.json` |
 | `line-biz-console` | LINE Business & Console Development Team | `operations` | `line-manager` | 4 | `platform/docs/org/learning/teams/line-biz-console.json` |
-| `website-brand-ux` | Website & Brand Synchronized Specialist Team | `operations` | `web-manager` | 3 | `platform/docs/org/learning/teams/website-brand-ux.json` |
-| `business-dx` | Business, Content & Digital Transformation Team | `operations` | `dx-manager` | 3 | `platform/docs/org/learning/teams/business-dx.json` |
+| `website-brand-ux` | Website & Brand Synchronized Specialist Team | `operations` | `web-manager` | 5 | `platform/docs/org/learning/teams/website-brand-ux.json` |
+| `business-dx` | Business, Content & Digital Transformation Team | `operations` | `dx-manager` | 4 | `platform/docs/org/learning/teams/business-dx.json` |
 | `ai-engineering-arch` | AI Engineering & Architecture Team (FE + BE) | `operations` | `eng-manager` | 4 | `platform/docs/org/learning/teams/ai-engineering-arch.json` |
 | `customer-service` | Customer Service Team (Frontline) | `customer` | `cs-manager` | 3 | `platform/docs/org/learning/teams/customer-service.json` |
 | `after-service` | After-Service & Care Team (Separate Role) | `customer` | `after-manager` | 3 | `platform/docs/org/learning/teams/after-service.json` |
@@ -48,7 +48,7 @@
 | `security-guard` | Final Governance Team 2 — Security & Privacy | `governance` | `sec-manager` | 2 | `platform/docs/org/learning/teams/security-guard.json` |
 | `audit-compliance` | Final Governance Team 3 — Audit & Command Compliance | `governance` | `audit-manager` | 2 | `platform/docs/org/learning/teams/audit-compliance.json` |
 
-## 5. Complete AI Agent Roster (32 Agents — Strictly Isolated Individual Learning)
+## 5. Complete AI Agent Roster (35 Agents — Strictly Isolated Individual Learning)
 
 | Agent ID | Display Name | Team ID | Level | Channels | Isolated Individual Learning File |
 | --- | --- | --- | --- | --- | --- |
@@ -62,9 +62,12 @@
 | `web-manager` | Website & Brand Director | `website-brand-ux` | Manager | `web, notion` | `platform/docs/org/learning/individual/web-manager.jsonl` |
 | `web-brand-designer` | Brand Font, Mood & Visual Designer | `website-brand-ux` | Specialist | `web, line_user` | `platform/docs/org/learning/individual/web-brand-designer.jsonl` |
 | `web-ux-architect` | Guided UX & Responsive Architect | `website-brand-ux` | Specialist | `web` | `platform/docs/org/learning/individual/web-ux-architect.jsonl` |
+| `web-ux-device-tester` | Customer Multi-Device UX Tester | `website-brand-ux` | Specialist | `web, line_user` | `platform/docs/org/learning/individual/web-ux-device-tester.jsonl` |
+| `web-color-sync-designer` | Synchronized UI Color Designer | `website-brand-ux` | Specialist | `web, line_user` | `platform/docs/org/learning/individual/web-color-sync-designer.jsonl` |
 | `dx-manager` | Digital Transformation Manager | `business-dx` | Manager | `notion, web, founder` | `platform/docs/org/learning/individual/dx-manager.jsonl` |
 | `dx-content-polisher` | Bilingual Content & Playbook Polisher | `business-dx` | Specialist | `web, line_user, notion` | `platform/docs/org/learning/individual/dx-content-polisher.jsonl` |
 | `dx-workflow-optimizer` | Cross-Team Process Architect | `business-dx` | Specialist | `notion, founder` | `platform/docs/org/learning/individual/dx-workflow-optimizer.jsonl` |
+| `dx-context-wording-specialist` | Context & Content Wording Specialist | `business-dx` | Specialist | `web, line_user, notion` | `platform/docs/org/learning/individual/dx-context-wording-specialist.jsonl` |
 | `eng-manager` | Chief AI Architect | `ai-engineering-arch` | Manager | `founder, web, notion` | `platform/docs/org/learning/individual/eng-manager.jsonl` |
 | `eng-frontend-specialist` | Frontend Interactive Engineer | `ai-engineering-arch` | Specialist | `web` | `platform/docs/org/learning/individual/eng-frontend-specialist.jsonl` |
 | `eng-backend-guardrail` | Backend Data & Guardrail Engineer | `ai-engineering-arch` | Specialist | `web, line_user, line_group` | `platform/docs/org/learning/individual/eng-backend-guardrail.jsonl` |

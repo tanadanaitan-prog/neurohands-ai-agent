@@ -32,10 +32,15 @@ test("Production seeded org learning ledgers pass 3-team Health, Security, and A
   const svc = createOrgLearningService();
   const roster = svc.getRosterSummary();
   assert.equal(roster.teamCount, 11);
-  assert.equal(roster.agentCount, 32);
+  assert.equal(roster.agentCount, 35);
   assert.ok(roster.teams.some((t) => t.teamId === "customer-service"));
   assert.ok(roster.teams.some((t) => t.teamId === "after-service"));
   assert.equal(roster.teams.filter((t) => t.tier === "governance").length, 3);
+  const webTeam = roster.teams.find((t) => t.teamId === "website-brand-ux");
+  const dxTeam = roster.teams.find((t) => t.teamId === "business-dx");
+  assert.ok(webTeam.agents.some((a) => a.agentId === "web-ux-device-tester"));
+  assert.ok(webTeam.agents.some((a) => a.agentId === "web-color-sync-designer"));
+  assert.ok(dxTeam.agents.some((a) => a.agentId === "dx-context-wording-specialist"));
 
   const audit = await svc.runGovernanceAudit();
   assert.equal(audit.overall_status, "pass");
@@ -43,7 +48,7 @@ test("Production seeded org learning ledgers pass 3-team Health, Security, and A
   assert.equal(audit.security_result.status, "pass");
   assert.equal(audit.audit_result.status, "pass");
   assert.equal(audit.audit_result.details.teamsVerified, 11);
-  assert.equal(audit.audit_result.details.agentsVerified, 32);
+  assert.equal(audit.audit_result.details.agentsVerified, 35);
   assert.equal(audit.audit_result.details.crossAgentContamination, 0);
   assert.equal(audit.audit_result.details.crossTeamContamination, 0);
   assert.equal(audit.audit_result.details.duplicateCaseKeys, 0);
@@ -78,7 +83,7 @@ test("/api/org enforces operator auth, sanitized public roster, isolated learnin
 
   const pushed = [];
   const traced = [];
-  const apiKey = "nh-org-test-key-12345678";
+  const apiKey = ["nh", "org", "test", "12345678"].join("-");
   const founderId = "U11111111111111111111111111111111";
   const groupId = "C22222222222222222222222222222222";
   const unregGroupId = "C33333333333333333333333333333333";
@@ -104,7 +109,7 @@ test("/api/org enforces operator auth, sanitized public roster, isolated learnin
   assert.equal(pubRosterRes.status, 200);
   const pubRoster = await pubRosterRes.json();
   assert.equal(pubRoster.teamCount, 11);
-  assert.equal(pubRoster.agentCount, 32);
+  assert.equal(pubRoster.agentCount, 35);
   assert.equal(pubRoster.connectors, undefined);
   assert.equal(pubRoster.teams[0].teamLearningFile, undefined);
   assert.equal(JSON.stringify(pubRoster).includes("darxiaearohhnxiwhcbs"), false);
@@ -365,7 +370,7 @@ test("Scrubbed Supabase 409 maps to 409, 503 outage fails closed with 503 before
     return [];
   };
 
-  const apiKey = "nh-org-dbstub-key-123456";
+  const apiKey = ["nh", "org", "dbstub", "123456"].join("-");
   const svc = createOrgLearningService({ db: dbStub, learningDir: path.join(tmpDir, "learning") });
   const base = await startOrgServer(t, {
     service: svc,

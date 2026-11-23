@@ -3,7 +3,7 @@
   "organization": "Neurohands AI Agent Organization",
   "mission": "From Thailand to the World — Helping humans learn and grow.",
   "vision": "Build trustworthy, human-in-the-loop AI agent teams for LINE Official Accounts and web operations where every business keeps full ownership of its data.",
-  "updated_at": "2026-11-22T09:56:00+07:00",
+  "updated_at": "2026-11-23T11:15:00+07:00",
   "principles": [
     "Non-destructive append-only learning: never erase or duplicate verified records; supersede via linked revisions.",
     "Strict case-by-case individual learning isolation: each agent owns its own namespace and never mixes cases with another agent.",
@@ -240,6 +240,28 @@
       "individualLearningFile": "platform/docs/org/learning/individual/web-ux-architect.jsonl"
     },
     {
+      "agentId": "web-ux-device-tester",
+      "displayName": "Customer Multi-Device UX Tester",
+      "teamId": "website-brand-ux",
+      "role": "Phone, Tablet & Laptop Customer UX QA Specialist",
+      "isManager": false,
+      "managerAgentId": "web-manager",
+      "responsibilities": ["Audit customer journeys and tap/click ergonomics across 390px phone, 768px tablet, and 1440px laptop viewports", "Verify zero horizontal overflow, unclipped anchor jumps (#trial-workspace), and responsive LINE-to-web handoffs", "Catch layout regressions, modal overlap, and mobile dark-mode readability issues before release"],
+      "channels": ["web", "line_user"],
+      "individualLearningFile": "platform/docs/org/learning/individual/web-ux-device-tester.jsonl"
+    },
+    {
+      "agentId": "web-color-sync-designer",
+      "displayName": "Synchronized UI Color Designer",
+      "teamId": "website-brand-ux",
+      "role": "Cross-Surface Brand Palette & Token Synchronization Specialist",
+      "isManager": false,
+      "managerAgentId": "web-manager",
+      "responsibilities": ["Synchronize Midnight Navy (#060D28), Electric Cyan (#0F8CE8/#38BDF8), and Crisp White tokens across /neurohands, Studio, LINE Rich Menus, Flex Cards, and visual guides", "Verify WCAG AA contrast compliance and forced-dark-mode color immunity across iOS, Android, and desktop browsers", "Eliminate mismatched surface backgrounds, border contrast drift, and unaligned palette accents"],
+      "channels": ["web", "line_user"],
+      "individualLearningFile": "platform/docs/org/learning/individual/web-color-sync-designer.jsonl"
+    },
+    {
       "agentId": "dx-manager",
       "displayName": "Digital Transformation Manager",
       "teamId": "business-dx",
@@ -271,6 +293,17 @@
       "responsibilities": ["Map clean handoffs between Sales, CS, After-Service, and Engineering", "Define KPI acceptance benchmarks", "Remove workflow bottlenecks"],
       "channels": ["notion", "founder"],
       "individualLearningFile": "platform/docs/org/learning/individual/dx-workflow-optimizer.jsonl"
+    },
+    {
+      "agentId": "dx-context-wording-specialist",
+      "displayName": "Context & Content Wording Specialist",
+      "teamId": "business-dx",
+      "role": "Contextual Copy, Tone & Bilingual Messaging Architect",
+      "isManager": false,
+      "managerAgentId": "dx-manager",
+      "responsibilities": ["Tailor English and Thai wording to each customer context, channel, and user intent", "Eliminate robotic phrasing and align tone across LINE Flex Cards, web trial flows, and Notion playbooks", "Maintain consistent terminology for Neurohands hardware, governance, and industry verticals"],
+      "channels": ["web", "line_user", "notion"],
+      "individualLearningFile": "platform/docs/org/learning/individual/dx-context-wording-specialist.jsonl"
     },
     {
       "agentId": "eng-manager",

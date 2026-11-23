@@ -19,6 +19,7 @@ async function loadOrgSchema(t) {
     "../supabase/migrations/20261117000001_dashboard_realtime_telemetry.sql",
     "../supabase/migrations/20261122000001_customer_trial_release.sql",
     "../supabase/migrations/20261122000002_ai_org_learning_and_reports.sql",
+    "../supabase/migrations/20261123000001_expand_org_35_agents.sql",
     "../supabase/manual_apply_trial_release.sql",
   ];
   for (const rel of baseFiles) {
@@ -139,7 +140,7 @@ test("20261122000002 & manual bundle double-apply cleanly, enforce append-only (
     agents: (await db.query("select agent_id from public.nh_org_agents")).rows.length,
   }));
   assert.equal(authCounts.teams, 11);
-  assert.equal(authCounts.agents, 32);
+  assert.equal(authCounts.agents, 35);
 
   await assertRoleRejects("authenticated", "select * from public.nh_agent_individual_learning", [], /permission denied/i);
   await assertRoleRejects("authenticated", "select * from public.nh_team_learning", [], /permission denied/i);

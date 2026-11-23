@@ -662,7 +662,7 @@ function buildBrandInfoFlexCard(topic = "about", { publicBase, previewUrl, custo
 
   if (key === "updates") {
     const bodyContents = [
-      makeBadge("LIVE • 11 TEAMS • 32 AI AGENTS", FLEX_BRAND.cyan),
+      makeBadge("LIVE • 11 TEAMS • 35 AI AGENTS", FLEX_BRAND.cyan),
       makeBulletRow("Guided 4-Step Free Trial (14 days • 200 msgs • $0 cap)"),
       makeBulletRow("Separate Frontline CS (Aria) & After-Service Warranty teams"),
       makeBulletRow("Private Hardware Data Ownership + 24/7 Cloud Backup"),
@@ -677,12 +677,12 @@ function buildBrandInfoFlexCard(topic = "about", { publicBase, previewUrl, custo
     }
     bodyContents.push(makeThaiHintBox("แตะปุ่มด้านล่างเพื่อเปิดหน้า AI Agent Portal หรือดูโครงสร้างทีม AI ทั้ง 11 ทีม"));
     return makeFlexCard({
-      altText: `Neurohands Updates — 11-Team / 32-Agent AI Organization, Guided 4-Step Free Trial, and Private Hardware ownership + 24/7 cloud operation. ${builderUrl}`,
+      altText: `Neurohands Updates — 11-Team / 35-Agent AI Organization, Guided 4-Step Free Trial, and Private Hardware ownership + 24/7 cloud operation. ${builderUrl}`,
       hero: makeHero(FLEX_BRAND.guides.welcome, publicBase),
       header: makeHeader({
         eyebrow: "LATEST UPDATES • MIDNIGHT NAVY V2",
         title: "What's New in Neurohands",
-        thaiHint: "อัปเดตระบบทีม AI 11 ทีม 32 เอเจนต์ และเมนูใหม่",
+        thaiHint: "อัปเดตระบบทีม AI 11 ทีม 35 เอเจนต์ และเมนูใหม่",
       }),
       bodyContents,
       footerButtons: [
@@ -1247,7 +1247,7 @@ function buildOrgRosterFlexCard(summary = {}, { publicBase } = {}) {
   const builderUrl = resolvePreviewUrl(undefined, publicBase);
   const teams = Array.isArray(safe.teams) ? safe.teams.filter((t) => t && typeof t === "object") : [];
   const teamCount = Number(safe.teamCount || teams.length || 11);
-  const agentCount = Number(safe.agentCount || 32);
+  const agentCount = Number(safe.agentCount || 35);
   const govTeams = teams.filter((t) => t.tier === "governance");
   const coreLines = teams.slice(0, 8).map((t) => `${String(t.name || t.teamId || "Team").split(" (")[0]} (${Array.isArray(t.agents) ? t.agents.length : 0})`);
   const govLabels = govTeams
@@ -1425,7 +1425,7 @@ function buildGovernanceAuditFlexCard(audit = {}, { publicBase } = {}) {
       makeKeyValueRow("Security Team", String(safe.security_result?.status || "-").toUpperCase(), { valueColor: safe.security_result?.status === "pass" ? FLEX_BRAND.success : FLEX_BRAND.danger }),
       makeKeyValueRow("Audit Team", String(safe.audit_result?.status || "-").toUpperCase(), { valueColor: safe.audit_result?.status === "pass" ? FLEX_BRAND.success : FLEX_BRAND.warning }),
       { type: "separator", margin: "sm" },
-      makeKeyValueRow("Teams / Agents", `${d.teamsVerified ?? 11} teams / ${d.agentsVerified ?? 32} agents`),
+      makeKeyValueRow("Teams / Agents", `${d.teamsVerified ?? 11} teams / ${d.agentsVerified ?? 35} agents`),
       makeKeyValueRow("Duplicates / Leaks", `${(d.duplicateCaseKeys || 0) + (d.duplicatePatternKeys || 0)} dup • ${sec.secretLeakHits ?? 0} secret`),
       makeKeyValueRow("Cross-Agent Mix", String(d.crossAgentContamination ?? 0)),
       makeThaiHintBox("ข้อมูลการเรียนรู้แยกอิสระราย Agent และรายทีม ห้ามลบหรือทำซ้ำ"),
